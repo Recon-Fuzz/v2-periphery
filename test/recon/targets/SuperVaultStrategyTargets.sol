@@ -26,9 +26,18 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
 
     function superVaultStrategy_handleOperations4626Mint_clamped(address controller) public {
         uint256 actorAssetBalance = IERC20(superVault.asset()).balanceOf(_getActor());
+        if (actorAssetBalance == 0) return;
+
         uint256 sharesNet = superVault.previewMint(actorAssetBalance) % (superVault.previewMint(actorAssetBalance) + 1);
-        uint256 assetsGross = actorAssetBalance % (actorAssetBalance + 1);
+        if (sharesNet == 0) return;
+
+        // Calculate assets with management fee applied
+        // assetsGross should be higher than assetsNet to trigger fee collection
         uint256 assetsNet = actorAssetBalance % (actorAssetBalance + 1);
+        // Add a small fee (1% for example) to make assetsGross > assetsNet
+        uint256 assetsGross = assetsNet + (assetsNet / 100);
+        if (assetsGross > actorAssetBalance) assetsGross = actorAssetBalance;
+
         MockERC20(superVault.asset()).approve(address(superVaultStrategy), assetsGross);
         superVaultStrategy_handleOperations4626Mint(controller, sharesNet, assetsGross, assetsNet);
     }
@@ -68,6 +77,31 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         actionTypes[1] = ISuperVaultStrategy.YieldSourceAction.UpdateOracle;
         
         superVaultStrategy_manageYieldSources(sources, oracles, actionTypes);
+    }
+
+    function superVaultStrategy_fulfillRedeemRequests_clamped(address controller) public {
+        // Only fulfill if there's a pending redeem request
+        uint256 pendingShares = superVaultStrategy.getSuperVaultState(controller).pendingRedeemRequest;
+        if (pendingShares == 0) return;
+
+        // Get current PPS to calculate assets out
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+
+        // Calculate assets based on pending shares
+        uint256 assetsOut = pendingShares * currentPPS / 1e18;
+
+        // Ensure strategy has enough balance
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance < assetsOut) return;
+
+        address[] memory controllers = new address[](1);
+        controllers[0] = controller;
+
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = assetsOut;
+
+        superVaultStrategy_fulfillRedeemRequests(controllers, totalAssetsOut);
     }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
@@ -137,5 +171,12 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
             managementFeeBps,
             recipient
         );
+    }
+
+    function superVaultStrategy_fulfillRedeemRequests(
+        address[] memory controllers,
+        uint256[] memory totalAssetsOut
+    ) public asActor {
+        superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut);
     }
 }
