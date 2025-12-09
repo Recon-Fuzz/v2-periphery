@@ -35,20 +35,168 @@ abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
     }
 
     function superVault_mint_clamped() public {
-        uint256 maxMintable = superVault.previewMint(IERC20(superVault.asset()).balanceOf(_getActor()));
-        uint256 shares = maxMintable % (maxMintable + 1);
-        MockERC20(superVault.asset()).approve(address(superVault), superVault.previewMint(shares));
+        address actor = _getActor();
+        uint256 actorBalance = IERC20(superVault.asset()).balanceOf(actor);
+        if (actorBalance == 0) return;
+
+        // Calculate reasonable shares to mint based on balance
+        // Use previewDeposit to get shares for our balance, then clamp
+        uint256 maxShares = superVault.previewDeposit(actorBalance);
+        if (maxShares == 0) return;
+        
+        uint256 shares = maxShares % (maxShares + 1);
+        if (shares == 0) return;
+
+        // Get the gross assets required for minting these shares
+        uint256 assetsRequired = superVault.previewMint(shares);
+        if (assetsRequired == 0 || assetsRequired > actorBalance) return;
+
+        // Approve and mint
+        MockERC20(superVault.asset()).approve(address(superVault), assetsRequired);
         superVault_mint(shares);
     }
 
     function superVault_redeem_clamped() public {
-        uint256 shares = superVault.maxRedeem(_getActor()) % (superVault.maxRedeem(_getActor()) + 1);
+        address actor = _getActor();
+        uint256 maxRedeemable = superVault.maxRedeem(actor);
+        if (maxRedeemable == 0) return;
+        
+        uint256 shares = maxRedeemable % (maxRedeemable + 1);
+        if (shares == 0) return;
+        
         superVault_redeem(shares);
     }
 
     function superVault_withdraw_clamped() public {
-        uint256 assets = superVault.maxWithdraw(_getActor()) % (superVault.maxWithdraw(_getActor()) + 1);
+        address actor = _getActor();
+        uint256 maxWithdrawable = superVault.maxWithdraw(actor);
+        if (maxWithdrawable == 0) return;
+        
+        uint256 assets = maxWithdrawable % (maxWithdrawable + 1);
+        if (assets == 0) return;
+        
         superVault_withdraw(assets);
+    }
+
+    /// @dev Complete redeem flow: deposit -> request redeem -> fulfill -> redeem
+    /// This ensures all steps in the redeem process are covered
+    function superVault_completeRedeemFlow_clamped() public {
+        address actor = _getActor();
+        
+        // Step 1: Deposit assets to get shares
+        uint256 assets = IERC20(superVault.asset()).balanceOf(actor);
+        if (assets == 0) return;
+        
+        assets = assets % (assets + 1);
+        if (assets == 0) return;
+        
+        MockERC20(superVault.asset()).approve(address(superVault), assets);
+        vm.prank(actor);
+        try superVault.deposit(assets, actor) {} catch {
+            return;
+        }
+        
+        // Step 2: Request redeem
+        uint256 shares = superVault.balanceOf(actor);
+        if (shares == 0) return;
+        
+        shares = shares % (shares + 1);
+        if (shares == 0) return;
+        
+        vm.prank(actor);
+        try superVault.requestRedeem(shares, actor, actor) {} catch {
+            return;
+        }
+        
+        // Step 3: Fulfill the redeem request (as manager)
+        uint256 pendingShares = superVaultStrategy.getSuperVaultState(actor).pendingRedeemRequest;
+        if (pendingShares == 0) return;
+        
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+        
+        uint256 assetsOut = pendingShares * currentPPS / 1e18;
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance < assetsOut) return;
+        
+        address[] memory controllers = new address[](1);
+        controllers[0] = actor;
+        
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = assetsOut;
+        
+        // Manager fulfills the request
+        vm.prank(address(this));
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {} catch {
+            return;
+        }
+        
+        // Step 4: Claim the redeemed assets
+        uint256 maxRedeemable = superVault.maxRedeem(actor);
+        if (maxRedeemable > 0) {
+            vm.prank(actor);
+            try superVault.redeem(maxRedeemable, actor, actor) {} catch {}
+        }
+    }
+
+    /// @dev Complete withdraw flow: similar to redeem but uses withdraw instead
+    function superVault_completeWithdrawFlow_clamped() public {
+        address actor = _getActor();
+        
+        // Step 1: Deposit assets to get shares
+        uint256 assets = IERC20(superVault.asset()).balanceOf(actor);
+        if (assets == 0) return;
+        
+        assets = assets % (assets + 1);
+        if (assets == 0) return;
+        
+        MockERC20(superVault.asset()).approve(address(superVault), assets);
+        vm.prank(actor);
+        try superVault.deposit(assets, actor) {} catch {
+            return;
+        }
+        
+        // Step 2: Request redeem
+        uint256 shares = superVault.balanceOf(actor);
+        if (shares == 0) return;
+        
+        shares = shares % (shares + 1);
+        if (shares == 0) return;
+        
+        vm.prank(actor);
+        try superVault.requestRedeem(shares, actor, actor) {} catch {
+            return;
+        }
+        
+        // Step 3: Fulfill the redeem request (as manager)
+        uint256 pendingShares = superVaultStrategy.getSuperVaultState(actor).pendingRedeemRequest;
+        if (pendingShares == 0) return;
+        
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+        
+        uint256 assetsOut = pendingShares * currentPPS / 1e18;
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance < assetsOut) return;
+        
+        address[] memory controllers = new address[](1);
+        controllers[0] = actor;
+        
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = assetsOut;
+        
+        // Manager fulfills the request
+        vm.prank(address(this));
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {} catch {
+            return;
+        }
+        
+        // Step 4: Withdraw the assets
+        uint256 maxWithdrawable = superVault.maxWithdraw(actor);
+        if (maxWithdrawable > 0) {
+            vm.prank(actor);
+            try superVault.withdraw(maxWithdrawable, actor, actor) {} catch {}
+        }
     }
 
     function superVault_requestRedeem_clamped() public {

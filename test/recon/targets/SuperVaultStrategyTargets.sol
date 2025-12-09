@@ -28,14 +28,34 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         uint256 actorAssetBalance = IERC20(superVault.asset()).balanceOf(_getActor());
         if (actorAssetBalance == 0) return;
 
-        uint256 sharesNet = superVault.previewMint(actorAssetBalance) % (superVault.previewMint(actorAssetBalance) + 1);
+        // Calculate shares to mint based on current PPS
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+
+        // Calculate a reasonable amount of shares to mint
+        uint256 sharesNet = (actorAssetBalance * 1e18 / currentPPS) % ((actorAssetBalance * 1e18 / currentPPS) + 1);
         if (sharesNet == 0) return;
 
-        // Calculate assets with management fee applied
-        // assetsGross should be higher than assetsNet to trigger fee collection
-        uint256 assetsNet = actorAssetBalance % (actorAssetBalance + 1);
-        // Add a small fee (1% for example) to make assetsGross > assetsNet
-        uint256 assetsGross = assetsNet + (assetsNet / 100);
+        // Calculate assets needed for these shares
+        uint256 assetsNet = sharesNet * currentPPS / 1e18;
+        if (assetsNet == 0 || assetsNet > actorAssetBalance) return;
+
+        // Get the management fee from the strategy's fee config
+        ISuperVaultStrategy.FeeConfig memory feeConfig = superVaultStrategy.getConfigInfo();
+        uint256 feeBps = feeConfig.managementFeeBps;
+        
+        if (feeBps >= 10000) return; // Invalid fee
+        
+        uint256 assetsGross;
+        if (feeBps > 0) {
+            // Calculate gross using the fee formula: gross = net * BPS / (BPS - feeBps)
+            assetsGross = assetsNet * 10000 / (10000 - feeBps);
+            // Add 1 for rounding to ensure we have enough
+            assetsGross += 1;
+        } else {
+            assetsGross = assetsNet;
+        }
+        
         if (assetsGross > actorAssetBalance) assetsGross = actorAssetBalance;
 
         MockERC20(superVault.asset()).approve(address(superVaultStrategy), assetsGross);
@@ -88,8 +108,28 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         uint256 currentPPS = superVaultStrategy.getStoredPPS();
         if (currentPPS == 0) return;
 
-        // Calculate assets based on pending shares
-        uint256 assetsOut = pendingShares * currentPPS / 1e18;
+        // Calculate theoretical assets based on current PPS
+        uint256 theoreticalAssets = pendingShares * currentPPS / 1e18;
+
+        // Get slippage parameters to calculate valid range
+        ISuperVaultStrategy.SuperVaultState memory state = superVaultStrategy.getSuperVaultState(controller);
+        uint16 slippageBps = state.redeemSlippageBps > 0 ? state.redeemSlippageBps : 500; // DEFAULT_REDEEM_SLIPPAGE_BPS
+        
+        // Calculate minAssetsOut based on average request PPS and slippage
+        uint256 minAssetsOut;
+        if (state.averageRequestPPS > 0) {
+            // Use the same formula as in _processExactFulfillmentBatch
+            uint256 baseAssets = pendingShares * state.averageRequestPPS / 1e18;
+            minAssetsOut = baseAssets - (baseAssets * slippageBps / 10000);
+        } else {
+            // If no average request PPS, use theoretical with slippage
+            minAssetsOut = theoreticalAssets - (theoreticalAssets * slippageBps / 10000);
+        }
+
+        // Clamp assetsOut to be within valid bounds [minAssetsOut, theoreticalAssets]
+        // Use a value slightly above minAssetsOut to avoid edge cases
+        uint256 assetsOut = minAssetsOut + ((theoreticalAssets - minAssetsOut) / 2);
+        if (assetsOut > theoreticalAssets) assetsOut = theoreticalAssets;
 
         // Ensure strategy has enough balance
         uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
@@ -102,6 +142,29 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         totalAssetsOut[0] = assetsOut;
 
         superVaultStrategy_fulfillRedeemRequests(controllers, totalAssetsOut);
+    }
+
+    /// @dev Combined handler: request redeem then immediately fulfill it
+    /// This ensures the redeem workflow is properly exercised
+    function superVaultStrategy_requestAndFulfillRedeem_clamped() public {
+        address controller = _getActor();
+        
+        // Step 1: Request a redeem
+        uint256 shares = superVault.balanceOf(controller);
+        if (shares == 0) return;
+        
+        // Clamp to a reasonable amount
+        shares = shares % (shares + 1);
+        if (shares == 0) return;
+        
+        // Request the redeem
+        vm.prank(controller);
+        try superVault.requestRedeem(shares, controller, controller) {} catch {
+            return;
+        }
+        
+        // Step 2: Fulfill the redeem request
+        superVaultStrategy_fulfillRedeemRequests_clamped(controller);
     }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///

@@ -63,12 +63,56 @@ abstract contract SuperVaultAggregatorTargets is
         superVaultAggregator_createVault(params);
     }
 
+    /// @dev Create vault with secondary managers to cover that path
+    function superVaultAggregator_createVault_withSecondaryManagers_clamped(uint256 numManagers) public {
+        uint256 minStaleness = superGovernor.getMinStaleness();
+        
+        // Clamp number of secondary managers (0 to 3)
+        numManagers = numManagers % 4;
+        
+        address[] memory secondaryManagers = new address[](numManagers);
+        for (uint256 i = 0; i < numManagers; i++) {
+            secondaryManagers[i] = _getRandomActor(i + 1);
+            // Ensure no zero addresses
+            if (secondaryManagers[i] == address(0)) {
+                secondaryManagers[i] = address(uint160(0x1000 + i));
+            }
+        }
+        
+        ISuperVaultAggregator.VaultCreationParams memory params = ISuperVaultAggregator.VaultCreationParams({
+            asset: _getAsset(),
+            name: "SuperVault2",
+            symbol: "SV2",
+            mainManager: _getActor(),
+            secondaryManagers: secondaryManagers,
+            minUpdateInterval: minStaleness % (minStaleness + 1),
+            maxStaleness: minStaleness,
+            feeConfig: ISuperVaultStrategy.FeeConfig({
+                performanceFeeBps: 1000,
+                managementFeeBps: 100,
+                recipient: feeRecipient
+            })
+        });
+        
+        superVaultAggregator_createVault(params);
+    }
+
     function superVaultAggregator_proposeChangePrimaryManager_clamped(address newManager, address newFeeRecipient) public {
+        // Ensure newManager is not zero address
+        if (newManager == address(0)) {
+            newManager = _getRandomActor(1);
+        }
+        
+        // Ensure newFeeRecipient is valid
+        if (newFeeRecipient == address(0)) {
+            newFeeRecipient = feeRecipient;
+        }
+        
         // First add current actor as a secondary manager if they're not already
         address currentActor = _getActor();
         
         // Use try-catch to handle case where actor is already a secondary manager
-        vm.prank(address(superVaultStrategy)); // Main manager can add secondary managers
+        vm.prank(address(this)); // Setup (this) is the main manager
         try superVaultAggregator.addSecondaryManager(address(superVaultStrategy), currentActor) {} catch {}
         
         // Now propose the change as a secondary manager
@@ -78,28 +122,52 @@ abstract contract SuperVaultAggregatorTargets is
     function superVaultAggregator_executeChangePrimaryManager_clamped() public {
         // First propose a change (requires being a secondary manager)
         address newManager = _getRandomActor(1);
+        if (newManager == address(0)) newManager = address(0x999);
+        
         address newFeeRecipient = _getRandomActor(2);
+        if (newFeeRecipient == address(0)) newFeeRecipient = feeRecipient;
         
-        superVaultAggregator_proposeChangePrimaryManager_clamped(newManager, newFeeRecipient);
+        // Add current actor as secondary manager
+        address currentActor = _getActor();
+        vm.prank(address(this)); // Setup (this) is the main manager
+        try superVaultAggregator.addSecondaryManager(address(superVaultStrategy), currentActor) {} catch {}
         
-        // Fast forward time to pass the timelock
+        // Propose the change
+        vm.prank(currentActor);
+        try superVaultAggregator.proposeChangePrimaryManager(address(superVaultStrategy), newManager, newFeeRecipient) {} catch {
+            return;
+        }
+        
+        // Fast forward time to pass the timelock (7 days)
         vm.warp(block.timestamp + 7 days + 1);
         
-        // Execute the change
-        superVaultAggregator_executeChangePrimaryManager(address(superVaultStrategy));
+        // Execute the change (can be called by anyone)
+        vm.prank(currentActor);
+        try superVaultAggregator.executeChangePrimaryManager(address(superVaultStrategy)) {} catch {}
     }
 
     function superVaultAggregator_cancelChangePrimaryManager_clamped() public {
         // First propose a change
         address newManager = _getRandomActor(1);
+        if (newManager == address(0)) newManager = address(0x999);
+        
         address newFeeRecipient = _getRandomActor(2);
+        if (newFeeRecipient == address(0)) newFeeRecipient = feeRecipient;
         
-        superVaultAggregator_proposeChangePrimaryManager_clamped(newManager, newFeeRecipient);
+        // Add current actor as secondary manager
+        address currentActor = _getActor();
+        vm.prank(address(this)); // Setup (this) is the main manager
+        try superVaultAggregator.addSecondaryManager(address(superVaultStrategy), currentActor) {} catch {}
         
-        // Now cancel it as the main manager
-        // The main manager needs to call this, so we need to get the main manager address
-        // For now, this might not work perfectly but it sets up the flow
-        superVaultAggregator_cancelChangePrimaryManager(address(superVaultStrategy));
+        // Propose the change
+        vm.prank(currentActor);
+        try superVaultAggregator.proposeChangePrimaryManager(address(superVaultStrategy), newManager, newFeeRecipient) {} catch {
+            return;
+        }
+        
+        // Now cancel it as the main manager (address(this) in setup)
+        vm.prank(address(this));
+        try superVaultAggregator.cancelChangePrimaryManager(address(superVaultStrategy)) {} catch {}
     }
 
     function superVaultAggregator_proposeWithdrawUpkeep_clamped() public {
@@ -119,6 +187,21 @@ abstract contract SuperVaultAggregatorTargets is
         
         // Execute the withdrawal
         superVaultAggregator_executeWithdrawUpkeep(address(superVaultStrategy));
+    }
+
+    /// @dev Add multiple secondary managers to test the MAX limit
+    function superVaultAggregator_addSecondaryManagers_toLimitClamped() public {
+        // Try to add 6 secondary managers (max is 5)
+        for (uint256 i = 0; i < 6; i++) {
+            address manager = address(uint160(0x2000 + i));
+            
+            // Main manager adds secondary managers
+            vm.prank(address(this));
+            try superVaultAggregator.addSecondaryManager(address(superVaultStrategy), manager) {} catch {
+                // Expected to fail on the 6th one
+                break;
+            }
+        }
     }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
@@ -220,6 +303,22 @@ abstract contract SuperVaultAggregatorTargets is
     // ) public asActor {
     //     superVaultAggregator.proposeStrategyHooksRoot(strategy, newRoot);
     // }
+
+    /// @dev Add and then remove a secondary manager to cover both paths
+    function superVaultAggregator_addAndRemoveSecondaryManager_clamped() public {
+        address manager = _getRandomActor(1);
+        if (manager == address(0)) manager = address(0x3000);
+        
+        // Main manager adds a secondary manager
+        vm.prank(address(this));
+        try superVaultAggregator.addSecondaryManager(address(superVaultStrategy), manager) {} catch {
+            return;
+        }
+        
+        // Then remove it
+        vm.prank(address(this));
+        try superVaultAggregator.removeSecondaryManager(address(superVaultStrategy), manager) {} catch {}
+    }
 
     function superVaultAggregator_removeSecondaryManager(
         address strategy,
