@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {BaseTargetFunctions} from "@chimera/BaseTargetFunctions.sol";
 import {vm} from "@chimera/Hevm.sol";
 import {Panic} from "@recon/Panic.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {
     ISuperVaultStrategy
@@ -18,6 +19,40 @@ abstract contract SuperVaultAggregatorTargets is
     Properties
 {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
+
+    // Clamped handlers for SuperVaultAggregator functions
+    function superVaultAggregator_depositUpkeep_clamped() public {
+        address upkeepToken = superGovernor.getAddress(superGovernor.UPKEEP_TOKEN());
+        uint256 amount = IERC20(upkeepToken).balanceOf(_getActor()) % (IERC20(upkeepToken).balanceOf(_getActor()) + 1);
+        IERC20(upkeepToken).approve(address(superVaultAggregator), amount);
+        superVaultAggregator_depositUpkeep(amount);
+    }
+
+    function superVaultAggregator_claimUpkeep_clamped() public {
+        uint256 amount = superVaultAggregator.claimableUpkeep() % (superVaultAggregator.claimableUpkeep() + 1);
+        superVaultAggregator_claimUpkeep(amount);
+    }
+
+    function superVaultAggregator_createVault_clamped() public {
+        uint256 minStaleness = superGovernor.getMinStaleness();
+        
+        ISuperVaultAggregator.VaultCreationParams memory params = ISuperVaultAggregator.VaultCreationParams({
+            asset: _getAsset(),
+            name: "SuperVault",
+            symbol: "SV",
+            mainManager: _getActor(),
+            secondaryManagers: new address[](0),
+            minUpdateInterval: minStaleness % (minStaleness + 1),
+            maxStaleness: minStaleness,
+            feeConfig: ISuperVaultStrategy.FeeConfig({
+                performanceFeeBps: 1000,
+                managementFeeBps: 100,
+                recipient: feeRecipient
+            })
+        });
+        
+        superVaultAggregator_createVault(params);
+    }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 

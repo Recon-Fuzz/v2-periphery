@@ -6,6 +6,7 @@ import {BaseTargetFunctions} from "@chimera/BaseTargetFunctions.sol";
 import {vm} from "@chimera/Hevm.sol";
 import {Panic} from "@recon/Panic.sol";
 import {MockERC20} from "@recon/MockERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "src/SuperVault/SuperVault.sol";
 
@@ -15,6 +16,56 @@ import {Properties} from "../Properties.sol";
 /// @dev All receivers are inherently clamped to actors to make checking properties easier
 abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
+
+    // Clamped handlers for SuperVault functions
+    function superVault_approve_clamped(address spender) public {
+        uint256 value = superVault.balanceOf(_getActor()) % (superVault.balanceOf(_getActor()) + 1);
+        superVault_approve(spender, value);
+    }
+
+    function superVault_burnShares_clamped() public {
+        uint256 amount = superVault.balanceOf(address(superVaultEscrow)) % (superVault.balanceOf(address(superVaultEscrow)) + 1);
+        superVault_burnShares(amount);
+    }
+
+    function superVault_deposit_clamped() public {
+        uint256 assets = IERC20(superVault.asset()).balanceOf(_getActor()) % (IERC20(superVault.asset()).balanceOf(_getActor()) + 1);
+        MockERC20(superVault.asset()).approve(address(superVault), assets);
+        superVault_deposit(assets);
+    }
+
+    function superVault_mint_clamped() public {
+        uint256 maxMintable = superVault.previewMint(IERC20(superVault.asset()).balanceOf(_getActor()));
+        uint256 shares = maxMintable % (maxMintable + 1);
+        MockERC20(superVault.asset()).approve(address(superVault), superVault.previewMint(shares));
+        superVault_mint(shares);
+    }
+
+    function superVault_redeem_clamped() public {
+        uint256 shares = superVault.maxRedeem(_getActor()) % (superVault.maxRedeem(_getActor()) + 1);
+        superVault_redeem(shares);
+    }
+
+    function superVault_withdraw_clamped() public {
+        uint256 assets = superVault.maxWithdraw(_getActor()) % (superVault.maxWithdraw(_getActor()) + 1);
+        superVault_withdraw(assets);
+    }
+
+    function superVault_requestRedeem_clamped() public {
+        uint256 shares = superVault.balanceOf(_getActor()) % (superVault.balanceOf(_getActor()) + 1);
+        superVault_requestRedeem(shares);
+    }
+
+    function superVault_transfer_clamped(uint256 entropy) public {
+        uint256 value = superVault.balanceOf(_getActor()) % (superVault.balanceOf(_getActor()) + 1);
+        superVault_transfer(entropy, value);
+    }
+
+    function superVault_transferFrom_clamped(uint256 entropyFrom, uint256 entropyTo) public {
+        address from = _getRandomActor(entropyFrom);
+        uint256 value = superVault.balanceOf(from) % (superVault.balanceOf(from) + 1);
+        superVault_transferFrom(entropyFrom, entropyTo, value);
+    }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
