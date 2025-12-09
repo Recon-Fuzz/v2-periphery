@@ -240,6 +240,34 @@ abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
         superVault_transferFrom(entropyFrom, entropyTo, value);
     }
 
+    /// @dev Attempt to trigger ERC20 address(0) validation errors
+    /// These target the uncovered lines in OpenZeppelin's ERC20Upgradeable:
+    /// - _approve line 300: ERC20InvalidApprover(address(0))
+    /// - _transfer lines 184, 187: ERC20InvalidSender/Receiver(address(0))
+    function superVault_transferToAddressZero_clamped() public {
+        address actor = _getActor();
+        uint256 value = superVault.balanceOf(actor);
+        if (value == 0) return;
+        
+        value = value % (value + 1);
+        if (value == 0) return;
+        
+        // Attempt to transfer to address(0) - should revert with ERC20InvalidReceiver
+        vm.prank(actor);
+        try superVault.transfer(address(0), value) {} catch {}
+    }
+    
+    /// @dev Attempt to approve address(0) as spender
+    /// Targets _approve line 300: ERC20InvalidSpender(address(0))
+    function superVault_approveAddressZero_clamped() public {
+        address actor = _getActor();
+        uint256 value = superVault.balanceOf(actor);
+        
+        // Attempt to approve address(0) - should revert with ERC20InvalidSpender
+        vm.prank(actor);
+        try superVault.approve(address(0), value) {} catch {}
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superVault_approve(address spender, uint256 value) public asActor {

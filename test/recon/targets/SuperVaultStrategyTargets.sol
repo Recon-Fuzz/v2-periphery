@@ -146,27 +146,74 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
 
     /// @dev Test fulfillRedeemRequests with insufficient strategy balance
     /// Attempts to trigger INSUFFICIENT_LIQUIDITY revert at line 356
-    function superVaultStrategy_fulfillRedeemRequests_insufficientLiquidity_clamped(address controller) public {
-        // Only fulfill if there's a pending redeem request
+    /// The key is that totalAssetsOut must be within bounds BUT strategy doesn't have enough
+    function superVaultStrategy_fulfillRedeemRequests_insufficientLiquidity_clamped(address controller, uint256 drainAmount) public {
+        // Step 1: Try to create a scenario where strategy has low balance
+        // Drain some assets from the strategy if possible
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance > 0) {
+            // Modulo to get a drain amount
+            drainAmount = drainAmount % (strategyBalance + 1);
+            // This could be done by having yield sources withdraw, etc.
+            // For now, we'll just proceed with current balance
+        }
+        
+        // Step 2: Check if there's a pending redeem request
         uint256 pendingShares = superVaultStrategy.getSuperVaultState(controller).pendingRedeemRequest;
         if (pendingShares == 0) return;
 
-        // Get current PPS to calculate assets out
+        // Step 3: Get current PPS
         uint256 currentPPS = superVaultStrategy.getStoredPPS();
         if (currentPPS == 0) return;
 
-        // Calculate maximum theoretical assets needed
+        // Step 4: Calculate theoretical assets (upper bound)
         uint256 theoreticalAssets = pendingShares * currentPPS / 1e18;
+        if (theoreticalAssets == 0) return;
         
-        // Get strategy balance
-        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        // Step 5: Get current strategy balance
+        strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
         
-        // Try to fulfill with more assets than available
-        // This should trigger the INSUFFICIENT_LIQUIDITY revert
-        uint256 assetsOut = theoreticalAssets;
-        if (assetsOut <= strategyBalance) {
-            // Increase to exceed balance
+        // Step 6: Calculate minAssetsOut (lower bound)
+        ISuperVaultStrategy.SuperVaultState memory state = superVaultStrategy.getSuperVaultState(controller);
+        uint16 slippageBps = state.redeemSlippageBps > 0 ? state.redeemSlippageBps : 500;
+        
+        uint256 minAssetsOut;
+        if (state.averageRequestPPS > 0) {
+            uint256 baseAssets = pendingShares * state.averageRequestPPS / 1e18;
+            minAssetsOut = baseAssets - (baseAssets * slippageBps / 10000);
+        } else {
+            minAssetsOut = theoreticalAssets - (theoreticalAssets * slippageBps / 10000);
+        }
+        
+        // Step 7: Check if we can trigger insufficient liquidity
+        // We need: minAssetsOut <= assetsOut <= theoreticalAssets AND strategyBalance < assetsOut
+        if (strategyBalance >= theoreticalAssets) {
+            // Strategy has enough for maximum possible payout, can't trigger insufficient liquidity
+            return;
+        }
+        
+        // Choose an assetsOut that's within bounds but exceeds strategy balance
+        uint256 assetsOut;
+        if (strategyBalance < minAssetsOut) {
+            // Even minimum required exceeds balance - use minimum
+            assetsOut = minAssetsOut;
+        } else {
+            // Strategy balance is between min and theoretical
+            // Use a value slightly above strategy balance but within theoretical
             assetsOut = strategyBalance + 1;
+            if (assetsOut > theoreticalAssets) {
+                assetsOut = theoreticalAssets;
+            }
+        }
+        
+        // Verify assetsOut is within bounds
+        if (assetsOut < minAssetsOut || assetsOut > theoreticalAssets) {
+            return;
+        }
+        
+        // Verify this would trigger insufficient liquidity
+        if (strategyBalance >= assetsOut) {
+            return;
         }
 
         address[] memory controllers = new address[](1);
