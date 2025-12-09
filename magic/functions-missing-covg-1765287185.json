@@ -1,0 +1,193 @@
+{
+  "timestamp": "1765287185",
+  "lcov_file": "echidna/covered.1765287185.lcov",
+  "missing_coverage": {
+    "_approve": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 297,
+        "end": 309
+      },
+      "coverage_stats": {
+        "total_lines": 8,
+        "covered_lines": 7,
+        "uncovered_lines": 1,
+        "percentage": 87.5
+      },
+      "uncovered_code": [
+        {
+          "line_range": "300",
+          "code": [
+            "300:             revert ERC20InvalidApprover(address(0));"
+          ]
+        }
+      ]
+    },
+    "_burn": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 253,
+        "end": 258
+      },
+      "coverage_stats": {
+        "total_lines": 4,
+        "covered_lines": 3,
+        "uncovered_lines": 1,
+        "percentage": 75.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "255",
+          "code": [
+            "255:             revert ERC20InvalidSender(address(0));"
+          ]
+        }
+      ]
+    },
+    "_getERC20Storage": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 46,
+        "end": 50
+      },
+      "coverage_stats": {
+        "total_lines": 1,
+        "covered_lines": 0,
+        "uncovered_lines": 1,
+        "percentage": 0.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "48",
+          "code": [
+            "48:             $.slot := ERC20StorageLocation"
+          ]
+        }
+      ]
+    },
+    "_mint": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 238,
+        "end": 243
+      },
+      "coverage_stats": {
+        "total_lines": 4,
+        "covered_lines": 3,
+        "uncovered_lines": 1,
+        "percentage": 75.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "240",
+          "code": [
+            "240:             revert ERC20InvalidReceiver(address(0));"
+          ]
+        }
+      ]
+    },
+    "_transfer": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 182,
+        "end": 190
+      },
+      "coverage_stats": {
+        "total_lines": 6,
+        "covered_lines": 4,
+        "uncovered_lines": 2,
+        "percentage": 66.67
+      },
+      "uncovered_code": [
+        {
+          "line_range": "184",
+          "code": [
+            "184:             revert ERC20InvalidSender(address(0));"
+          ]
+        },
+        {
+          "line_range": "187",
+          "code": [
+            "187:             revert ERC20InvalidReceiver(address(0));"
+          ]
+        }
+      ]
+    },
+    "executeHooks": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 273,
+        "end": 297
+      },
+      "coverage_stats": {
+        "total_lines": 17,
+        "covered_lines": 16,
+        "uncovered_lines": 1,
+        "percentage": 94.12
+      },
+      "uncovered_code": [
+        {
+          "line_range": "290",
+          "code": [
+            "290:                 revert HOOK_VALIDATION_FAILED();"
+          ]
+        }
+      ]
+    },
+    "fulfillRedeemRequests": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 318,
+        "end": 368
+      },
+      "coverage_stats": {
+        "total_lines": 23,
+        "covered_lines": 22,
+        "uncovered_lines": 1,
+        "percentage": 95.65
+      },
+      "uncovered_code": [
+        {
+          "line_range": "356",
+          "code": [
+            "356:             revert INSUFFICIENT_LIQUIDITY();"
+          ]
+        }
+      ]
+    },
+    "handleOperations7540": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 251,
+        "end": 267
+      },
+      "coverage_stats": {
+        "total_lines": 13,
+        "covered_lines": 12,
+        "uncovered_lines": 1,
+        "percentage": 92.31
+      },
+      "uncovered_code": [
+        {
+          "line_range": "265",
+          "code": [
+            "265:             revert ACTION_TYPE_DISALLOWED();"
+          ]
+        }
+      ]
+    }
+  },
+  "summary": {
+    "functions_analyzed": 97,
+    "functions_with_missing_coverage": 8,
+    "full_coverage": false
+  }
+}
