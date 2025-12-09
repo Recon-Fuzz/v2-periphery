@@ -1,0 +1,152 @@
+[
+  {
+    "target_function": "superGovernor_proposeFee",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "10000"
+  },
+  {
+    "target_function": "superGovernor_executeUpkeepClaim",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVaultAggregator.claimableUpkeep()"
+  },
+  {
+    "target_function": "superVault_approve",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "superVault.balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_burnShares",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVault.balanceOf(address(superVaultEscrow))"
+  },
+  {
+    "target_function": "superVault_deposit",
+    "type": "max",
+    "value": "uint256 assets",
+    "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_mint",
+    "type": "max",
+    "value": "uint256 shares",
+    "access": "superVault.previewMint(IERC20(superVault.asset()).balanceOf(_getActor()))"
+  },
+  {
+    "target_function": "superVault_redeem",
+    "type": "max",
+    "value": "uint256 shares",
+    "access": "superVault.maxRedeem(_getActor())"
+  },
+  {
+    "target_function": "superVault_withdraw",
+    "type": "max",
+    "value": "uint256 assets",
+    "access": "superVault.maxWithdraw(_getActor())"
+  },
+  {
+    "target_function": "superVault_requestRedeem",
+    "type": "max",
+    "value": "uint256 shares",
+    "access": "superVault.balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_transfer",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "superVault.balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_transferFrom",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "superVault.balanceOf(from)"
+  },
+  {
+    "target_function": "superVaultEscrow_escrowShares",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVault.balanceOf(from)"
+  },
+  {
+    "target_function": "superVaultEscrow_returnShares",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVault.balanceOf(address(superVaultEscrow))"
+  },
+  {
+    "target_function": "superVaultStrategy_handleOperations4626Deposit",
+    "type": "max",
+    "value": "uint256 assetsGross",
+    "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVaultStrategy_handleOperations4626Mint",
+    "type": "max",
+    "value": "uint256 sharesNet",
+    "access": "superVault.previewMint(IERC20(superVault.asset()).balanceOf(_getActor()))"
+  },
+  {
+    "target_function": "superVaultStrategy_handleOperations4626Mint",
+    "type": "max",
+    "value": "uint256 assetsGross",
+    "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVaultStrategy_handleOperations4626Mint",
+    "type": "max",
+    "value": "uint256 assetsNet",
+    "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVaultStrategy_handleOperations7540",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVault.balanceOf(controller)"
+  },
+  {
+    "target_function": "superVaultStrategy_proposeVaultFeeConfigUpdate",
+    "type": "max",
+    "value": "uint256 performanceFeeBps",
+    "access": "5100"
+  },
+  {
+    "target_function": "superVaultStrategy_proposeVaultFeeConfigUpdate",
+    "type": "max",
+    "value": "uint256 managementFeeBps",
+    "access": "10000"
+  },
+  {
+    "target_function": "superVaultAggregator_depositUpkeep",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "IERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVaultAggregator_claimUpkeep",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVaultAggregator.claimableUpkeep()"
+  },
+  {
+    "target_function": "superVaultAggregator_createVault",
+    "type": "exact",
+    "value": "ISuperVaultAggregator.VaultCreationParams memory params",
+    "access": "params"
+  },
+  {
+    "target_function": "superVaultAggregator_createVault",
+    "type": "max",
+    "value": "params.maxStaleness",
+    "access": "superGovernor.getMinStaleness()"
+  },
+  {
+    "target_function": "superVaultAggregator_createVault",
+    "type": "max",
+    "value": "params.minUpdateInterval",
+    "access": "params.maxStaleness"
+  }
+]
