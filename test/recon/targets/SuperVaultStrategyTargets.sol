@@ -288,6 +288,68 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         superVaultAggregator.setGlobalHooksRootVetoStatus(false);
     }
 
+    /// @dev Test executeHooks with invalid Merkle proofs
+    /// Attempts to trigger HOOK_VALIDATION_FAILED revert at line 290
+    function superVaultStrategy_executeHooks_invalidProof_clamped(address hook) public {
+        // Only try if hook is registered
+        if (!superGovernor.isHookRegistered(hook)) return;
+
+        // Create execute args with invalid proofs (empty arrays)
+        address[] memory hooks = new address[](1);
+        hooks[0] = hook;
+
+        bytes[] memory hookCalldata = new bytes[](1);
+        hookCalldata[0] = ""; // Empty calldata
+
+        uint256[] memory expectedAssetsOrSharesOut = new uint256[](1);
+        expectedAssetsOrSharesOut[0] = 0;
+
+        bytes32[][] memory globalProofs = new bytes32[][](1);
+        globalProofs[0] = new bytes32[](0); // Empty proof - will fail validation
+
+        bytes32[][] memory strategyProofs = new bytes32[][](1);
+        strategyProofs[0] = new bytes32[](0); // Empty proof - will fail validation
+
+        ISuperVaultStrategy.ExecuteArgs memory args = ISuperVaultStrategy.ExecuteArgs({
+            hooks: hooks,
+            hookCalldata: hookCalldata,
+            expectedAssetsOrSharesOut: expectedAssetsOrSharesOut,
+            globalProofs: globalProofs,
+            strategyProofs: strategyProofs
+        });
+
+        // Try to execute hooks with invalid proofs - should revert with HOOK_VALIDATION_FAILED
+        // address(this) is the manager as configured in Setup.sol
+        vm.prank(address(this));
+        try superVaultStrategy.executeHooks(args) {} catch {}
+    }
+
+    /// @dev Test handleOperations7540 with invalid operation type
+    /// Attempts to trigger ACTION_TYPE_DISALLOWED revert at line 265
+    /// Note: This uses low-level call to bypass Solidity's enum validation
+    function superVaultStrategy_handleOperations7540_invalidOp_clamped(address controller, address receiver) public {
+        // Valid operations are: RedeemRequest(0), CancelRedeemRequest(1), ClaimCancelRedeem(2), ClaimRedeem(3)
+        // We need to use a low-level call to pass value 4 (or higher) which is outside the enum range
+        
+        uint256 amount = 1000e18; // Arbitrary amount
+        
+        // Manually encode the call with an invalid enum value (4)
+        // Function signature: handleOperations7540(uint8,address,address,uint256)
+        bytes memory data = abi.encodeWithSelector(
+            ISuperVaultStrategy.handleOperations7540.selector,
+            uint8(4), // Invalid operation value
+            controller,
+            receiver,
+            amount
+        );
+        
+        // Try to call with invalid operation using low-level call
+        // This bypasses Solidity's enum type checking
+        vm.prank(address(superVault)); // Only vault can call this function
+        (bool success,) = address(superVaultStrategy).call(data);
+        // Expected to fail with ACTION_TYPE_DISALLOWED
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superVaultStrategy_executeVaultFeeConfigUpdate() public asActor {
