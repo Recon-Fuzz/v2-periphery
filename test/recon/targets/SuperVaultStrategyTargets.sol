@@ -48,6 +48,28 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         superVaultStrategy_proposeVaultFeeConfigUpdate(performanceFeeBps, managementFeeBps, recipient);
     }
 
+    function superVaultStrategy_manageYieldSources_clamped() public {
+        // Get current yield source and oracle
+        address yieldSource = _getYieldSource();
+        YieldSourceType sourceType = _getCurrentYieldSourceType();
+        address oracle = _getYieldSourceOracleForType(sourceType);
+        
+        // Create arrays for batch operation with 2 actions: Add and UpdateOracle
+        address[] memory sources = new address[](2);
+        sources[0] = yieldSource;
+        sources[1] = yieldSource;
+        
+        address[] memory oracles = new address[](2);
+        oracles[0] = oracle;
+        oracles[1] = oracle;
+        
+        ISuperVaultStrategy.YieldSourceAction[] memory actionTypes = new ISuperVaultStrategy.YieldSourceAction[](2);
+        actionTypes[0] = ISuperVaultStrategy.YieldSourceAction.Add;
+        actionTypes[1] = ISuperVaultStrategy.YieldSourceAction.UpdateOracle;
+        
+        superVaultStrategy_manageYieldSources(sources, oracles, actionTypes);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superVaultStrategy_executeVaultFeeConfigUpdate() public asActor {
