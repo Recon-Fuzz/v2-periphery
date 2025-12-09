@@ -1,0 +1,933 @@
+{
+  "timestamp": "1765284341",
+  "lcov_file": "echidna/covered.1765284341.lcov",
+  "missing_coverage": {
+    "_approve": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 297,
+        "end": 309
+      },
+      "coverage_stats": {
+        "total_lines": 8,
+        "covered_lines": 7,
+        "uncovered_lines": 1,
+        "percentage": 87.5
+      },
+      "uncovered_code": [
+        {
+          "line_range": "300",
+          "code": [
+            "300:             revert ERC20InvalidApprover(address(0));"
+          ]
+        }
+      ]
+    },
+    "_burn": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 253,
+        "end": 258
+      },
+      "coverage_stats": {
+        "total_lines": 4,
+        "covered_lines": 0,
+        "uncovered_lines": 4,
+        "percentage": 0.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "253-255",
+          "code": [
+            "253:     function _burn(address account, uint256 value) internal {",
+            "254:         if (account == address(0)) {",
+            "255:             revert ERC20InvalidSender(address(0));"
+          ]
+        },
+        {
+          "line_range": "257",
+          "code": [
+            "257:         _update(account, address(0), value);"
+          ]
+        }
+      ]
+    },
+    "_getERC20Storage": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 46,
+        "end": 50
+      },
+      "coverage_stats": {
+        "total_lines": 1,
+        "covered_lines": 0,
+        "uncovered_lines": 1,
+        "percentage": 0.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "48",
+          "code": [
+            "48:             $.slot := ERC20StorageLocation"
+          ]
+        }
+      ]
+    },
+    "_mint": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 238,
+        "end": 243
+      },
+      "coverage_stats": {
+        "total_lines": 4,
+        "covered_lines": 3,
+        "uncovered_lines": 1,
+        "percentage": 75.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "240",
+          "code": [
+            "240:             revert ERC20InvalidReceiver(address(0));"
+          ]
+        }
+      ]
+    },
+    "_transfer": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 182,
+        "end": 190
+      },
+      "coverage_stats": {
+        "total_lines": 6,
+        "covered_lines": 4,
+        "uncovered_lines": 2,
+        "percentage": 66.67
+      },
+      "uncovered_code": [
+        {
+          "line_range": "184",
+          "code": [
+            "184:             revert ERC20InvalidSender(address(0));"
+          ]
+        },
+        {
+          "line_range": "187",
+          "code": [
+            "187:             revert ERC20InvalidReceiver(address(0));"
+          ]
+        }
+      ]
+    },
+    "_update": {
+      "contract": "ERC20Upgradeable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol",
+      "function_range": {
+        "start": 199,
+        "end": 228
+      },
+      "coverage_stats": {
+        "total_lines": 11,
+        "covered_lines": 10,
+        "uncovered_lines": 1,
+        "percentage": 90.91
+      },
+      "uncovered_code": [
+        {
+          "line_range": "218",
+          "code": [
+            "218:                 $._totalSupply -= value;"
+          ]
+        }
+      ]
+    },
+    "maxRedeem": {
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 412,
+        "end": 416
+      },
+      "coverage_stats": {
+        "total_lines": 4,
+        "covered_lines": 3,
+        "uncovered_lines": 1,
+        "percentage": 75.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "415",
+          "code": [
+            "415:         return maxWithdraw(owner).mulDiv(PRECISION, withdrawPrice, Math.Rounding.Floor);"
+          ]
+        }
+      ]
+    },
+    "mint": {
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 163,
+        "end": 180
+      },
+      "coverage_stats": {
+        "total_lines": 9,
+        "covered_lines": 7,
+        "uncovered_lines": 2,
+        "percentage": 77.78
+      },
+      "uncovered_code": [
+        {
+          "line_range": "177",
+          "code": [
+            "177:         _mint(receiver, shares);"
+          ]
+        },
+        {
+          "line_range": "179",
+          "code": [
+            "179:         emit Deposit(msg.sender, receiver, assets, shares);"
+          ]
+        }
+      ]
+    },
+    "redeem": {
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 511,
+        "end": 543
+      },
+      "coverage_stats": {
+        "total_lines": 14,
+        "covered_lines": 6,
+        "uncovered_lines": 8,
+        "percentage": 42.86
+      },
+      "uncovered_code": [
+        {
+          "line_range": "528",
+          "code": [
+            "528:         assets = shares.mulDiv(averageWithdrawPrice, PRECISION, Math.Rounding.Floor);"
+          ]
+        },
+        {
+          "line_range": "530-531",
+          "code": [
+            "530:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
+            "531:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();"
+          ]
+        },
+        {
+          "line_range": "533-534",
+          "code": [
+            "533:         uint256 escrowBalance = _asset.balanceOf(escrow);",
+            "534:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();"
+          ]
+        },
+        {
+          "line_range": "537",
+          "code": [
+            "537:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);"
+          ]
+        },
+        {
+          "line_range": "540",
+          "code": [
+            "540:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);"
+          ]
+        },
+        {
+          "line_range": "542",
+          "code": [
+            "542:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
+          ]
+        }
+      ]
+    },
+    "withdraw": {
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 476,
+        "end": 508
+      },
+      "coverage_stats": {
+        "total_lines": 15,
+        "covered_lines": 6,
+        "uncovered_lines": 9,
+        "percentage": 40.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "485",
+          "code": [
+            "485:     {"
+          ]
+        },
+        {
+          "line_range": "492-493",
+          "code": [
+            "492:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
+            "493:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();"
+          ]
+        },
+        {
+          "line_range": "496",
+          "code": [
+            "496:         shares = assets.mulDiv(PRECISION, averageWithdrawPrice, Math.Rounding.Ceil);"
+          ]
+        },
+        {
+          "line_range": "498-499",
+          "code": [
+            "498:         uint256 escrowBalance = _asset.balanceOf(escrow);",
+            "499:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();"
+          ]
+        },
+        {
+          "line_range": "502",
+          "code": [
+            "502:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);"
+          ]
+        },
+        {
+          "line_range": "505",
+          "code": [
+            "505:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);"
+          ]
+        },
+        {
+          "line_range": "507",
+          "code": [
+            "507:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
+          ]
+        }
+      ]
+    },
+    "_handleClaimRedeem": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 1038,
+        "end": 1044
+      },
+      "coverage_stats": {
+        "total_lines": 6,
+        "covered_lines": 0,
+        "uncovered_lines": 6,
+        "percentage": 0.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "1038-1043",
+          "code": [
+            "1038:     function _handleClaimRedeem(address controller, address receiver, uint256 assetsToClaim) private {",
+            "1039:         if (assetsToClaim == 0) revert INVALID_AMOUNT();",
+            "1040:         if (controller == address(0)) revert ZERO_ADDRESS();",
+            "1041:         SuperVaultState storage state = superVaultState[controller];",
+            "1042:         state.maxWithdraw -= assetsToClaim;",
+            "1043:         emit RedeemRequestClaimed(receiver, controller, assetsToClaim, 0);"
+          ]
+        }
+      ]
+    },
+    "_processExactFulfillmentBatch": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 788,
+        "end": 824
+      },
+      "coverage_stats": {
+        "total_lines": 17,
+        "covered_lines": 0,
+        "uncovered_lines": 17,
+        "percentage": 0.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "788",
+          "code": [
+            "788:     function _processExactFulfillmentBatch("
+          ]
+        },
+        {
+          "line_range": "795-796",
+          "code": [
+            "795:     {",
+            "796:         SuperVaultState storage state = superVaultState[controller];"
+          ]
+        },
+        {
+          "line_range": "799",
+          "code": [
+            "799:         uint16 slippageBps = state.redeemSlippageBps > 0 ? state.redeemSlippageBps : DEFAULT_REDEEM_SLIPPAGE_BPS;"
+          ]
+        },
+        {
+          "line_range": "801",
+          "code": [
+            "801:         uint256 theoreticalAssets = pendingShares.mulDiv(currentPPS, PRECISION, Math.Rounding.Floor);"
+          ]
+        },
+        {
+          "line_range": "803-804",
+          "code": [
+            "803:         uint256 minAssetsOut =",
+            "804:             SuperVaultAccountingLib.computeMinNetOut(pendingShares, state.averageRequestPPS, slippageBps, PRECISION);"
+          ]
+        },
+        {
+          "line_range": "807-808",
+          "code": [
+            "807:         if (totalAssetsOut < minAssetsOut || totalAssetsOut > theoreticalAssets) {",
+            "808:             revert BOUNDS_EXCEEDED(minAssetsOut, theoreticalAssets, totalAssetsOut);"
+          ]
+        },
+        {
+          "line_range": "812-813",
+          "code": [
+            "812:         state.averageWithdrawPrice = SuperVaultAccountingLib.calculateAverageWithdrawPrice(",
+            "813:             state.maxWithdraw, state.averageWithdrawPrice, pendingShares, totalAssetsOut, PRECISION"
+          ]
+        },
+        {
+          "line_range": "817-821",
+          "code": [
+            "817:         state.pendingRedeemRequest = 0;",
+            "818:         state.maxWithdraw += totalAssetsOut;",
+            "819:         state.averageRequestPPS = 0;",
+            "820:         state.pendingCancelRedeemRequest = false;",
+            "821:         state.claimableCancelRedeemRequest = 0;"
+          ]
+        },
+        {
+          "line_range": "823",
+          "code": [
+            "823:         emit RedeemClaimable(controller, totalAssetsOut, pendingShares, state.averageWithdrawPrice);"
+          ]
+        }
+      ]
+    },
+    "_processSingleHookExecution": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 730,
+        "end": 770
+      },
+      "coverage_stats": {
+        "total_lines": 18,
+        "covered_lines": 12,
+        "uncovered_lines": 6,
+        "percentage": 66.67
+      },
+      "uncovered_code": [
+        {
+          "line_range": "758",
+          "code": [
+            "758:         ISuperHook(address(vars.hookContract)).resetExecutionState(address(this));"
+          ]
+        },
+        {
+          "line_range": "760",
+          "code": [
+            "760:         uint256 actualOutput = ISuperHookResult(hook).getOutAmount(address(this));"
+          ]
+        },
+        {
+          "line_range": "763-764",
+          "code": [
+            "763:         if (actualOutput < expectedAssetsOrSharesOut) {",
+            "764:             revert MINIMUM_OUTPUT_AMOUNT_ASSETS_NOT_MET();"
+          ]
+        },
+        {
+          "line_range": "767",
+          "code": [
+            "767:         emit HookExecuted(hook, prevHook, vars.targetedYieldSource, usePrevHookAmount, hookCalldata);"
+          ]
+        },
+        {
+          "line_range": "769",
+          "code": [
+            "769:         return hook;"
+          ]
+        }
+      ]
+    },
+    "executeHooks": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 273,
+        "end": 297
+      },
+      "coverage_stats": {
+        "total_lines": 17,
+        "covered_lines": 14,
+        "uncovered_lines": 3,
+        "percentage": 82.35
+      },
+      "uncovered_code": [
+        {
+          "line_range": "290",
+          "code": [
+            "290:                 revert HOOK_VALIDATION_FAILED();"
+          ]
+        },
+        {
+          "line_range": "293",
+          "code": [
+            "293:             prevHook ="
+          ]
+        },
+        {
+          "line_range": "296",
+          "code": [
+            "296:         emit HooksExecuted(args.hooks);"
+          ]
+        }
+      ]
+    },
+    "fulfillRedeemRequests": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 318,
+        "end": 368
+      },
+      "coverage_stats": {
+        "total_lines": 23,
+        "covered_lines": 5,
+        "uncovered_lines": 18,
+        "percentage": 21.74
+      },
+      "uncovered_code": [
+        {
+          "line_range": "324",
+          "code": [
+            "324:     {"
+          ]
+        },
+        {
+          "line_range": "332-334",
+          "code": [
+            "332:         FulfillRedeemVars memory vars;",
+            "333:         vars.currentPPS = getStoredPPS();",
+            "334:         if (vars.currentPPS == 0) revert INVALID_PPS();"
+          ]
+        },
+        {
+          "line_range": "337",
+          "code": [
+            "337:         for (uint256 i; i < len; ++i) {"
+          ]
+        },
+        {
+          "line_range": "339",
+          "code": [
+            "339:             if (i > 0 && controllers[i] <= controllers[i - 1]) revert CONTROLLERS_NOT_SORTED_UNIQUE();"
+          ]
+        },
+        {
+          "line_range": "342-343",
+          "code": [
+            "342:             uint256 pendingShares = superVaultState[controllers[i]].pendingRedeemRequest;",
+            "343:             vars.totalRequestedShares += pendingShares;"
+          ]
+        },
+        {
+          "line_range": "346",
+          "code": [
+            "346:             if (pendingShares == 0) revert ZERO_SHARE_FULFILLMENT_DISALLOWED();"
+          ]
+        },
+        {
+          "line_range": "349-350",
+          "code": [
+            "349:             _processExactFulfillmentBatch(controllers[i], totalAssetsOut[i], vars.currentPPS, pendingShares);",
+            "350:             vars.totalNetAssetsOut += totalAssetsOut[i];"
+          ]
+        },
+        {
+          "line_range": "354-356",
+          "code": [
+            "354:         vars.strategyBalance = _getTokenBalance(address(_asset), address(this));",
+            "355:         if (vars.strategyBalance < vars.totalNetAssetsOut) {",
+            "356:             revert INSUFFICIENT_LIQUIDITY();"
+          ]
+        },
+        {
+          "line_range": "360",
+          "code": [
+            "360:         ISuperVault(_vault).burnShares(vars.totalRequestedShares);"
+          ]
+        },
+        {
+          "line_range": "363-364",
+          "code": [
+            "363:         if (vars.totalNetAssetsOut > 0) {",
+            "364:             _asset.safeTransfer(ISuperVault(_vault).escrow(), vars.totalNetAssetsOut);"
+          ]
+        },
+        {
+          "line_range": "367",
+          "code": [
+            "367:         emit RedeemRequestsFulfilled(controllers, vars.totalRequestedShares, vars.currentPPS);"
+          ]
+        }
+      ]
+    },
+    "handleOperations4626Deposit": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 157,
+        "end": 195
+      },
+      "coverage_stats": {
+        "total_lines": 23,
+        "covered_lines": 22,
+        "uncovered_lines": 1,
+        "percentage": 95.65
+      },
+      "uncovered_code": [
+        {
+          "line_range": "166",
+          "code": [
+            "166:             revert OPERATIONS_BLOCKED_BY_VETO();"
+          ]
+        }
+      ]
+    },
+    "handleOperations4626Mint": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 198,
+        "end": 234
+      },
+      "coverage_stats": {
+        "total_lines": 18,
+        "covered_lines": 7,
+        "uncovered_lines": 11,
+        "percentage": 38.89
+      },
+      "uncovered_code": [
+        {
+          "line_range": "205",
+          "code": [
+            "205:     {"
+          ]
+        },
+        {
+          "line_range": "214",
+          "code": [
+            "214:             revert OPERATIONS_BLOCKED_BY_VETO();"
+          ]
+        },
+        {
+          "line_range": "219",
+          "code": [
+            "219:         uint256 feeBps = feeConfig.managementFeeBps;"
+          ]
+        },
+        {
+          "line_range": "221-227",
+          "code": [
+            "221:         if (feeBps != 0) {",
+            "222:             uint256 feeAssets = assetsGross - assetsNet;",
+            "223:             if (feeAssets != 0) {",
+            "224:                 address recipient = feeConfig.recipient;",
+            "225:                 if (recipient == address(0)) revert ZERO_ADDRESS();",
+            "226:                 _safeTokenTransfer(address(_asset), recipient, feeAssets);",
+            "227:                 emit ManagementFeePaid(controller, recipient, feeAssets, feeBps);"
+          ]
+        },
+        {
+          "line_range": "233",
+          "code": [
+            "233:         emit DepositHandled(controller, assetsNet, sharesNet);"
+          ]
+        }
+      ]
+    },
+    "handleOperations7540": {
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 251,
+        "end": 267
+      },
+      "coverage_stats": {
+        "total_lines": 13,
+        "covered_lines": 11,
+        "uncovered_lines": 2,
+        "percentage": 84.62
+      },
+      "uncovered_code": [
+        {
+          "line_range": "261",
+          "code": [
+            "261:             _handleClaimRedeem(controller, receiver, amount); // amount = assets"
+          ]
+        },
+        {
+          "line_range": "265",
+          "code": [
+            "265:             revert ACTION_TYPE_DISALLOWED();"
+          ]
+        }
+      ]
+    },
+    "addSecondaryManager": {
+      "contract": "UnsafeSuperVaultAggregator",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/test/recon/helpers/UnsafeSuperVaultAggregator.sol",
+      "function_range": {
+        "start": 470,
+        "end": 488
+      },
+      "coverage_stats": {
+        "total_lines": 8,
+        "covered_lines": 7,
+        "uncovered_lines": 1,
+        "percentage": 87.5
+      },
+      "uncovered_code": [
+        {
+          "line_range": "481",
+          "code": [
+            "481:             revert TOO_MANY_SECONDARY_MANAGERS();"
+          ]
+        }
+      ]
+    },
+    "cancelChangePrimaryManager": {
+      "contract": "UnsafeSuperVaultAggregator",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/test/recon/helpers/UnsafeSuperVaultAggregator.sol",
+      "function_range": {
+        "start": 633,
+        "end": 652
+      },
+      "coverage_stats": {
+        "total_lines": 10,
+        "covered_lines": 5,
+        "uncovered_lines": 5,
+        "percentage": 50.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "644",
+          "code": [
+            "644:         address cancelledManager = _strategyData[strategy].proposedManager;"
+          ]
+        },
+        {
+          "line_range": "647-649",
+          "code": [
+            "647:         _strategyData[strategy].proposedManager = address(0);",
+            "648:         _strategyData[strategy].proposedFeeRecipient = address(0);",
+            "649:         _strategyData[strategy].managerChangeEffectiveTime = 0;"
+          ]
+        },
+        {
+          "line_range": "651",
+          "code": [
+            "651:         emit PrimaryManagerChangeCancelled(strategy, cancelledManager);"
+          ]
+        }
+      ]
+    },
+    "createVault": {
+      "contract": "UnsafeSuperVaultAggregator",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/test/recon/helpers/UnsafeSuperVaultAggregator.sol",
+      "function_range": {
+        "start": 137,
+        "end": 214
+      },
+      "coverage_stats": {
+        "total_lines": 38,
+        "covered_lines": 35,
+        "uncovered_lines": 3,
+        "percentage": 92.11
+      },
+      "uncovered_code": [
+        {
+          "line_range": "189",
+          "code": [
+            "189:             revert MAX_STALENESS_TOO_LOW();"
+          ]
+        },
+        {
+          "line_range": "202",
+          "code": [
+            "202:             _strategyData[strategy].secondaryManagers.add(params.secondaryManagers[i]);"
+          ]
+        },
+        {
+          "line_range": "205",
+          "code": [
+            "205:             revert TOO_MANY_SECONDARY_MANAGERS();"
+          ]
+        }
+      ]
+    },
+    "executeChangePrimaryManager": {
+      "contract": "UnsafeSuperVaultAggregator",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/test/recon/helpers/UnsafeSuperVaultAggregator.sol",
+      "function_range": {
+        "start": 655,
+        "end": 692
+      },
+      "coverage_stats": {
+        "total_lines": 20,
+        "covered_lines": 2,
+        "uncovered_lines": 18,
+        "percentage": 10.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "660",
+          "code": [
+            "660:         if (block.timestamp < _strategyData[strategy].managerChangeEffectiveTime) revert TIMELOCK_NOT_EXPIRED();"
+          ]
+        },
+        {
+          "line_range": "662-663",
+          "code": [
+            "662:         address newManager = _strategyData[strategy].proposedManager;",
+            "663:         address oldManager = _strategyData[strategy].mainManager;"
+          ]
+        },
+        {
+          "line_range": "666",
+          "code": [
+            "666:         _strategyData[strategy].secondaryManagers.clear();"
+          ]
+        },
+        {
+          "line_range": "669-671",
+          "code": [
+            "669:         if (pendingUpkeepWithdrawals[strategy].effectiveTime != 0) {",
+            "670:             delete pendingUpkeepWithdrawals[strategy];",
+            "671:             emit UpkeepWithdrawalCancelled(strategy);"
+          ]
+        },
+        {
+          "line_range": "674-677",
+          "code": [
+            "674:         _strategyData[strategy].proposedHooksRoot = bytes32(0);",
+            "675:         _strategyData[strategy].hooksRootEffectiveTime = 0;",
+            "676:         _strategyData[strategy].proposedMinUpdateInterval = 0;",
+            "677:         _strategyData[strategy].minUpdateIntervalEffectiveTime = 0;"
+          ]
+        },
+        {
+          "line_range": "680",
+          "code": [
+            "680:         _strategyData[strategy].mainManager = newManager;"
+          ]
+        },
+        {
+          "line_range": "683-684",
+          "code": [
+            "683:         address feeRecipient = _strategyData[strategy].proposedFeeRecipient;",
+            "684:         ISuperVaultStrategy(strategy).changeFeeRecipient(feeRecipient);"
+          ]
+        },
+        {
+          "line_range": "687-689",
+          "code": [
+            "687:         _strategyData[strategy].proposedManager = address(0);",
+            "688:         _strategyData[strategy].proposedFeeRecipient = address(0);",
+            "689:         _strategyData[strategy].managerChangeEffectiveTime = 0;"
+          ]
+        },
+        {
+          "line_range": "691",
+          "code": [
+            "691:         emit PrimaryManagerChanged(strategy, oldManager, newManager, feeRecipient);"
+          ]
+        }
+      ]
+    },
+    "proposeChangePrimaryManager": {
+      "contract": "UnsafeSuperVaultAggregator",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/test/recon/helpers/UnsafeSuperVaultAggregator.sol",
+      "function_range": {
+        "start": 606,
+        "end": 630
+      },
+      "coverage_stats": {
+        "total_lines": 10,
+        "covered_lines": 4,
+        "uncovered_lines": 6,
+        "percentage": 40.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "619",
+          "code": [
+            "619:         if (newManager == address(0)) revert ZERO_ADDRESS();"
+          ]
+        },
+        {
+          "line_range": "622",
+          "code": [
+            "622:         uint256 effectiveTime = block.timestamp + _MANAGER_CHANGE_TIMELOCK;"
+          ]
+        },
+        {
+          "line_range": "625-627",
+          "code": [
+            "625:         _strategyData[strategy].proposedManager = newManager;",
+            "626:         _strategyData[strategy].proposedFeeRecipient = feeRecipient;",
+            "627:         _strategyData[strategy].managerChangeEffectiveTime = effectiveTime;"
+          ]
+        },
+        {
+          "line_range": "629",
+          "code": [
+            "629:         emit PrimaryManagerChangeProposed(strategy, msg.sender, newManager, feeRecipient, effectiveTime);"
+          ]
+        }
+      ]
+    },
+    "removeSecondaryManager": {
+      "contract": "UnsafeSuperVaultAggregator",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform_Fresh/v2-periphery/test/recon/helpers/UnsafeSuperVaultAggregator.sol",
+      "function_range": {
+        "start": 491,
+        "end": 499
+      },
+      "coverage_stats": {
+        "total_lines": 4,
+        "covered_lines": 3,
+        "uncovered_lines": 1,
+        "percentage": 75.0
+      },
+      "uncovered_code": [
+        {
+          "line_range": "498",
+          "code": [
+            "498:         emit SecondaryManagerRemoved(strategy, manager);"
+          ]
+        }
+      ]
+    }
+  },
+  "summary": {
+    "functions_analyzed": 97,
+    "functions_with_missing_coverage": 24,
+    "full_coverage": false
+  }
+}
