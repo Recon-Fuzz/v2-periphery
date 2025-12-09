@@ -1,0 +1,48 @@
+# Function: erc7540_4_redeem(address,uint256)
+
+**Contract**: [test/recon/CryticToFoundry.sol/contract_CryticToFoundry.md]
+
+## Metadata
+
+- **Contract**: CryticToFoundry
+- **Signature**: `erc7540_4_redeem(address,uint256)`
+- **Visibility**: public
+- **Source Range**: 6985:732:10
+- **Inherited From**: ERC7540Properties
+
+## Implementation
+
+```solidity
+function erc7540_4_redeem(address erc7540Target, uint256 amt) virtual public returns (bool) {
+    if (amt == 0) {
+        return true;
+    }
+    uint256 maxDep = IERC7540Like(erc7540Target).maxRedeem(actor);
+    uint256 sum = maxDep + amt;
+    if (sum == 0) {
+        return true;
+    }
+    try IERC7540Like(erc7540Target).redeem(maxDep + amt, actor, actor) {
+        return false;
+    } catch {
+        return true;
+    }
+}
+```
+
+## External Calls
+
+- **IERC7540Like::maxRedeem(address)**
+- **IERC7540Like::redeem(uint256,address,address)**
+
+## State Variable Reads
+
+- **actor** (`address`)
+
+## Call Tree
+
+```
+┌─ [0] ⚙️ FUNCTION: ERC7540Properties.erc7540_4_redeem(address,uint256) (NodeID: 0)
+    💬 Args: [no args]
+    👁️  Def: public
+```

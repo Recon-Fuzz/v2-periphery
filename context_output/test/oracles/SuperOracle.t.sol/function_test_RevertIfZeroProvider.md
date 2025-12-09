@@ -1,0 +1,47 @@
+# Function: test_RevertIfZeroProvider()
+
+**Contract**: [test/oracles/SuperOracle.t.sol/contract_SuperOracleTest.md]
+
+## Metadata
+
+- **Contract**: SuperOracleTest
+- **Signature**: `test_RevertIfZeroProvider()`
+- **Visibility**: public
+- **Source Range**: 19658:610:624
+
+## Implementation
+
+```solidity
+function test_RevertIfZeroProvider() public {
+    address[] memory bases = new address[](1);
+    bases[0] = address(mockBTC);
+    address[] memory quotes = new address[](1);
+    quotes[0] = address(mockUSD);
+    bytes32[] memory providers = new bytes32[](1);
+    providers[0] = bytes32(0);
+    address[] memory feeds = new address[](1);
+    feeds[0] = address(mockFeed4);
+    vm.expectRevert(ISuperOracle.ZERO_PROVIDER.selector);
+    superOracle.queueOracleUpdate(bases, quotes, providers, feeds);
+}
+```
+
+## External Calls
+
+- **Vm::expectRevert(bytes4)**
+- **SuperOracle::queueOracleUpdate(address[],address[],bytes32[],address[])**
+
+## State Variable Reads
+
+- **mockBTC** (`contract MockERC20`) [test/mocks/MockERC20.sol/contract_MockERC20.md]
+- **mockUSD** (`contract MockERC20`) [test/mocks/MockERC20.sol/contract_MockERC20.md]
+- **mockFeed4** (`contract MockAggregator`) [test/mocks/MockAggregator.sol/contract_MockAggregator.md]
+- **superOracle** (`contract SuperOracle`) [src/oracles/SuperOracle.sol/contract_SuperOracle.md]
+
+## Call Tree
+
+```
+┌─ [0] ⚙️ FUNCTION: SuperOracleTest.test_RevertIfZeroProvider() (NodeID: 0)
+    💬 Args: [no args]
+    👁️  Def: public
+```

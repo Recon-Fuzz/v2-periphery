@@ -1,0 +1,94 @@
+# Function: test_CalculateIncentive_SmallChange()
+
+**Contract**: [test/draft/test/integration/SuperAsset/IncentiveCalculationContract.t.sol/contract_IncentiveCalculationContractTest.md]
+
+## Metadata
+
+- **Contract**: IncentiveCalculationContractTest
+- **Signature**: `test_CalculateIncentive_SmallChange()`
+- **Visibility**: public
+- **Source Range**: 13068:1640:564
+
+## Implementation
+
+```solidity
+function test_CalculateIncentive_SmallChange() public view {
+    uint256[] memory allocationPreOperation = new uint256[](2);
+    allocationPreOperation[0] = 501e18;
+    allocationPreOperation[1] = 499e18;
+    uint256[] memory allocationPostOperation = new uint256[](2);
+    allocationPostOperation[0] = 500e18;
+    allocationPostOperation[1] = 500e18;
+    uint256[] memory allocationTarget = new uint256[](2);
+    allocationTarget[0] = 500e18;
+    allocationTarget[1] = 500e18;
+    uint256[] memory weights = new uint256[](2);
+    weights[0] = PRECISION;
+    weights[1] = PRECISION;
+    uint256 totalAllocationPreOperation = 1000e18;
+    uint256 totalAllocationPostOperation = 1000e18;
+    uint256 totalAllocationTarget = 1000e18;
+    uint256 energyToUSDExchangeRatio = PRECISION;
+    (int256 incentive, bool isSuccess) = calculator.calculateIncentive(allocationPreOperation, allocationPostOperation, allocationTarget, weights, totalAllocationPreOperation, totalAllocationPostOperation, totalAllocationTarget, energyToUSDExchangeRatio);
+    assertEq(isSuccess, true, "isSuccess should be true");
+    assertTrue(incentive > 0);
+    assertTrue(incentive < int256(PRECISION));
+}
+```
+
+## Related Implementations
+
+### assertEq(bool,bool,string)
+
+- **Kind**: internal
+- **Source**: 2487:171:12
+- **Link**: `lib/forge-std/src/StdAssertions.sol:StdAssertions:assertEq(bool,bool,string)`
+
+```solidity
+function assertEq(bool left, bool right, string memory err) virtual internal pure {
+    if (left != right) {
+        vm.assertEq(left, right, err);
+    }
+}
+```
+
+### assertTrue(bool)
+
+- **Kind**: internal
+- **Source**: 1764:124:12
+- **Link**: `lib/forge-std/src/StdAssertions.sol:StdAssertions:assertTrue(bool)`
+
+```solidity
+function assertTrue(bool data) virtual internal pure {
+    if (!data) {
+        vm.assertTrue(data);
+    }
+}
+```
+
+## External Calls
+
+- **IncentiveCalculationContract::calculateIncentive(uint256[],uint256[],uint256[],uint256[],uint256,uint256,uint256,uint256)**
+
+## State Variable Reads
+
+- **PRECISION** (`uint256`)
+- **calculator** (`contract IncentiveCalculationContract`) [test/draft/src/SuperAsset/IncentiveCalculationContract.sol/contract_IncentiveCalculationContract.md]
+- **vm** (`contract Vm`) [lib/forge-std/src/Vm.sol/interface_Vm.md]
+
+## Call Tree
+
+```
+┌─ [0] ⚙️ FUNCTION: IncentiveCalculationContractTest.test_CalculateIncentive_SmallChange() (NodeID: 0)
+    💬 Args: [no args]
+    👁️  Def: public
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(bool,bool,string) (NodeID: 1)
+  │   💬 Args: [isSuccess, true, "isSuccess should be true"]
+  │   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertTrue(bool) (NodeID: 2)
+  │   💬 Args: [incentive > 0]
+  │   👁️  Def: internal
+  └─ [1] ⚙️ FUNCTION: StdAssertions.assertTrue(bool) (NodeID: 3)
+      💬 Args: [incentive < int256(PRECISION)]
+      👁️  Def: internal
+```

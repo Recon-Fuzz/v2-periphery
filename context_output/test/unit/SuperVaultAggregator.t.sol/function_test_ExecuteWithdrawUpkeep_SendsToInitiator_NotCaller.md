@@ -1,0 +1,90 @@
+# Function: test_ExecuteWithdrawUpkeep_SendsToInitiator_NotCaller()
+
+**Contract**: [test/unit/SuperVaultAggregator.t.sol/contract_SuperVaultAggregatorTest.md]
+
+## Metadata
+
+- **Contract**: SuperVaultAggregatorTest
+- **Signature**: `test_ExecuteWithdrawUpkeep_SendsToInitiator_NotCaller()`
+- **Visibility**: public
+- **Source Range**: 176495:1181:661
+
+## Implementation
+
+```solidity
+/// @notice Tests that funds go to initiator, not executor
+function test_ExecuteWithdrawUpkeep_SendsToInitiator_NotCaller() public {
+    uint256 upkeepAmount = 1000e18;
+    address executor = address(0xEEEE);
+    MockUp(upToken).mint(manager, upkeepAmount);
+    vm.startPrank(manager);
+    IERC20(upToken).approve(address(superVaultAggregator), upkeepAmount);
+    superVaultAggregator.depositUpkeep(strategy, upkeepAmount);
+    superVaultAggregator.proposeWithdrawUpkeep(strategy);
+    vm.stopPrank();
+    vm.warp((block.timestamp + 24 hours) + 1);
+    uint256 managerBalBefore = IERC20(upToken).balanceOf(manager);
+    uint256 executorBalBefore = IERC20(upToken).balanceOf(executor);
+    vm.prank(executor);
+    superVaultAggregator.executeWithdrawUpkeep(strategy);
+    assertEq(IERC20(upToken).balanceOf(manager), managerBalBefore + upkeepAmount, "Manager should receive funds");
+    assertEq(IERC20(upToken).balanceOf(executor), executorBalBefore, "Executor should not receive funds");
+}
+```
+
+## Related Implementations
+
+### assertEq(uint256,uint256,string)
+
+- **Kind**: internal
+- **Source**: 2823:177:12
+- **Link**: `lib/forge-std/src/StdAssertions.sol:StdAssertions:assertEq(uint256,uint256,string)`
+
+```solidity
+function assertEq(uint256 left, uint256 right, string memory err) virtual internal pure {
+    if (left != right) {
+        vm.assertEq(left, right, err);
+    }
+}
+```
+
+## External Calls
+
+- **MockUp::mint(address,uint256)**
+- **Vm::startPrank(address)**
+- **IERC20::approve(address,uint256)**
+- **SuperVaultAggregator::depositUpkeep(address,uint256)**
+- **SuperVaultAggregator::proposeWithdrawUpkeep(address)**
+- **Vm::stopPrank()**
+- **Vm::warp(uint256)**
+- **IERC20::balanceOf(address)**
+- **Vm::prank(address)**
+- **SuperVaultAggregator::executeWithdrawUpkeep(address)**
+
+## State Variable Reads
+
+- **upToken** (`address`)
+- **manager** (`address`)
+- **superVaultAggregator** (`contract SuperVaultAggregator`) [src/SuperVault/SuperVaultAggregator.sol/contract_SuperVaultAggregator.md]
+- **strategy** (`address`)
+- **vm** (`contract Vm`) [lib/forge-std/src/Vm.sol/interface_Vm.md]
+
+## Call Tree
+
+```
+┌─ [0] ⚙️ FUNCTION: SuperVaultAggregatorTest.test_ExecuteWithdrawUpkeep_SendsToInitiator_NotCaller() (NodeID: 0)
+    💬 Args: [no args]
+    👁️  Def: public
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(uint256,uint256,string) (NodeID: 1)
+  │   💬 Args: [IERC20(upToken).balanceOf(manager), managerBalBefore + upkeepAmount, "Manager should receive funds"]
+  │   👁️  Def: internal
+  └─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(uint256,uint256,string) (NodeID: 2)
+      💬 Args: [IERC20(upToken).balanceOf(executor), executorBalBefore, "Executor should not receive funds"]
+      👁️  Def: internal
+```
+
+## Documentation
+
+### Function Documentation
+
+@notice Tests that funds go to initiator, not executor

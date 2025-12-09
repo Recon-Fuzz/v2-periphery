@@ -1,0 +1,4676 @@
+# Function: test_Deposit5115_AndAllocateToYieldViaSmartAccountManager()
+
+**Contract**: [test/integration/SuperVault/SuperVault5115Tests.t.sol/contract_SuperVault5115Tests.md]
+
+## Metadata
+
+- **Contract**: SuperVault5115Tests
+- **Signature**: `test_Deposit5115_AndAllocateToYieldViaSmartAccountManager()`
+- **Visibility**: public
+- **Source Range**: 7311:2060:581
+
+## Implementation
+
+```solidity
+function test_Deposit5115_AndAllocateToYieldViaSmartAccountManager() public {
+    uint256 depositAmount = 1000e6;
+    vm.selectFork(FORKS[ETH]);
+    AccountInstance memory managerAccount = accInstances[1];
+    _getTokens(address(asset5115), managerAccount.account, 1 ether);
+    (address newVaultAddr, address newStrategyAddr, ) = _deployVaultWithSmartAccountManager(managerAccount.account, address(asset5115), "SA-5115", "SA-5115");
+    string memory _name = SuperVault(newVaultAddr).name();
+    assertEq(_name, "SA-5115");
+    string memory _symbol = SuperVault(newVaultAddr).symbol();
+    assertEq(_symbol, "SA-5115");
+    SuperVault newVault = SuperVault(newVaultAddr);
+    SuperVaultStrategy newStrategy = SuperVaultStrategy(payable(newStrategyAddr));
+    _manageYieldSourcesViaSmartAccount(managerAccount, newStrategy);
+    _deposit(depositAmount, newVaultAddr, address(asset5115));
+    uint256 userShares = newVault.balanceOf(accountEth);
+    assertGt(userShares, 0, "No shares minted to user");
+    assertEq(asset5115.balanceOf(address(newStrategy)), depositAmount, "Wrong strategy balance");
+    _depositFreeAssetsFromSingleAmountViaSmartAccount5115(depositAmount, pendleEthenaAddress, managerAccount, newStrategy);
+    assertGt(pendleEthena.balanceOf(address(newStrategy)), 0, "No shares allocated");
+    assertEq(asset5115.balanceOf(address(newStrategy)), 0, "Strategy should have no free assets after allocation");
+}
+```
+
+## Related Implementations
+
+### _getTokens(address,address,uint256)
+
+- **Kind**: internal
+- **Source**: 3137:118:500
+- **Link**: `lib/v2-core/test/utils/Helpers.sol:Helpers:_getTokens(address,address,uint256)`
+
+```solidity
+function _getTokens(address token_, address to_, uint256 amount_) internal {
+    deal(token_, to_, amount_);
+}
+```
+
+### deal(address,address,uint256)
+
+- **Kind**: internal
+- **Source**: 27270:117:14
+- **Link**: `lib/forge-std/src/StdCheats.sol:StdCheats:deal(address,address,uint256)`
+
+```solidity
+function deal(address token, address to, uint256 give) virtual internal {
+    deal(token, to, give, false);
+}
+```
+
+### deal(address,address,uint256,bool)
+
+- **Kind**: internal
+- **Source**: 27666:837:14
+- **Link**: `lib/forge-std/src/StdCheats.sol:StdCheats:deal(address,address,uint256,bool)`
+
+```solidity
+function deal(address token, address to, uint256 give, bool adjust) virtual internal {
+    (, bytes memory balData) = token.staticcall(abi.encodeWithSelector(0x70a08231, to));
+    uint256 prevBal = abi.decode(balData, (uint256));
+    stdstore.target(token).sig(0x70a08231).with_key(to).checked_write(give);
+    if (adjust) {
+        (, bytes memory totSupData) = token.staticcall(abi.encodeWithSelector(0x18160ddd));
+        uint256 totSup = abi.decode(totSupData, (uint256));
+        if (give < prevBal) {
+            totSup -= (prevBal - give);
+        } else {
+            totSup += (give - prevBal);
+        }
+        stdstore.target(token).sig(0x18160ddd).checked_write(totSup);
+    }
+}
+```
+
+### target(struct StdStorage,address)
+
+- **Kind**: internal
+- **Source**: 13254:156:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:target(struct StdStorage,address)`
+
+```solidity
+function target(StdStorage storage self, address _target) internal returns (StdStorage storage) {
+    return stdStorageSafe.target(self, _target);
+}
+```
+
+### target(struct StdStorage,address)
+
+- **Kind**: internal
+- **Source**: 6743:156:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:target(struct StdStorage,address)`
+
+```solidity
+function target(StdStorage storage self, address _target) internal returns (StdStorage storage) {
+    self._target = _target;
+    return self;
+}
+```
+
+### sig(struct StdStorage,bytes4)
+
+- **Kind**: internal
+- **Source**: 13416:143:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:sig(struct StdStorage,bytes4)`
+
+```solidity
+function sig(StdStorage storage self, bytes4 _sig) internal returns (StdStorage storage) {
+    return stdStorageSafe.sig(self, _sig);
+}
+```
+
+### sig(struct StdStorage,bytes4)
+
+- **Kind**: internal
+- **Source**: 6905:143:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:sig(struct StdStorage,bytes4)`
+
+```solidity
+function sig(StdStorage storage self, bytes4 _sig) internal returns (StdStorage storage) {
+    self._sig = _sig;
+    return self;
+}
+```
+
+### with_key(struct StdStorage,address)
+
+- **Kind**: internal
+- **Source**: 13721:152:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:with_key(struct StdStorage,address)`
+
+```solidity
+function with_key(StdStorage storage self, address who) internal returns (StdStorage storage) {
+    return stdStorageSafe.with_key(self, who);
+}
+```
+
+### with_key(struct StdStorage,address)
+
+- **Kind**: internal
+- **Source**: 7396:179:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:with_key(struct StdStorage,address)`
+
+```solidity
+function with_key(StdStorage storage self, address who) internal returns (StdStorage storage) {
+    self._keys.push(bytes32(uint256(uint160(who))));
+    return self;
+}
+```
+
+### checked_write(struct StdStorage,uint256)
+
+- **Kind**: internal
+- **Source**: 14942:120:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:checked_write(struct StdStorage,uint256)`
+
+```solidity
+function checked_write(StdStorage storage self, uint256 amt) internal {
+    checked_write(self, bytes32(amt));
+}
+```
+
+### checked_write(struct StdStorage,bytes32)
+
+- **Kind**: internal
+- **Source**: 15434:1484:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:checked_write(struct StdStorage,bytes32)`
+
+```solidity
+function checked_write(StdStorage storage self, bytes32 set) internal {
+    address who = self._target;
+    bytes4 fsig = self._sig;
+    uint256 field_depth = self._depth;
+    bytes memory params = stdStorageSafe.getCallParams(self);
+    if (!self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))].found) {
+        find(self, false);
+    }
+    FindData storage data = self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))];
+    if ((data.offsetLeft + data.offsetRight) > 0) {
+        uint256 maxVal = 2 ** (256 - (data.offsetLeft + data.offsetRight));
+        require(uint256(set) < maxVal, string(abi.encodePacked("stdStorage find(StdStorage): Packed slot. We can't fit value greater than ", vm.toString(maxVal))));
+    }
+    bytes32 curVal = vm.load(who, bytes32(data.slot));
+    bytes32 valToSet = stdStorageSafe.getUpdatedSlotValue(curVal, uint256(set), data.offsetLeft, data.offsetRight);
+    vm.store(who, bytes32(data.slot), valToSet);
+    (bool success, bytes32 callResult) = stdStorageSafe.callTarget(self);
+    if ((!success) || (callResult != set)) {
+        vm.store(who, bytes32(data.slot), curVal);
+        revert("stdStorage find(StdStorage): Failed to write value.");
+    }
+    clear(self);
+}
+```
+
+### getCallParams(struct StdStorage)
+
+- **Kind**: internal
+- **Source**: 953:236:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:getCallParams(struct StdStorage)`
+
+```solidity
+function getCallParams(StdStorage storage self) internal view returns (bytes memory) {
+    if (self._calldata.length == 0) {
+        return flatten(self._keys);
+    } else {
+        return self._calldata;
+    }
+}
+```
+
+### flatten(bytes32[])
+
+- **Kind**: internal
+- **Source**: 11182:393:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:flatten(bytes32[])`
+
+```solidity
+function flatten(bytes32[] memory b) private pure returns (bytes memory) {
+    bytes memory result = new bytes(b.length * 32);
+    for (uint256 i = 0; i < b.length; i++) {
+        bytes32 k = b[i];
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(add(result, add(32, mul(32, i))), k)
+        }
+    }
+    return result;
+}
+```
+
+### find(struct StdStorage,bool)
+
+- **Kind**: internal
+- **Source**: 13107:141:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:find(struct StdStorage,bool)`
+
+```solidity
+function find(StdStorage storage self, bool _clear) internal returns (uint256) {
+    return stdStorageSafe.find(self, _clear).slot;
+}
+```
+
+### find(struct StdStorage,bool)
+
+- **Kind**: internal
+- **Source**: 4245:2492:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:find(struct StdStorage,bool)`
+
+```solidity
+/// @notice find an arbitrary storage slot given a function sig, input data, address of the contract and a value to check against
+function find(StdStorage storage self, bool _clear) internal returns (FindData storage) {
+    address who = self._target;
+    bytes4 fsig = self._sig;
+    uint256 field_depth = self._depth;
+    bytes memory params = getCallParams(self);
+    if (self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))].found) {
+        if (_clear) {
+            clear(self);
+        }
+        return self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))];
+    }
+    vm.record();
+    (, bytes32 callResult) = callTarget(self);
+    (bytes32[] memory reads, ) = vm.accesses(address(who));
+    if (reads.length == 0) {
+        revert("stdStorage find(StdStorage): No storage use detected for target.");
+    } else {
+        for (uint256 i = reads.length; (--i) >= 0; ) {
+            bytes32 prev = vm.load(who, reads[i]);
+            if (prev == bytes32(0)) {
+                emit WARNING_UninitedSlot(who, uint256(reads[i]));
+            }
+            if (!checkSlotMutatesCall(self, reads[i])) {
+                continue;
+            }
+            (uint256 offsetLeft, uint256 offsetRight) = (0, 0);
+            if (self._enable_packed_slots) {
+                bool found;
+                (found, offsetLeft, offsetRight) = findOffsets(self, reads[i]);
+                if (!found) {
+                    continue;
+                }
+            }
+            uint256 curVal = (uint256(prev) & getMaskByOffsets(offsetLeft, offsetRight)) >> offsetRight;
+            if (uint256(callResult) != curVal) {
+                continue;
+            }
+            emit SlotFound(who, fsig, keccak256(abi.encodePacked(params, field_depth)), uint256(reads[i]));
+            self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))] = FindData(uint256(reads[i]), offsetLeft, offsetRight, true);
+            break;
+        }
+    }
+    require(self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))].found, "stdStorage find(StdStorage): Slot(s) not found.");
+    if (_clear) {
+        clear(self);
+    }
+    return self.finds[who][fsig][keccak256(abi.encodePacked(params, field_depth))];
+}
+```
+
+### clear(struct StdStorage)
+
+- **Kind**: internal
+- **Source**: 11581:239:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:clear(struct StdStorage)`
+
+```solidity
+function clear(StdStorage storage self) internal {
+    delete self._target;
+    delete self._sig;
+    delete self._keys;
+    delete self._depth;
+    delete self._enable_packed_slots;
+    delete self._calldata;
+}
+```
+
+### callTarget(struct StdStorage)
+
+- **Kind**: internal
+- **Source**: 1251:339:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:callTarget(struct StdStorage)`
+
+```solidity
+function callTarget(StdStorage storage self) internal view returns (bool, bytes32) {
+    bytes memory cd = abi.encodePacked(self._sig, getCallParams(self));
+    (bool success, bytes memory rdat) = self._target.staticcall(cd);
+    bytes32 result = bytesToBytes32(rdat, 32 * self._depth);
+    return (success, result);
+}
+```
+
+### bytesToBytes32(bytes,uint256)
+
+- **Kind**: internal
+- **Source**: 10872:304:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:bytesToBytes32(bytes,uint256)`
+
+```solidity
+function bytesToBytes32(bytes memory b, uint256 offset) private pure returns (bytes32) {
+    bytes32 out;
+    uint256 max = (b.length > 32) ? 32 : b.length;
+    for (uint256 i = 0; i < max; i++) {
+        out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
+    }
+    return out;
+}
+```
+
+### checkSlotMutatesCall(struct StdStorage,bytes32)
+
+- **Kind**: internal
+- **Source**: 1847:546:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:checkSlotMutatesCall(struct StdStorage,bytes32)`
+
+```solidity
+function checkSlotMutatesCall(StdStorage storage self, bytes32 slot) internal returns (bool) {
+    bytes32 prevSlotValue = vm.load(self._target, slot);
+    (bool success, bytes32 prevReturnValue) = callTarget(self);
+    bytes32 testVal = (prevReturnValue == bytes32(0)) ? bytes32(UINT256_MAX) : bytes32(0);
+    vm.store(self._target, slot, testVal);
+    (, bytes32 newReturnValue) = callTarget(self);
+    vm.store(self._target, slot, prevSlotValue);
+    return (success && (prevReturnValue != newReturnValue));
+}
+```
+
+### findOffsets(struct StdStorage,bytes32)
+
+- **Kind**: internal
+- **Source**: 3076:534:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:findOffsets(struct StdStorage,bytes32)`
+
+```solidity
+function findOffsets(StdStorage storage self, bytes32 slot) internal returns (bool, uint256, uint256) {
+    bytes32 prevSlotValue = vm.load(self._target, slot);
+    (bool foundLeft, uint256 offsetLeft) = findOffset(self, slot, true);
+    (bool foundRight, uint256 offsetRight) = findOffset(self, slot, false);
+    vm.store(self._target, slot, prevSlotValue);
+    return (foundLeft && foundRight, offsetLeft, offsetRight);
+}
+```
+
+### findOffset(struct StdStorage,bytes32,bool)
+
+- **Kind**: internal
+- **Source**: 2556:514:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:findOffset(struct StdStorage,bytes32,bool)`
+
+```solidity
+function findOffset(StdStorage storage self, bytes32 slot, bool left) internal returns (bool, uint256) {
+    for (uint256 offset = 0; offset < 256; offset++) {
+        uint256 valueToPut = left ? (1 << (255 - offset)) : (1 << offset);
+        vm.store(self._target, slot, bytes32(valueToPut));
+        (bool success, bytes32 data) = callTarget(self);
+        if (success && (uint256(data) > 0)) {
+            return (true, offset);
+        }
+    }
+    return (false, 0);
+}
+```
+
+### getMaskByOffsets(uint256,uint256)
+
+- **Kind**: internal
+- **Source**: 12013:376:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:getMaskByOffsets(uint256,uint256)`
+
+```solidity
+function getMaskByOffsets(uint256 offsetLeft, uint256 offsetRight) internal pure returns (uint256 mask) {
+    assembly {
+        mask := shl(offsetRight, sub(shl(sub(256, add(offsetRight, offsetLeft)), 1), 1))
+    }
+}
+```
+
+### getUpdatedSlotValue(bytes32,uint256,uint256,uint256)
+
+- **Kind**: internal
+- **Source**: 12451:300:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorageSafe:getUpdatedSlotValue(bytes32,uint256,uint256,uint256)`
+
+```solidity
+function getUpdatedSlotValue(bytes32 curValue, uint256 varValue, uint256 offsetLeft, uint256 offsetRight) internal pure returns (bytes32 newValue) {
+    return bytes32((uint256(curValue) & (~getMaskByOffsets(offsetLeft, offsetRight))) | (varValue << offsetRight));
+}
+```
+
+### clear(struct StdStorage)
+
+- **Kind**: internal
+- **Source**: 14700:92:20
+- **Link**: `lib/forge-std/src/StdStorage.sol:stdStorage:clear(struct StdStorage)`
+
+```solidity
+function clear(StdStorage storage self) internal {
+    stdStorageSafe.clear(self);
+}
+```
+
+### _deployVaultWithSmartAccountManager(address,address,string,string)
+
+- **Kind**: internal
+- **Source**: 18511:1294:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:_deployVaultWithSmartAccountManager(address,address,string,string)`
+
+```solidity
+function _deployVaultWithSmartAccountManager(address smartAccountManager, address svAsset, string memory name, string memory symbol) internal returns (address vaultAddr, address strategyAddr, address escrowAddr) {
+    vm.startPrank(SV_MANAGER);
+    (vaultAddr, strategyAddr, escrowAddr) = aggregator.createVault(ISuperVaultAggregator.VaultCreationParams({asset: svAsset, name: name, symbol: symbol, mainManager: smartAccountManager, secondaryManagers: new address[](0), minUpdateInterval: 5, maxStaleness: 300, feeConfig: ISuperVaultStrategy.FeeConfig({performanceFeeBps: 1000, managementFeeBps: 0, recipient: address(this)})}));
+    vm.label(vaultAddr, "SuperVault SA");
+    vm.label(strategyAddr, "SuperVaultStrategy SA");
+    vm.label(escrowAddr, "SuperVaultEscrow SA");
+    vm.stopPrank();
+    return (vaultAddr, strategyAddr, escrowAddr);
+}
+```
+
+### assertEq(string,string)
+
+- **Kind**: internal
+- **Source**: 5050:122:12
+- **Link**: `lib/forge-std/src/StdAssertions.sol:StdAssertions:assertEq(string,string)`
+
+```solidity
+function assertEq(string memory left, string memory right) virtual internal pure {
+    vm.assertEq(left, right);
+}
+```
+
+### _manageYieldSourcesViaSmartAccount(struct AccountInstance,contract SuperVaultStrategy)
+
+- **Kind**: internal
+- **Source**: 21855:1972:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:_manageYieldSourcesViaSmartAccount(struct AccountInstance,contract SuperVaultStrategy)`
+
+```solidity
+///  @notice Helper function to manage yield sources via smart account manager
+///  @param managerAccount The smart account that will execute the management calls
+///  @param targetStrategy The strategy to manage yield sources for
+function _manageYieldSourcesViaSmartAccount(AccountInstance memory managerAccount, SuperVaultStrategy targetStrategy) internal {
+    address[] memory sources = new address[](3);
+    sources[0] = address(fluidVault);
+    sources[1] = address(aaveVault);
+    sources[2] = address(pendleEthenaAddress);
+    address[] memory oracles = new address[](3);
+    oracles[0] = _getContract(ETH, ERC4626_YIELD_SOURCE_ORACLE_KEY);
+    oracles[1] = _getContract(ETH, ERC4626_YIELD_SOURCE_ORACLE_KEY);
+    oracles[2] = _getContract(ETH, ERC5115_YIELD_SOURCE_ORACLE_KEY);
+    ISuperVaultStrategy.YieldSourceAction[] memory actionTypes = new ISuperVaultStrategy.YieldSourceAction[](3);
+    actionTypes[0] = ISuperVaultStrategy.YieldSourceAction.Add;
+    actionTypes[1] = ISuperVaultStrategy.YieldSourceAction.Add;
+    actionTypes[2] = ISuperVaultStrategy.YieldSourceAction.Add;
+    SuperVaultManageYieldSourceHook.ManageYieldSourcesArgs memory args = SuperVaultManageYieldSourceHook.ManageYieldSourcesArgs({sources: sources, oracles: oracles, actionTypes: actionTypes});
+    address manageYieldSourceHook = address(new SuperVaultManageYieldSourceHook(address(targetStrategy)));
+    address[] memory hooksAddresses = new address[](1);
+    hooksAddresses[0] = manageYieldSourceHook;
+    bytes[] memory hooksData = new bytes[](1);
+    hooksData[0] = abi.encode(args);
+    ISuperExecutor.ExecutorEntry memory entry = ISuperExecutor.ExecutorEntry({hooksAddresses: hooksAddresses, hooksData: hooksData});
+    UserOpData memory userOpData = _getExecOps(managerAccount, superExecutorOnEth, abi.encode(entry));
+    executeOp(userOpData);
+}
+```
+
+### _getContract(uint64,string)
+
+- **Kind**: internal
+- **Source**: 20955:162:480
+- **Link**: `lib/v2-core/test/BaseTest.t.sol:BaseTest:_getContract(uint64,string)`
+
+```solidity
+function _getContract(uint64 chainId, string memory contractName) internal view returns (address) {
+    return contractAddresses[chainId][contractName];
+}
+```
+
+### _getExecOps(struct AccountInstance,contract ISuperExecutor,bytes)
+
+- **Kind**: internal
+- **Source**: 3424:376:501
+- **Link**: `lib/v2-core/test/utils/InternalHelpers.sol:InternalHelpers:_getExecOps(struct AccountInstance,contract ISuperExecutor,bytes)`
+
+```solidity
+function _getExecOps(AccountInstance memory instance, ISuperExecutor superExecutor, bytes memory data) internal returns (UserOpData memory userOpData) {
+    return instance.getExecOps(address(superExecutor), 0, abi.encodeCall(superExecutor.execute, (data)), address(instance.defaultValidator));
+}
+```
+
+### getExecOps(struct AccountInstance,address,uint256,bytes,address)
+
+- **Kind**: internal
+- **Source**: 4143:577:232
+- **Link**: `lib/v2-core/lib/modulekit/src/test/ModuleKitHelpers.sol:ModuleKitHelpers:getExecOps(struct AccountInstance,address,uint256,bytes,address)`
+
+```solidity
+/// @notice Configures a userOp to execute a single operation
+///  @param instance AccountInstance struct containing the account and accountHelper
+///  @param target The address of the contract to call
+///  @param value The amount of ether to send
+///  @param callData The data to send to the contract
+///  @param txValidator The address of the transaction validator
+///  @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
+function getExecOps(AccountInstance memory instance, address target, uint256 value, bytes memory callData, address txValidator) internal returns (UserOpData memory userOpData) {
+    bytes memory erc7579ExecCall = HelperBase(instance.accountHelper).encode(target, value, callData);
+    (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp(instance, erc7579ExecCall, txValidator);
+    userOpData.entrypoint = instance.aux.entrypoint;
+}
+```
+
+### executeOp(struct UserOpData)
+
+- **Kind**: internal
+- **Source**: 2902:141:501
+- **Link**: `lib/v2-core/test/utils/InternalHelpers.sol:InternalHelpers:executeOp(struct UserOpData)`
+
+```solidity
+function executeOp(UserOpData memory userOpData) public returns (ExecutionReturnData memory) {
+    return userOpData.execUserOps();
+}
+```
+
+### execUserOps(struct UserOpData)
+
+- **Kind**: internal
+- **Source**: 3413:243:232
+- **Link**: `lib/v2-core/lib/modulekit/src/test/ModuleKitHelpers.sol:ModuleKitHelpers:execUserOps(struct UserOpData)`
+
+```solidity
+/// @notice Executes userOps on the entrypoint
+///  @param userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
+///  @return ExecutionReturnData struct containing the logs from the execution
+function execUserOps(UserOpData memory userOpData) internal returns (ExecutionReturnData memory) {
+    return ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
+}
+```
+
+### exec4337(struct PackedUserOperation,contract IEntryPoint)
+
+- **Kind**: internal
+- **Source**: 5908:333:241
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/ERC4337Helpers.sol:ERC4337Helpers:exec4337(struct PackedUserOperation,contract IEntryPoint)`
+
+```solidity
+function exec4337(PackedUserOperation memory userOp, IEntryPoint onEntryPoint) internal returns (ExecutionReturnData memory logs) {
+    PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+    userOps[0] = userOp;
+    return exec4337(userOps, onEntryPoint);
+}
+```
+
+### exec4337(struct PackedUserOperation[],contract IEntryPoint)
+
+- **Kind**: internal
+- **Source**: 1486:4373:241
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/ERC4337Helpers.sol:ERC4337Helpers:exec4337(struct PackedUserOperation[],contract IEntryPoint)`
+
+```solidity
+function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal returns (ExecutionReturnData memory executionData) {
+    ExecutionContext memory ctx = ExecutionContext({isExpectRevert: getExpectRevert(), beneficiary: payable(address(0x69)), userOpCalldata: "", success: false, returnData: ""});
+    if (envOr("SIMULATE", false) || getSimulateUserOp()) {
+        bool simulationSuccess = userOps[0].simulateUserOp(address(onEntryPoint));
+        if (ctx.isExpectRevert == 0) {
+            require(simulationSuccess, "UserOperation simulation failed");
+        }
+    }
+    recordLogs();
+    ctx.userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, ctx.beneficiary));
+    (ctx.success, ctx.returnData) = address(onEntryPoint).call(ctx.userOpCalldata);
+    if (ctx.isExpectRevert == 0) {
+        require(ctx.success, "UserOperation execution failed");
+    } else if ((ctx.isExpectRevert == 2) && (!ctx.success)) {
+        checkRevertMessage(ctx.returnData);
+    }
+    VmSafe.Log[] memory logs = getRecordedLogs();
+    executionData = ExecutionReturnData(logs);
+    uint256 totalUserOpGas = 0;
+    for (uint256 i; i < logs.length; i++) {
+        if (logs[i].topics[0] == 0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f) {
+            (uint256 nonce, bool userOpSuccess, , uint256 actualGasUsed) = abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
+            totalUserOpGas = actualGasUsed;
+            if (!userOpSuccess) {
+                bytes32 userOpHash = logs[i].topics[1];
+                if (ctx.isExpectRevert == 0) {
+                    bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
+                    address account = address(bytes20(logs[i].topics[2]));
+                    revert UserOperationReverted(userOpHash, account, getLabel(account), nonce, revertReason);
+                } else {
+                    if (ctx.isExpectRevert == 2) {
+                        checkRevertMessage(getUserOpRevertReason(logs, userOpHash));
+                    }
+                    clearExpectRevert();
+                }
+            }
+        } else if (logs[i].topics[0] == 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123) {
+            (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+            writeInstalledModule(InstalledModule(moduleType, module), logs[i].emitter);
+        } else if (logs[i].topics[0] == 0x341347516a9de374859dfda710fa4828b2d48cb57d4fbe4c1149612b8e02276e) {
+            (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+            InstalledModule[] memory installedModules = getInstalledModules(logs[i].emitter);
+            for (uint256 j; j < installedModules.length; j++) {
+                if ((installedModules[j].moduleAddress == module) && (installedModules[j].moduleType == moduleType)) {
+                    removeInstalledModule(j, logs[i].emitter);
+                    break;
+                }
+            }
+        }
+    }
+    string memory gasIdentifier = getGasIdentifier();
+    if ((envOr("GAS", false) && (bytes(gasIdentifier).length > 0)) && (bytes(gasIdentifier).length < 50)) {
+        calculateGas(userOps, onEntryPoint, ctx.beneficiary, gasIdentifier, totalUserOpGas);
+    }
+    for (uint256 i; i < userOps.length; i++) {
+        emit ModuleKitLogs.ModuleKit_Exec4337(userOps[i].sender);
+    }
+}
+```
+
+### getExpectRevert()
+
+- **Kind**: free-function
+- **Source**: 588:163:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:getExpectRevert()`
+
+```solidity
+function getExpectRevert() view returns (uint256 value) {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    assembly {
+        value := sload(slot)
+    }
+}
+```
+
+### getSimulateUserOp()
+
+- **Kind**: free-function
+- **Source**: 1949:166:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:getSimulateUserOp()`
+
+```solidity
+function getSimulateUserOp() view returns (bool value) {
+    bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
+    assembly {
+        value := sload(slot)
+    }
+}
+```
+
+### envOr(string,bool)
+
+- **Kind**: internal
+- **Source**: 4355:148:500
+- **Link**: `lib/v2-core/test/utils/Helpers.sol:Helpers:envOr(string,bool)`
+
+```solidity
+function envOr(string memory name, bool defaultValue) public view returns (bool value) {
+    return Vm(VM_ADDR).envOr(name, defaultValue);
+}
+```
+
+### simulateUserOp(struct PackedUserOperation,address)
+
+- **Kind**: internal
+- **Source**: 1279:1591:139
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/Simulator.sol:Simulator:simulateUserOp(struct PackedUserOperation,address)`
+
+```solidity
+///  Simulates a UserOperation and validates the ERC-4337 rules
+///  @dev This function will revert if the UserOperation is invalid
+///  @dev If the simulation fails, the rules might not be checked correctly so simulationSuccess
+///  should be handled accordingly
+///  @dev This function is used for v0.7 ERC-4337
+///  @param userOp The PackedUserOperation to simulate
+///  @param onEntryPoint The address of the entry point to simulate the UserOperation on
+///  @return simulationSuccess True if the simulation was successful, false otherwise
+function simulateUserOp(PackedUserOperation memory userOp, address onEntryPoint) internal returns (bool simulationSuccess) {
+    _preSimulation();
+    bytes memory epCallData = abi.encodeCall(IEntryPointSimulations.simulateValidation, (userOp));
+    bytes memory returnData;
+    (simulationSuccess, returnData) = address(onEntryPoint).call(epCallData);
+    if (!simulationSuccess) {
+        return simulationSuccess;
+    }
+    IEntryPointSimulations.ValidationResult memory result = abi.decode(returnData, (IEntryPointSimulations.ValidationResult));
+    if (result.returnInfo.accountValidationData != 0) {
+        bool sigFailed = (result.returnInfo.accountValidationData & 1) == 1;
+        if (sigFailed) {
+            simulationSuccess = false;
+        }
+    }
+    UserOperationDetails memory userOpDetails = UserOperationDetails({entryPoint: onEntryPoint, sender: userOp.sender, initCode: userOp.initCode, paymasterAndData: userOp.paymasterAndData});
+    _postSimulation(userOpDetails);
+}
+```
+
+### _preSimulation()
+
+- **Kind**: internal
+- **Source**: 4794:514:139
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/Simulator.sol:Simulator:_preSimulation()`
+
+```solidity
+///  Pre-simulation setup
+function _preSimulation() internal {
+    uint256 snapShotId = snapshotState();
+    bytes32 snapShotSlot = keccak256(abi.encodePacked("Simulator.SnapshotId"));
+    assembly {
+        sstore(snapShotSlot, snapShotId)
+    }
+    startMappingRecording();
+    startDebugTraceRecording();
+}
+```
+
+### snapshotState()
+
+- **Kind**: free-function
+- **Source**: 394:86:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:snapshotState()`
+
+```solidity
+function snapshotState() returns (uint256) {
+    return Vm(VM_ADDR).snapshotState();
+}
+```
+
+### startMappingRecording()
+
+- **Kind**: free-function
+- **Source**: 579:77:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:startMappingRecording()`
+
+```solidity
+function startMappingRecording() {
+    Vm(VM_ADDR).startMappingRecording();
+}
+```
+
+### startDebugTraceRecording()
+
+- **Kind**: free-function
+- **Source**: 961:83:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:startDebugTraceRecording()`
+
+```solidity
+function startDebugTraceRecording() {
+    Vm(VM_ADDR).startDebugTraceRecording();
+}
+```
+
+### _postSimulation(struct UserOperationDetails)
+
+- **Kind**: internal
+- **Source**: 5436:688:139
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/Simulator.sol:Simulator:_postSimulation(struct UserOperationDetails)`
+
+```solidity
+///  Post-simulation validation
+///  @param userOpDetails The UserOperationDetails to validate
+function _postSimulation(UserOperationDetails memory userOpDetails) internal {
+    VmSafe.DebugStep[] memory debugTrace = stopAndReturnDebugTraceRecording();
+    ERC4337SpecsParser.parseValidation(userOpDetails, debugTrace);
+    stopMappingRecording();
+    uint256 snapShotId;
+    bytes32 snapShotSlot = keccak256(abi.encodePacked("Simulator.SnapshotId"));
+    assembly {
+        snapShotId := sload(snapShotSlot)
+    }
+    revertToState(snapShotId);
+}
+```
+
+### stopAndReturnDebugTraceRecording()
+
+- **Kind**: free-function
+- **Source**: 1046:148:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:stopAndReturnDebugTraceRecording()`
+
+```solidity
+function stopAndReturnDebugTraceRecording() returns (VmSafe.DebugStep[] memory steps) {
+    return Vm(VM_ADDR).stopAndReturnDebugTraceRecording();
+}
+```
+
+### parseValidation(struct UserOperationDetails,struct VmSafe.DebugStep[])
+
+- **Kind**: internal
+- **Source**: 1656:1779:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:parseValidation(struct UserOperationDetails,struct VmSafe.DebugStep[])`
+
+```solidity
+///  Parses and validates the ERC-4337 rules
+///  @param userOpDetails The UserOperationDetails to validate
+///  @param debugTrace A trace of used opcodes, stack and memory to validate
+function parseValidation(UserOperationDetails memory userOpDetails, VmSafe.DebugStep[] memory debugTrace) internal {
+    Entities memory entities = getEntities(userOpDetails);
+    (VmSafe.DebugStep[] memory filteredUserOpSteps, VmSafe.DebugStep[] memory filteredPaymasterUserOpSteps) = filterDebugTrace(debugTrace, entities, userOpDetails.entryPoint);
+    validateBannedOpcodes(filteredUserOpSteps, entities);
+    validateBannedOpcodes(filteredPaymasterUserOpSteps, entities);
+    validateOutOfGas(filteredUserOpSteps);
+    validateOutOfGas(filteredPaymasterUserOpSteps);
+    validateBannedStorageLocations(filteredUserOpSteps, entities, userOpDetails);
+    validateBannedStorageLocations(filteredPaymasterUserOpSteps, entities, userOpDetails);
+    validateCalls(filteredUserOpSteps, entities, userOpDetails.entryPoint);
+    validateCalls(filteredPaymasterUserOpSteps, entities, userOpDetails.entryPoint);
+    validateExtOpcodes(filteredUserOpSteps, entities);
+    validateExtOpcodes(filteredPaymasterUserOpSteps, entities);
+    validateCreate(filteredUserOpSteps, entities, userOpDetails);
+    validateCreate(filteredPaymasterUserOpSteps, entities, userOpDetails);
+}
+```
+
+### getEntities(struct UserOperationDetails)
+
+- **Kind**: internal
+- **Source**: 25300:1252:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:getEntities(struct UserOperationDetails)`
+
+```solidity
+///  Returns the entities of the UserOperation
+///  @param userOpDetails The UserOperationDetails to get the entities of
+///  @return entities The entities of the UserOperation
+function getEntities(UserOperationDetails memory userOpDetails) internal view returns (Entities memory entities) {
+    address factory;
+    if (userOpDetails.initCode.length > 20) {
+        bytes memory initCode = userOpDetails.initCode;
+        assembly {
+            factory := mload(add(initCode, 20))
+        }
+    }
+    address paymaster;
+    if (userOpDetails.paymasterAndData.length > 20) {
+        bytes memory paymasterAndData = userOpDetails.paymasterAndData;
+        assembly {
+            paymaster := mload(add(paymasterAndData, 20))
+        }
+    }
+    address aggregator;
+    entities = Entities({account: userOpDetails.sender, factory: factory, isFactoryStaked: isStaked(factory, userOpDetails.entryPoint), paymaster: paymaster, isPaymasterStaked: isStaked(paymaster, userOpDetails.entryPoint), aggregator: aggregator, isAggregatorStaked: isStaked(aggregator, userOpDetails.entryPoint)});
+}
+```
+
+### isStaked(address,address)
+
+- **Kind**: internal
+- **Source**: 28211:470:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:isStaked(address,address)`
+
+```solidity
+///  Returns whether the entity is staked
+///  @param entity The entity to check
+///  @return isEntityStaked Whether the entity is staked
+function isStaked(address entity, address entryPoint) internal view returns (bool isEntityStaked) {
+    IStakeManager.DepositInfo memory deposit = IStakeManager(entryPoint).getDepositInfo(entity);
+    isEntityStaked = (deposit.stake >= MIN_STAKE_VALUE) && (deposit.unstakeDelaySec >= MIN_UNSTAKE_DELAY);
+}
+```
+
+### filterDebugTrace(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address)
+
+- **Kind**: internal
+- **Source**: 6062:2998:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:filterDebugTrace(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address)`
+
+```solidity
+///  Filter debug trace, we are interested in the following debug traces:
+///  - Entrypoint -> validateUserOp
+///  - Entrypoint - validatePaymasterUserOp
+///  @param debugTrace The debug trace to filter
+///  @param entities The entities of the userOp
+///  @param entryPoint The entryPoint address
+///  @return filteredUserOpSteps The filtered debug steps
+///  @return filteredPaymasterUserOpSteps The filtered debug steps
+function filterDebugTrace(VmSafe.DebugStep[] memory debugTrace, Entities memory entities, address entryPoint) private pure returns (VmSafe.DebugStep[] memory, VmSafe.DebugStep[] memory) {
+    VmSafe.DebugStep[] memory filteredUserOpSteps = new VmSafe.DebugStep[](debugTrace.length);
+    VmSafe.DebugStep[] memory filteredPaymasterUserOpSteps = new VmSafe.DebugStep[](debugTrace.length);
+    uint256 filteredUserOpStepsLength;
+    uint256 filteredPaymasterUserOpStepsLength;
+    uint256 startDepth = 0;
+    for (uint256 i; i < debugTrace.length; i++) {
+        if (debugTrace[i].contractAddr == entryPoint) {
+            startDepth = debugTrace[i].depth;
+            break;
+        }
+    }
+    address currentContractAddr;
+    for (uint256 i = 0; i < debugTrace.length; i++) {
+        if ((debugTrace[i].depth == startDepth) && (debugTrace[i].contractAddr == entryPoint)) {
+            if ((debugTrace[i].opcode == 0xF1) || (debugTrace[i].opcode == 0xFA)) {
+                currentContractAddr = address(uint160(uint256(debugTrace[i].stack[1])));
+            }
+            continue;
+        }
+        if (debugTrace[i].depth > startDepth) {
+            if (currentContractAddr == entities.account) {
+                filteredUserOpSteps[filteredUserOpStepsLength++] = debugTrace[i];
+            } else if (currentContractAddr == entities.paymaster) {
+                filteredPaymasterUserOpSteps[filteredPaymasterUserOpStepsLength++] = debugTrace[i];
+            }
+        }
+    }
+    assembly {
+        mstore(filteredUserOpSteps, filteredUserOpStepsLength)
+        mstore(filteredPaymasterUserOpSteps, filteredPaymasterUserOpStepsLength)
+    }
+    return (filteredUserOpSteps, filteredPaymasterUserOpSteps);
+}
+```
+
+### validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities)
+
+- **Kind**: internal
+- **Source**: 3559:2043:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities)`
+
+```solidity
+///  Validates that no banned opcodes are used
+///  @param debugTrace The debug trace to validate
+function validateBannedOpcodes(VmSafe.DebugStep[] memory debugTrace, Entities memory entities) internal pure {
+    for (uint256 i; i < debugTrace.length; i++) {
+        if (isForbiddenOpcode(debugTrace[i].opcode)) {
+            if (debugTrace[i].opcode == 0x5A) {
+                if (((i + 1) >= debugTrace.length) || ((((debugTrace[i + 1].opcode != 0xF1) && (debugTrace[i + 1].opcode != 0xF4)) && (debugTrace[i + 1].opcode != 0xF2)) && (debugTrace[i + 1].opcode != 0xFA))) {
+                    revert InvalidOpcode(debugTrace[i].contractAddr, 0x5A);
+                }
+            } else if (((debugTrace[i].opcode == 0x31) || (debugTrace[i].opcode == 0x47)) && isEntityAndStaked(entities, debugTrace[i].contractAddr)) {
+                continue;
+            } else {
+                revert InvalidOpcode(debugTrace[i].contractAddr, debugTrace[i].opcode);
+            }
+        }
+    }
+}
+```
+
+### isForbiddenOpcode(uint8)
+
+- **Kind**: internal
+- **Source**: 29220:729:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:isForbiddenOpcode(uint8)`
+
+```solidity
+///  Checks if the opcode is a forbidden opcode
+///  @param opcode The opcode to check
+///  @return isForbidden Whether the opcode is forbidden
+function isForbiddenOpcode(uint8 opcode) private pure returns (bool isForbidden) {
+    return ((((((((((((((opcode == 0x3A) || (opcode == 0x45)) || (opcode == 0x44)) || (opcode == 0x42)) || (opcode == 0x48)) || (opcode == 0x40)) || (opcode == 0x43)) || (opcode == 0x47)) || (opcode == 0x31)) || (opcode == 0x32)) || (opcode == 0x5A)) || (opcode == 0xF0)) || (opcode == 0x41)) || (opcode == 0xFE)) || (opcode == 0xFF);
+}
+```
+
+### isEntityAndStaked(struct ERC4337SpecsParser.Entities,address)
+
+- **Kind**: internal
+- **Source**: 26835:634:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:isEntityAndStaked(struct ERC4337SpecsParser.Entities,address)`
+
+```solidity
+///  Returns whether something is an entity and is staked
+///  @param entities The entities of the UserOperation
+///  @param toCheck The address to check
+///  @return addressIsEntityAndStaked Whether the address is an entity and is staked
+function isEntityAndStaked(Entities memory entities, address toCheck) internal pure returns (bool addressIsEntityAndStaked) {
+    if (toCheck == entities.account) {
+        addressIsEntityAndStaked = true;
+    } else if (toCheck == entities.factory) {
+        addressIsEntityAndStaked = entities.isFactoryStaked;
+    } else if (toCheck == entities.paymaster) {
+        addressIsEntityAndStaked = entities.isPaymasterStaked;
+    } else if (toCheck == entities.aggregator) {
+        addressIsEntityAndStaked = entities.isAggregatorStaked;
+    }
+}
+```
+
+### validateOutOfGas(struct VmSafe.DebugStep[])
+
+- **Kind**: internal
+- **Source**: 9203:345:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:validateOutOfGas(struct VmSafe.DebugStep[])`
+
+```solidity
+///  Validate that the simulation does not revert with Out of Gas
+///  @param debugTrace The debug trace to validate
+function validateOutOfGas(VmSafe.DebugStep[] memory debugTrace) internal pure {
+    for (uint256 i; i < debugTrace.length; i++) {
+        if (debugTrace[i].isOutOfGas) {
+            revert("[OP-020] Simulation reverts with Out of Gas");
+        }
+    }
+}
+```
+
+### validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails)
+
+- **Kind**: internal
+- **Source**: 9851:4230:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails)`
+
+```solidity
+///  Validates that no banned storage locations are accessed
+///  @param debugTrace The debug trace to validate
+///  @param entities  The entities of the userOp
+///  @param userOpDetails The UserOperationDetails to validate
+function validateBannedStorageLocations(VmSafe.DebugStep[] memory debugTrace, Entities memory entities, UserOperationDetails memory userOpDetails) internal {
+    for (uint256 i; i < debugTrace.length; i++) {
+        VmSafe.DebugStep memory currentStep = debugTrace[i];
+        if ((((currentStep.opcode != 0x54) && (currentStep.opcode != 0x55)) && (currentStep.opcode != 0x5C)) && (currentStep.opcode != 0x5D)) {
+            continue;
+        }
+        address currentAccessAccount = currentStep.contractAddr;
+        bytes32 currentSlot = bytes32(uint256(currentStep.stack[0]));
+        bool notEntity = !isEntity(entities, currentAccessAccount);
+        if (currentAccessAccount == entities.account) {
+            continue;
+        }
+        /// Access to associated storage of the account in an external (non-entity) contract
+        bool accountAlreadyExists = (entities.account.code.length != 0) || ((currentAccessAccount == userOpDetails.entryPoint) && (entities.account != address(0)));
+        bool isFactoryStaked = entities.isFactoryStaked;
+        if ((notEntity && isAssociatedStorage(currentSlot, currentAccessAccount, entities.account)) && (accountAlreadyExists || isFactoryStaked)) {
+            continue;
+        }
+        if (entities.isFactoryStaked || entities.isPaymasterStaked) {
+            if (((currentAccessAccount == entities.factory) && entities.isFactoryStaked) || ((currentAccessAccount == entities.paymaster) && entities.isPaymasterStaked)) {
+                continue;
+            } else if (notEntity && ((isAssociatedStorage(currentSlot, currentAccessAccount, entities.factory) && entities.isFactoryStaked) || (isAssociatedStorage(currentSlot, currentAccessAccount, entities.paymaster) && entities.isPaymasterStaked))) {
+                continue;
+            } else if (notEntity && ((currentStep.opcode == 0x54) || (currentStep.opcode == 0x5C))) {
+                continue;
+            }
+        }
+        bool isWrite = (currentStep.opcode == 0x55) || (currentStep.opcode == 0x5D);
+        revert InvalidStorageLocation(currentAccessAccount, getLabel(currentAccessAccount), currentSlot, isWrite ? bytes32(uint256(currentStep.stack[1])) : bytes32(0), isWrite);
+    }
+}
+```
+
+### isEntity(struct ERC4337SpecsParser.Entities,address)
+
+- **Kind**: internal
+- **Source**: 27643:388:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:isEntity(struct ERC4337SpecsParser.Entities,address)`
+
+```solidity
+///  Returns wether something is an entity
+///  @param entities The entities of the UserOperation
+///  @param toCheck The address to check
+function isEntity(Entities memory entities, address toCheck) internal pure returns (bool addressIsEntity) {
+    if ((((toCheck == entities.account) || (toCheck == entities.factory)) || (toCheck == entities.paymaster)) || (toCheck == entities.aggregator)) {
+        addressIsEntity = true;
+    }
+}
+```
+
+### isAssociatedStorage(bytes32,address,address)
+
+- **Kind**: internal
+- **Source**: 20836:774:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:isAssociatedStorage(bytes32,address,address)`
+
+```solidity
+///  Returns whether the current storage slot matches a specific entity
+///  @param currentSlot The current storage slot
+///  @param currentAccessAccount The contract address of the current access
+///  @param entity The entity to check
+///  @return isAssociated Whether the current storage slot matches a specific entity
+function isAssociatedStorage(bytes32 currentSlot, address currentAccessAccount, address entity) internal returns (bool isAssociated) {
+    if (slotMatchesEntity(currentSlot, entity)) {
+        isAssociated = true;
+    } else {
+        (bool found, bytes32 key) = getMappingParent(currentAccessAccount, currentSlot);
+        if (found) {
+            if (slotMatchesEntity(key, entity)) {
+                isAssociated = true;
+            }
+        }
+    }
+}
+```
+
+### slotMatchesEntity(bytes32,address)
+
+- **Kind**: internal
+- **Source**: 23408:355:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:slotMatchesEntity(bytes32,address)`
+
+```solidity
+///  Returns whether the current storage slot matches an entity
+///  @param slot The current storage slot
+///  @param entity The entity to check
+///  @return _ Whether the current storage slot matches an entity
+function slotMatchesEntity(bytes32 slot, address entity) internal pure returns (bool) {
+    if (slot == bytes32(0)) {
+        return false;
+    }
+    return slot == bytes32(uint256(uint160(entity)));
+}
+```
+
+### getMappingParent(address,bytes32)
+
+- **Kind**: internal
+- **Source**: 24067:1014:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:getMappingParent(address,bytes32)`
+
+```solidity
+///  Returns the parent of the current storage slot
+///  @param currentAccessAccount The contract address of the current access
+///  @param currentSlot The current storage slot
+///  @return found Whether the parent was found
+///  @return key The parent slot
+function getMappingParent(address currentAccessAccount, bytes32 currentSlot) internal returns (bool found, bytes32 key) {
+    (bool _found, bytes32 _key, ) = getMappingKeyAndParentOf(currentAccessAccount, currentSlot);
+    if (_found) {
+        found = _found;
+        key = _key;
+    } else {
+        for (uint256 k = 1; (k <= 128) && (k <= uint256(currentSlot)); k++) {
+            (_found, _key, ) = getMappingKeyAndParentOf(currentAccessAccount, bytes32(uint256(currentSlot) - k));
+            if (_found) {
+                found = _found;
+                key = _key;
+                break;
+            }
+        }
+    }
+}
+```
+
+### getMappingKeyAndParentOf(address,bytes32)
+
+- **Kind**: free-function
+- **Source**: 735:163:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:getMappingKeyAndParentOf(address,bytes32)`
+
+```solidity
+function getMappingKeyAndParentOf(address target, bytes32 slot) returns (bool, bytes32, bytes32) {
+    return Vm(VM_ADDR).getMappingKeyAndParentOf(target, slot);
+}
+```
+
+### getLabel(address)
+
+- **Kind**: free-function
+- **Source**: 289:103:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:getLabel(address)`
+
+```solidity
+function getLabel(address addr) view returns (string memory) {
+    return Vm(VM_ADDR).getLabel(addr);
+}
+```
+
+### validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address)
+
+- **Kind**: internal
+- **Source**: 14362:2479:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address)`
+
+```solidity
+///  Validates *CALL operations in the trace (CALL, DELEGATECALL, CALLCODE, STATICCALL)
+///  @param debugSteps The filtered debug steps to validate
+///  @param entities The entities of the userOp
+///  @param entryPoint The EntryPoint contract address
+function validateCalls(VmSafe.DebugStep[] memory debugSteps, Entities memory entities, address entryPoint) internal view {
+    for (uint256 i = 0; i < debugSteps.length; i++) {
+        uint8 op = debugSteps[i].opcode;
+        if ((((op != 0xF1) && (op != 0xF2)) && (op != 0xF4)) && (op != 0xFA)) {
+            continue;
+        }
+        address targetAddr = address(uint160(uint256(debugSteps[i].stack[1])));
+        uint256 value = ((op == 0xF1) || (op == 0xF2)) ? uint256(debugSteps[i].stack[2]) : 0;
+        bytes memory callData = debugSteps[i].memoryInput;
+        if (((targetAddr.code.length == 0) && (!isPrecompile(targetAddr))) && (targetAddr != entities.account)) {
+            revert("[OP-041] Cannot *CALL addresses without code");
+        }
+        bool callerIsAccount = debugSteps[i].contractAddr == entities.account;
+        bool callerIsFactory = debugSteps[i].contractAddr == entities.factory;
+        bool calleeIsEntryPoint = targetAddr == entryPoint;
+        if (value > 0) {
+            if (!((callerIsAccount || callerIsFactory) && calleeIsEntryPoint)) {
+                revert("[OP-061] Cannot use value except from account or factory to EntryPoint");
+            }
+        }
+        if (calleeIsEntryPoint) {
+            bytes4 selector;
+            if (callData.length >= 4) {
+                selector = bytes4(abi.encodePacked(callData[0], callData[1], callData[2], callData[3]));
+            }
+            if (!(((callerIsAccount || callerIsFactory) && (selector == bytes4(0xb760faf9))) || (callerIsAccount && (callData.length == 0)))) {
+                revert("[OP-052] Cannot call EntryPoint except depositTo from factory or account");
+            }
+        }
+    }
+}
+```
+
+### isPrecompile(address)
+
+- **Kind**: internal
+- **Source**: 28874:160:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:isPrecompile(address)`
+
+```solidity
+///  Returns whether the address is a precompile
+///  @param target The address to check
+///  @return isPrecompile Whether the address is a precompile
+function isPrecompile(address target) internal pure returns (bool) {
+    return (uint256(uint160(target)) <= 0x09) || (uint256(uint160(target)) == 0x100);
+}
+```
+
+### validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities)
+
+- **Kind**: internal
+- **Source**: 17061:862:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities)`
+
+```solidity
+///  Validates EXT* operations in the trace (EXTCODESIZE, EXTCODEHASH, EXTCODECOPY)
+///  @param debugSteps The filtered debug steps to validate
+///  @param entities The entities of the userOp
+function validateExtOpcodes(VmSafe.DebugStep[] memory debugSteps, Entities memory entities) internal view {
+    for (uint256 i = 0; i < debugSteps.length; i++) {
+        uint8 op = debugSteps[i].opcode;
+        if (((op != 0x3B) && (op != 0x3C)) && (op != 0x3F)) {
+            continue;
+        }
+        address targetAddr = address(uint160(uint256(debugSteps[i].stack[0])));
+        if (((targetAddr.code.length == 0) && (!isPrecompile(targetAddr))) && (targetAddr != entities.account)) {
+            revert("[OP-041] EXT* opcodes cannot access addresses without code");
+        }
+    }
+}
+```
+
+### validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails)
+
+- **Kind**: internal
+- **Source**: 18178:1122:140
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/SpecsParser.sol:ERC4337SpecsParser:validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails)`
+
+```solidity
+///  Validates CREATE operations in the trace
+///  @param debugSteps The filtered debug steps to validate
+///  @param entities The entities of the userOp
+///  @param userOpDetails The UserOperationDetails containing initCode
+function validateCreate(VmSafe.DebugStep[] memory debugSteps, Entities memory entities, UserOperationDetails memory userOpDetails) internal pure {
+    uint256 createCount = 0;
+    for (uint256 i = 0; i < debugSteps.length; i++) {
+        if (debugSteps[i].opcode == 0xF5) {
+            createCount++;
+            if (userOpDetails.initCode.length == 0) {
+                revert("[OP-031] CREATE2 not allowed without initCode");
+            }
+            if (createCount > 1) {
+                revert("[OP-031] Multiple CREATE2 operations not allowed");
+            }
+            address createdAddr = address(uint160(uint256(debugSteps[i].stack[0])));
+            if (createdAddr != entities.account) {
+                revert("[OP-031] CREATE2 must deploy the account contract");
+            }
+        }
+    }
+}
+```
+
+### stopMappingRecording()
+
+- **Kind**: free-function
+- **Source**: 658:75:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:stopMappingRecording()`
+
+```solidity
+function stopMappingRecording() {
+    Vm(VM_ADDR).stopMappingRecording();
+}
+```
+
+### revertToState(uint256)
+
+- **Kind**: free-function
+- **Source**: 482:95:142
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@rhinestone/erc4337-validation/src/lib/Vm.sol:revertToState(uint256)`
+
+```solidity
+function revertToState(uint256 id) returns (bool) {
+    return Vm(VM_ADDR).revertToState(id);
+}
+```
+
+### recordLogs()
+
+- **Kind**: free-function
+- **Source**: 1458:55:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:recordLogs()`
+
+```solidity
+function recordLogs() {
+    Vm(VM_ADDR).recordLogs();
+}
+```
+
+### checkRevertMessage(bytes)
+
+- **Kind**: internal
+- **Source**: 6800:719:241
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/ERC4337Helpers.sol:ERC4337Helpers:checkRevertMessage(bytes)`
+
+```solidity
+function checkRevertMessage(bytes memory actualReason) internal view {
+    bytes memory revertMessage = getExpectRevertMessage();
+    if (actualReason.length >= 4) {
+        bytes4 actual = bytes4(actualReason);
+        bytes4 expected = bytes4(revertMessage);
+        if (actual == bytes4(0x65c8fd4d)) {
+            return parseFailedOpWithRevert(actualReason, revertMessage);
+        } else if (actual != expected) {
+            revert InvalidRevertMessageBytes(revertMessage, actualReason);
+        }
+        return;
+    }
+    if (revertMessage.length != actualReason.length) {
+        revert InvalidRevertMessageBytes(revertMessage, actualReason);
+    }
+}
+```
+
+### getExpectRevertMessage()
+
+- **Kind**: free-function
+- **Source**: 753:180:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:getExpectRevertMessage()`
+
+```solidity
+function getExpectRevertMessage() view returns (bytes memory data) {
+    bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
+    assembly {
+        data := sload(slot)
+    }
+}
+```
+
+### parseFailedOpWithRevert(bytes,bytes)
+
+- **Kind**: internal
+- **Source**: 7525:1258:241
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/ERC4337Helpers.sol:ERC4337Helpers:parseFailedOpWithRevert(bytes,bytes)`
+
+```solidity
+function parseFailedOpWithRevert(bytes memory actualReason, bytes memory revertMessage) internal pure {
+    uint256 bytesOffset;
+    assembly {
+        let ptr := add(actualReason, 0x20)
+        ptr := add(ptr, 0x04)
+        ptr := add(ptr, 0x40)
+        bytesOffset := mload(ptr)
+    }
+    bytes memory actual;
+    assembly {
+        let ptr := add(actualReason, 0x20)
+        ptr := add(ptr, 0x04)
+        ptr := add(ptr, bytesOffset)
+        let innerLength := mload(ptr)
+        actual := mload(0x40)
+        mstore(actual, innerLength)
+        let srcPtr := add(ptr, 0x20)
+        let destPtr := add(actual, 0x20)
+        mstore(destPtr, mload(srcPtr))
+        mstore(0x40, add(add(actual, 0x20), innerLength))
+    }
+    if (revertMessage.length == 4) {
+        bytes4 expected = bytes4(revertMessage);
+        if (expected != bytes4(actual)) {
+            revert InvalidRevertMessage(expected, bytes4(actual));
+        }
+    } else {
+        if (keccak256(actual) != keccak256(revertMessage)) {
+            revert InvalidRevertMessageBytes(revertMessage, actual);
+        }
+    }
+}
+```
+
+### getRecordedLogs()
+
+- **Kind**: free-function
+- **Source**: 1515:102:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:getRecordedLogs()`
+
+```solidity
+function getRecordedLogs() returns (VmSafe.Log[] memory) {
+    return Vm(VM_ADDR).getRecordedLogs();
+}
+```
+
+### getUserOpRevertReason(struct VmSafe.Log[],bytes32)
+
+- **Kind**: internal
+- **Source**: 6247:547:241
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/ERC4337Helpers.sol:ERC4337Helpers:getUserOpRevertReason(struct VmSafe.Log[],bytes32)`
+
+```solidity
+function getUserOpRevertReason(VmSafe.Log[] memory logs, bytes32 userOpHash) internal pure returns (bytes memory revertReason) {
+    for (uint256 i; i < logs.length; i++) {
+        if ((logs[i].topics[0] == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201) && (logs[i].topics[1] == userOpHash)) {
+            (, revertReason) = abi.decode(logs[i].data, (uint256, bytes));
+        }
+    }
+}
+```
+
+### getLabel(address)
+
+- **Kind**: free-function
+- **Source**: 1066:103:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:getLabel(address)`
+
+```solidity
+function getLabel(address addr) view returns (string memory) {
+    return Vm(VM_ADDR).getLabel(addr);
+}
+```
+
+### clearExpectRevert()
+
+- **Kind**: free-function
+- **Source**: 935:230:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:clearExpectRevert()`
+
+```solidity
+function clearExpectRevert() {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    assembly {
+        sstore(slot, 0)
+    }
+    slot = keccak256("ModuleKit.ExpectMessageSlot");
+    assembly {
+        sstore(slot, 0)
+    }
+}
+```
+
+### writeInstalledModule(struct InstalledModule,address)
+
+- **Kind**: free-function
+- **Source**: 6700:1960:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:writeInstalledModule(struct InstalledModule,address)`
+
+```solidity
+// Failed to render writeInstalledModule(struct InstalledModule,address) implementation (FunctionDefinition#96186). Check logs for details.
+```
+
+### getInstalledModules(address)
+
+- **Kind**: free-function
+- **Source**: 10596:2115:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:getInstalledModules(address)`
+
+```solidity
+function getInstalledModules(address account) view returns (InstalledModule[] memory modules) {
+    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account))));
+    bytes32 headSlot = keccak256(abi.encode("ModuleKit.InstalledModuleHead.", keccak256(abi.encodePacked(account))));
+    assembly {
+        let length := sload(lengthSlot)
+        let structSize := 0x40
+        let size := mul(length, structSize)
+        let totalSize := add(add(size, 0x40), mul(0x20, length))
+        let freeMemoryPtr := mload(0x40)
+        modules := freeMemoryPtr
+        mstore(modules, length)
+        mstore(0x40, add(freeMemoryPtr, totalSize))
+        let storageLocation := sload(headSlot)
+        for {
+            let i := 0
+        } lt(i, length) {
+            i := add(i, 1)
+        } {
+            let structLocation := add(add(freeMemoryPtr, add(0x40, mul(i, structSize))), mul(0x20, length))
+            let moduleType := sload(storageLocation)
+            let moduleAddress := sload(add(storageLocation, 0x20))
+            mstore(add(freeMemoryPtr, add(0x20, mul(i, 0x20))), structLocation)
+            mstore(structLocation, moduleType)
+            mstore(add(structLocation, 0x20), moduleAddress)
+            storageLocation := sload(add(storageLocation, 0x60))
+        }
+    }
+}
+```
+
+### removeInstalledModule(uint256,address)
+
+- **Kind**: free-function
+- **Source**: 8701:1838:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:removeInstalledModule(uint256,address)`
+
+```solidity
+function removeInstalledModule(uint256 index, address account) {
+    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account))));
+    bytes32 headSlot = keccak256(abi.encode("ModuleKit.InstalledModuleHead.", keccak256(abi.encodePacked(account))));
+    bytes32 tailSlot = keccak256(abi.encode("ModuleKit.InstalledModuleTail.", keccak256(abi.encodePacked(account))));
+    assembly {
+        let length := sload(lengthSlot)
+        let elementSlot := sload(headSlot)
+        if lt(index, length) {
+            for {
+                let i := 0
+            } lt(i, index) {
+                i := add(i, 1)
+            } {
+                elementSlot := sload(add(elementSlot, 0x60))
+            }
+            let prevSlot := sload(add(elementSlot, 0x40))
+            let nextSlot := sload(add(elementSlot, 0x60))
+            sstore(add(prevSlot, 0x60), nextSlot)
+            sstore(add(nextSlot, 0x40), prevSlot)
+            if eq(elementSlot, sload(headSlot)) {
+                sstore(headSlot, nextSlot)
+            }
+            if eq(elementSlot, sload(tailSlot)) {
+                sstore(tailSlot, prevSlot)
+            }
+            sstore(elementSlot, 0)
+            sstore(add(elementSlot, 0x20), 0)
+            sstore(add(elementSlot, 0x40), 0)
+            sstore(add(elementSlot, 0x60), 0)
+            sstore(lengthSlot, sub(length, 1))
+        }
+    }
+}
+```
+
+### getGasIdentifier()
+
+- **Kind**: free-function
+- **Source**: 1476:151:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:getGasIdentifier()`
+
+```solidity
+function getGasIdentifier() view returns (string memory id) {
+    bytes32 slot = keccak256("ModuleKit.GasIdentifierSlot");
+    id = readString(slot);
+}
+```
+
+### readString(bytes32)
+
+- **Kind**: free-function
+- **Source**: 13545:742:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:readString(bytes32)`
+
+```solidity
+function readString(bytes32 slot) view returns (string memory) {
+    uint256 length;
+    assembly {
+        length := sload(slot)
+    }
+    bytes memory strBytes = new bytes(length);
+    for (uint256 i = 0; i < length; i += 32) {
+        bytes32 charSlot = keccak256(abi.encodePacked(slot, i / 32));
+        bytes32 data;
+        assembly {
+            data := sload(charSlot)
+        }
+        for (uint256 j = 0; (j < 32) && ((i + j) < length); j++) {
+            strBytes[i + j] = bytes1(uint8(uint256(data >> (248 - (j * 8)))));
+        }
+    }
+    return string(strBytes);
+}
+```
+
+### calculateGas(struct PackedUserOperation[],contract IEntryPoint,address,string,uint256)
+
+- **Kind**: internal
+- **Source**: 8789:510:241
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/ERC4337Helpers.sol:ERC4337Helpers:calculateGas(struct PackedUserOperation[],contract IEntryPoint,address,string,uint256)`
+
+```solidity
+function calculateGas(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint, address beneficiary, string memory gasIdentifier, uint256 totalUserOpGas) internal {
+    bytes memory userOpCalldata = abi.encodeWithSelector(onEntryPoint.handleOps.selector, userOps, beneficiary);
+    GasParser.parseAndWriteGas(userOpCalldata, address(onEntryPoint), gasIdentifier, userOps[0].sender, totalUserOpGas);
+}
+```
+
+### parseAndWriteGas(bytes,address,string,address,uint256)
+
+- **Kind**: internal
+- **Source**: 243:1164:246
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasParser.sol:GasParser:parseAndWriteGas(bytes,address,string,address,uint256)`
+
+```solidity
+function parseAndWriteGas(bytes memory userOpCalldata, address entrypoint, string memory gasIdentifier, address sender, uint256 totalUserOpGas) internal {
+    string memory fileName = string.concat("./gas_calculations/", gasIdentifier, ".json");
+    GasCalculations memory gasCalculations = GasCalculations({creation: GasDebug(entrypoint).getGasConsumed(sender, 0), validation: GasDebug(entrypoint).getGasConsumed(sender, 1), execution: GasDebug(entrypoint).getGasConsumed(sender, 2), total: totalUserOpGas, arbitrum: getArbitrumL1Gas(userOpCalldata), opStack: getOpStackL1Gas(userOpCalldata)});
+    GasCalculations memory prevGasCalculations;
+    if (exists(fileName)) {
+        string memory fileContent = readFile(fileName);
+        prevGasCalculations = parsePrevGasReport(fileContent);
+    }
+    string memory finalJson = formatGasToWrite(gasIdentifier, prevGasCalculations, gasCalculations);
+    writeJson(finalJson, fileName);
+    writeGasIdentifier("");
+}
+```
+
+### getArbitrumL1Gas(bytes)
+
+- **Kind**: free-function
+- **Source**: 1197:185:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:getArbitrumL1Gas(bytes)`
+
+```solidity
+/// @notice Calculate the gas cost of calldata on Arbitrum L1.
+///  @param data The calldata to be sent.
+///  @return calldataGas The gas cost of the calldata on Arbitrum L1.
+function getArbitrumL1Gas(bytes memory data) pure returns (uint256 calldataGas) {
+    bytes memory compressed = LibZip.flzCompress(data);
+    calldataGas = getCallDataGas(compressed);
+}
+```
+
+### flzCompress(bytes)
+
+- **Kind**: internal
+- **Source**: 1102:3958:322
+- **Link**: `lib/v2-core/lib/solady/src/utils/LibZip.sol:LibZip:flzCompress(bytes)`
+
+```solidity
+/// @dev Returns the compressed `data`.
+function flzCompress(bytes memory data) internal pure returns (bytes memory result) {
+    /// @solidity memory-safe-assembly
+    assembly {
+        function ms8 (d_, v_) -> _d {
+            mstore8(d_, v_)
+            _d := add(d_, 1)
+        }
+        function u24 (p_) -> _u {
+            _u := mload(p_)
+            _u := or(shl(16, byte(2, _u)), or(shl(8, byte(1, _u)), byte(0, _u)))
+        }
+        function cmp (p_, q_, e_) -> _l {
+            for {
+                e_ := sub(e_, q_)
+            } lt(_l, e_) {
+                _l := add(_l, 1)
+            } {
+                e_ := mul(iszero(byte(0, xor(mload(add(p_, _l)), mload(add(q_, _l))))), e_)
+            }
+        }
+        function literals (runs_, src_, dest_) -> _o {
+            for {
+                _o := dest_
+            } iszero(lt(runs_, 0x20)) {
+                runs_ := sub(runs_, 0x20)
+            } {
+                mstore(ms8(_o, 31), mload(src_))
+                _o := add(_o, 0x21)
+                src_ := add(src_, 0x20)
+            }
+            if iszero(runs_) {
+                leave
+            }
+            mstore(ms8(_o, sub(runs_, 1)), mload(src_))
+            _o := add(1, add(_o, runs_))
+        }
+        function mt (l_, d_, o_) -> _o {
+            for {
+                d_ := sub(d_, 1)
+            } iszero(lt(l_, 263)) {
+                l_ := sub(l_, 262)
+            } {
+                o_ := ms8(ms8(ms8(o_, add(224, shr(8, d_))), 253), and(0xff, d_))
+            }
+            if iszero(lt(l_, 7)) {
+                _o := ms8(ms8(ms8(o_, add(224, shr(8, d_))), sub(l_, 7)), and(0xff, d_))
+                leave
+            }
+            _o := ms8(ms8(o_, add(shl(5, l_), shr(8, d_))), and(0xff, d_))
+        }
+        function setHash (i_, v_) {
+            let p_ := add(mload(0x40), shl(2, i_))
+            mstore(p_, xor(mload(p_), shl(224, xor(shr(224, mload(p_)), v_))))
+        }
+        function getHash (i_) -> _h {
+            _h := shr(224, mload(add(mload(0x40), shl(2, i_))))
+        }
+        function hash (v_) -> _r {
+            _r := and(shr(19, mul(2654435769, v_)), 0x1fff)
+        }
+        function setNextHash (ip_, ipStart_) -> _ip {
+            setHash(hash(u24(ip_)), sub(ip_, ipStart_))
+            _ip := add(ip_, 1)
+        }
+        result := mload(0x40)
+        calldatacopy(result, calldatasize(), 0x8000)
+        let op := add(result, 0x8000)
+        let a := add(data, 0x20)
+        let ipStart := a
+        let ipLimit := sub(add(ipStart, mload(data)), 13)
+        for {
+            let ip := add(2, a)
+        } lt(ip, ipLimit) {} {
+            let r := 0
+            let d := 0
+            for {} 1 {} {
+                let s := u24(ip)
+                let h := hash(s)
+                r := add(ipStart, getHash(h))
+                setHash(h, sub(ip, ipStart))
+                d := sub(ip, r)
+                if iszero(lt(ip, ipLimit)) {
+                    break
+                }
+                ip := add(ip, 1)
+                if iszero(gt(d, 0x1fff)) {
+                    if eq(s, u24(r)) {
+                        break
+                    }
+                }
+            }
+            if iszero(lt(ip, ipLimit)) {
+                break
+            }
+            ip := sub(ip, 1)
+            if gt(ip, a) {
+                op := literals(sub(ip, a), a, op)
+            }
+            let l := cmp(add(r, 3), add(ip, 3), add(ipLimit, 9))
+            op := mt(l, d, op)
+            ip := setNextHash(setNextHash(add(ip, l), ipStart), ipStart)
+            a := ip
+        }
+        let end := sub(literals(sub(add(ipStart, mload(data)), a), a, op), 0x7fe0)
+        let o := add(result, 0x20)
+        mstore(result, sub(end, o))
+        for {} iszero(gt(o, end)) {
+            o := add(o, 0x20)
+        } {
+            mstore(o, mload(add(o, 0x7fe0)))
+        }
+        mstore(end, 0)
+        mstore(0x40, add(end, 0x20))
+    }
+}
+```
+
+### getCallDataGas(bytes)
+
+- **Kind**: free-function
+- **Source**: 768:254:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:getCallDataGas(bytes)`
+
+```solidity
+/// @notice Calculate the gas cost of calldata.
+///  @param data The calldata to be sent.
+///  @return calldataGas The gas cost of the calldata.
+function getCallDataGas(bytes memory data) pure returns (uint256 calldataGas) {
+    for (uint256 i = 0; i < data.length; i++) {
+        if (data[i] == 0x00) {
+            calldataGas += 4;
+        } else {
+            calldataGas += 16;
+        }
+    }
+}
+```
+
+### getOpStackL1Gas(bytes)
+
+- **Kind**: free-function
+- **Source**: 1555:300:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:getOpStackL1Gas(bytes)`
+
+```solidity
+/// @notice Calculate the gas cost of calldata on OpStack L1.
+///  @param data The calldata to be sent.
+///  @return calldataGas The gas cost of the calldata on OpStack L1.
+function getOpStackL1Gas(bytes memory data) pure returns (uint256 calldataGas) {
+    uint256 opStackConstant = 2028;
+    UD60x18 opStackScalar = ud(0.684e18);
+    calldataGas = intoUint256(PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)).mul(opStackScalar)) + opStackConstant;
+}
+```
+
+### ud(uint256)
+
+- **Kind**: free-function
+- **Source**: 3445:86:132
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/ud60x18/Casting.sol:ud(uint256)`
+
+```solidity
+/// @notice Alias for {wrap}.
+function ud(uint256 x) pure returns (UD60x18 result) {
+    result = UD60x18.wrap(x);
+}
+```
+
+### intoUint256(UD60x18)
+
+- **Kind**: free-function
+- **Source**: 2647:97:132
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/ud60x18/Casting.sol:intoUint256(UD60x18)`
+
+```solidity
+/// @notice Casts a UD60x18 number into uint128.
+///  @dev This is basically an alias for {unwrap}.
+function intoUint256(UD60x18 x) pure returns (uint256 result) {
+    result = UD60x18.unwrap(x);
+}
+```
+
+### intoUD60x18(uint256)
+
+- **Kind**: internal
+- **Source**: 3135:112:109
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/casting/Uint256.sol:PRBMathCastingUint256:intoUD60x18(uint256)`
+
+```solidity
+/// @notice Casts a uint256 number to UD60x18.
+function intoUD60x18(uint256 x) internal pure returns (UD60x18 result) {
+    result = UD60x18.wrap(x);
+}
+```
+
+### mul(UD60x18,UD60x18)
+
+- **Kind**: free-function
+- **Source**: 18914:128:137
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/ud60x18/Math.sol:mul(UD60x18,UD60x18)`
+
+```solidity
+/// @notice Multiplies two UD60x18 numbers together, returning a new UD60x18 number.
+///  @dev Uses {Common.mulDiv} to enable overflow-safe multiplication and division.
+///  Notes:
+///  - Refer to the notes in {Common.mulDiv}.
+///  Requirements:
+///  - Refer to the requirements in {Common.mulDiv}.
+///  @dev See the documentation in {Common.mulDiv18}.
+///  @param x The multiplicand as a UD60x18 number.
+///  @param y The multiplier as a UD60x18 number.
+///  @return result The product as a UD60x18 number.
+///  @custom:smtchecker abstract-function-nondet
+function mul(UD60x18 x, UD60x18 y) pure returns (UD60x18 result) {
+    result = wrap(Common.mulDiv18(x.unwrap(), y.unwrap()));
+}
+```
+
+### wrap(uint256)
+
+- **Kind**: free-function
+- **Source**: 3865:88:132
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/ud60x18/Casting.sol:wrap(uint256)`
+
+```solidity
+/// @notice Wraps a uint256 number into the UD60x18 value type.
+function wrap(uint256 x) pure returns (UD60x18 result) {
+    result = UD60x18.wrap(x);
+}
+```
+
+### mulDiv18(uint256,uint256)
+
+- **Kind**: free-function
+- **Source**: 19680:819:107
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/Common.sol:mulDiv18(uint256,uint256)`
+
+```solidity
+/// @notice Calculates x*y÷1e18 with 512-bit precision.
+///  @dev A variant of {mulDiv} with constant folding, i.e. in which the denominator is hard coded to 1e18.
+///  Notes:
+///  - The body is purposely left uncommented; to understand how this works, see the documentation in {mulDiv}.
+///  - The result is rounded toward zero.
+///  - We take as an axiom that the result cannot be `MAX_UINT256` when x and y solve the following system of equations:
+///  $$
+///  \begin{cases}
+///      x * y = MAX\_UINT256 * UNIT \\
+///      (x * y) \% UNIT \geq \frac{UNIT}{2}
+///  \end{cases}
+///  $$
+///  Requirements:
+///  - Refer to the requirements in {mulDiv}.
+///  - The result must fit in uint256.
+///  @param x The multiplicand as an unsigned 60.18-decimal fixed-point number.
+///  @param y The multiplier as an unsigned 60.18-decimal fixed-point number.
+///  @return result The result as an unsigned 60.18-decimal fixed-point number.
+///  @custom:smtchecker abstract-function-nondet
+function mulDiv18(uint256 x, uint256 y) pure returns (uint256 result) {
+    uint256 prod0;
+    uint256 prod1;
+    assembly ("memory-safe") {
+        let mm := mulmod(x, y, not(0))
+        prod0 := mul(x, y)
+        prod1 := sub(sub(mm, prod0), lt(mm, prod0))
+    }
+    if (prod1 == 0) {
+        unchecked {
+            return prod0 / UNIT;
+        }
+    }
+    if (prod1 >= UNIT) {
+        revert PRBMath_MulDiv18_Overflow(x, y);
+    }
+    uint256 remainder;
+    assembly ("memory-safe") {
+        remainder := mulmod(x, y, UNIT)
+        result := mul(or(div(sub(prod0, remainder), UNIT_LPOTD), mul(sub(prod1, gt(remainder, prod0)), add(div(sub(0, UNIT_LPOTD), UNIT_LPOTD), 1))), UNIT_INVERSE)
+    }
+}
+```
+
+### unwrap(UD60x18)
+
+- **Kind**: free-function
+- **Source**: 3707:92:132
+- **Link**: `lib/v2-core/lib/modulekit/node_modules/@prb/math/src/ud60x18/Casting.sol:unwrap(UD60x18)`
+
+```solidity
+/// @notice Unwraps a UD60x18 number into uint256.
+function unwrap(UD60x18 x) pure returns (uint256 result) {
+    result = UD60x18.unwrap(x);
+}
+```
+
+### exists(string)
+
+- **Kind**: free-function
+- **Source**: 3719:96:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:exists(string)`
+
+```solidity
+function exists(string memory path) view returns (bool) {
+    return Vm(VM_ADDR).exists(path);
+}
+```
+
+### readFile(string)
+
+- **Kind**: free-function
+- **Source**: 3608:109:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:readFile(string)`
+
+```solidity
+function readFile(string memory path) view returns (string memory) {
+    return Vm(VM_ADDR).readFile(path);
+}
+```
+
+### parsePrevGasReport(string)
+
+- **Kind**: free-function
+- **Source**: 2023:722:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:parsePrevGasReport(string)`
+
+```solidity
+/// @notice Parse the previous gas report from a file.
+///  @param fileContent The content of the file.
+///  @return prevGasCalculations The previous gas calculations.
+function parsePrevGasReport(string memory fileContent) pure returns (GasCalculations memory prevGasCalculations) {
+    prevGasCalculations.total = parseUintFromASCII(parseJson(fileContent, ".Total"));
+    prevGasCalculations.creation = parseUintFromASCII(parseJson(fileContent, ".Phases.Creation"));
+    prevGasCalculations.validation = parseUintFromASCII(parseJson(fileContent, ".Phases.Validation"));
+    prevGasCalculations.execution = parseUintFromASCII(parseJson(fileContent, ".Phases.Execution"));
+    prevGasCalculations.arbitrum = parseUintFromASCII(parseJson(fileContent, ".Calldata.Arbitrum"));
+    prevGasCalculations.opStack = parseUintFromASCII(parseJson(fileContent, ".Calldata.OP-Stack"));
+}
+```
+
+### parseUintFromASCII(bytes)
+
+- **Kind**: free-function
+- **Source**: 2865:632:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:parseUintFromASCII(bytes)`
+
+```solidity
+/// @notice Parse a uint256 from ASCII.
+///  @param ascii The ASCII to be parsed.
+///  @return _ret The parsed uint256.
+function parseUintFromASCII(bytes memory ascii) pure returns (uint256 _ret) {
+    bytes memory prevTotal;
+    uint256 offset = (ascii.length > 32) ? 32 : 0;
+    for (uint256 i; i < ascii.length; i++) {
+        if (ascii[i] == 0x28) {
+            break;
+        } else {
+            if (i >= offset) {
+                prevTotal = abi.encodePacked(prevTotal, ascii[i]);
+            }
+        }
+    }
+    uint256 j = 1;
+    for (uint256 i = prevTotal.length - 1; i > 0; i--) {
+        if ((uint8(prevTotal[i]) >= 48) && (uint8(prevTotal[i]) <= 57)) {
+            _ret += (uint8(prevTotal[i]) - 48) * j;
+            j *= 10;
+        }
+    }
+}
+```
+
+### parseJson(string,string)
+
+- **Kind**: free-function
+- **Source**: 4352:134:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:parseJson(string,string)`
+
+```solidity
+function parseJson(string memory json, string memory key) pure returns (bytes memory) {
+    return Vm(VM_ADDR).parseJson(json, key);
+}
+```
+
+### formatGasToWrite(string,struct GasCalculations,struct GasCalculations)
+
+- **Kind**: internal
+- **Source**: 1413:2033:246
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasParser.sol:GasParser:formatGasToWrite(string,struct GasCalculations,struct GasCalculations)`
+
+```solidity
+function formatGasToWrite(string memory gasIdentifier, GasCalculations memory prevGasCalculations, GasCalculations memory gasCalculations) internal returns (string memory finalJson) {
+    string memory jsonObj = string(abi.encodePacked(gasIdentifier));
+    serializeString(jsonObj, "Total", formatGasValue({prevValue: prevGasCalculations.total, newValue: gasCalculations.total}));
+    string memory phasesObj = "phases";
+    serializeString(phasesObj, "Creation", formatGasValue({prevValue: prevGasCalculations.creation, newValue: gasCalculations.creation}));
+    serializeString(phasesObj, "Validation", formatGasValue({prevValue: prevGasCalculations.validation, newValue: gasCalculations.validation}));
+    string memory phasesOutput = serializeString(phasesObj, "Execution", formatGasValue({prevValue: prevGasCalculations.execution, newValue: gasCalculations.execution}));
+    string memory l2sObj = "l2s";
+    serializeString(l2sObj, "OP-Stack", formatGasValue({prevValue: prevGasCalculations.opStack, newValue: gasCalculations.opStack}));
+    string memory l2sOutput = serializeString(l2sObj, "Arbitrum", formatGasValue({prevValue: prevGasCalculations.arbitrum, newValue: gasCalculations.arbitrum}));
+    serializeString(jsonObj, "Phases", phasesOutput);
+    finalJson = serializeString(jsonObj, "Calldata", l2sOutput);
+}
+```
+
+### serializeString(string,string,string)
+
+- **Kind**: free-function
+- **Source**: 3290:213:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:serializeString(string,string,string)`
+
+```solidity
+function serializeString(string memory objectKey, string memory valueKey, string memory value) returns (string memory json) {
+    return Vm(VM_ADDR).serializeString(objectKey, valueKey, value);
+}
+```
+
+### formatGasValue(uint256,uint256)
+
+- **Kind**: free-function
+- **Source**: 3669:445:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:formatGasValue(uint256,uint256)`
+
+```solidity
+/// @notice Format the gas value.
+///  @param prevValue The previous gas value.
+///  @param newValue The new gas value.
+///  @return formattedValue The formatted gas value.
+function formatGasValue(uint256 prevValue, uint256 newValue) pure returns (string memory formattedValue) {
+    if (prevValue == 0) {
+        formattedValue = string.concat(formatGas(int256(newValue)), " gas");
+    } else {
+        formattedValue = string.concat(formatGas(int256(newValue)), " gas (diff: ", formatGas(int256(newValue) - int256(prevValue)), ")");
+    }
+}
+```
+
+### formatGas(int256)
+
+- **Kind**: free-function
+- **Source**: 4268:455:245
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/gas/GasCalculations.sol:formatGas(int256)`
+
+```solidity
+/// @notice Format the gas value with underscores for readability.
+///  @param value The gas value to be formatted.
+///  @return The formatted gas value.
+function formatGas(int256 value) pure returns (string memory) {
+    string memory str = toString(value);
+    bytes memory bStr = bytes(str);
+    bytes memory result = new bytes(bStr.length + ((bStr.length - 1) / 3));
+    uint256 j = result.length;
+    for (uint256 i = 0; i < bStr.length; i++) {
+        if ((i > 0) && ((i % 3) == 0)) {
+            result[--j] = "_";
+        }
+        result[--j] = bStr[(bStr.length - i) - 1];
+    }
+    return string(result);
+}
+```
+
+### toString(int256)
+
+- **Kind**: free-function
+- **Source**: 3924:104:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:toString(int256)`
+
+```solidity
+function toString(int256 input) pure returns (string memory) {
+    return Vm(VM_ADDR).toString(input);
+}
+```
+
+### writeJson(string,string)
+
+- **Kind**: free-function
+- **Source**: 3505:101:244
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Vm.sol:writeJson(string,string)`
+
+```solidity
+function writeJson(string memory json, string memory path) {
+    Vm(VM_ADDR).writeJson(json, path);
+}
+```
+
+### writeGasIdentifier(string)
+
+- **Kind**: free-function
+- **Source**: 1337:137:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:writeGasIdentifier(string)`
+
+```solidity
+function writeGasIdentifier(string memory id) {
+    bytes32 slot = keccak256("ModuleKit.GasIdentifierSlot");
+    writeString(slot, id);
+}
+```
+
+### writeString(bytes32,string)
+
+- **Kind**: free-function
+- **Source**: 12883:660:243
+- **Link**: `lib/v2-core/lib/modulekit/src/test/utils/Storage.sol:writeString(bytes32,string)`
+
+```solidity
+function writeString(bytes32 slot, string memory value) {
+    bytes memory strBytes = bytes(value);
+    uint256 length = strBytes.length;
+    assembly {
+        sstore(slot, length)
+    }
+    for (uint256 i = 0; i < length; i += 32) {
+        bytes32 data;
+        for (uint256 j = 0; (j < 32) && ((i + j) < length); j++) {
+            data |= bytes32(uint256(uint8(strBytes[i + j])) << (248 - (j * 8)));
+        }
+        bytes32 charSlot = keccak256(abi.encodePacked(slot, i / 32));
+        assembly {
+            sstore(charSlot, data)
+        }
+    }
+}
+```
+
+### _deposit(uint256,address,address)
+
+- **Kind**: internal
+- **Source**: 33093:162:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:_deposit(uint256,address,address)`
+
+```solidity
+function _deposit(uint256 depositAmount, address superVault, address asset_) internal {
+    __deposit(instanceOnEth, depositAmount, superVault, asset_);
+}
+```
+
+### __deposit(struct AccountInstance,uint256,address,address)
+
+- **Kind**: internal
+- **Source**: 24723:958:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:__deposit(struct AccountInstance,uint256,address,address)`
+
+```solidity
+function __deposit(AccountInstance memory accInst, uint256 depositAmount, address superVault, address asset_) internal {
+    address[] memory hooksAddresses = new address[](1);
+    hooksAddresses[0] = _getHookAddress(ETH, APPROVE_AND_DEPOSIT_4626_VAULT_HOOK_KEY);
+    bytes[] memory hooksData = new bytes[](1);
+    hooksData[0] = _createApproveAndDeposit4626HookData(_getYieldSourceOracleId(bytes32(bytes(ERC4626_YIELD_SOURCE_ORACLE_KEY)), MANAGER), superVault, asset_, depositAmount, false, address(0), 0);
+    ISuperExecutor.ExecutorEntry memory entry = ISuperExecutor.ExecutorEntry({hooksAddresses: hooksAddresses, hooksData: hooksData});
+    UserOpData memory userOpData = _getExecOps(accInst, superExecutorOnEth, abi.encode(entry));
+    executeOp(userOpData);
+}
+```
+
+### _getHookAddress(uint64,string)
+
+- **Kind**: internal
+- **Source**: 21123:153:480
+- **Link**: `lib/v2-core/test/BaseTest.t.sol:BaseTest:_getHookAddress(uint64,string)`
+
+```solidity
+function _getHookAddress(uint64 chainId, string memory hookName) internal view returns (address) {
+    return hookAddresses[chainId][hookName];
+}
+```
+
+### _createApproveAndDeposit4626HookData(bytes32,address,address,uint256,bool,address,uint256)
+
+- **Kind**: internal
+- **Source**: 12335:449:501
+- **Link**: `lib/v2-core/test/utils/InternalHelpers.sol:InternalHelpers:_createApproveAndDeposit4626HookData(bytes32,address,address,uint256,bool,address,uint256)`
+
+```solidity
+function _createApproveAndDeposit4626HookData(bytes32 yieldSourceOracleId, address vault, address token, uint256 amount, bool usePrevHookAmount, address vaultBank, uint256 dstChainId) internal pure returns (bytes memory hookData) {
+    hookData = abi.encodePacked(yieldSourceOracleId, vault, token, amount, usePrevHookAmount, vaultBank, dstChainId);
+}
+```
+
+### _getYieldSourceOracleId(bytes32,address)
+
+- **Kind**: internal
+- **Source**: 4752:156:501
+- **Link**: `lib/v2-core/test/utils/InternalHelpers.sol:InternalHelpers:_getYieldSourceOracleId(bytes32,address)`
+
+```solidity
+function _getYieldSourceOracleId(bytes32 id, address sender) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(id, sender));
+}
+```
+
+### assertGt(uint256,uint256,string)
+
+- **Kind**: internal
+- **Source**: 14795:177:12
+- **Link**: `lib/forge-std/src/StdAssertions.sol:StdAssertions:assertGt(uint256,uint256,string)`
+
+```solidity
+function assertGt(uint256 left, uint256 right, string memory err) virtual internal pure {
+    if (left <= right) {
+        vm.assertGt(left, right, err);
+    }
+}
+```
+
+### assertEq(uint256,uint256,string)
+
+- **Kind**: internal
+- **Source**: 2823:177:12
+- **Link**: `lib/forge-std/src/StdAssertions.sol:StdAssertions:assertEq(uint256,uint256,string)`
+
+```solidity
+function assertEq(uint256 left, uint256 right, string memory err) virtual internal pure {
+    if (left != right) {
+        vm.assertEq(left, right, err);
+    }
+}
+```
+
+### _depositFreeAssetsFromSingleAmountViaSmartAccount5115(uint256,address,struct AccountInstance,contract SuperVaultStrategy)
+
+- **Kind**: internal
+- **Source**: 38821:2572:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:_depositFreeAssetsFromSingleAmountViaSmartAccount5115(uint256,address,struct AccountInstance,contract SuperVaultStrategy)`
+
+```solidity
+function _depositFreeAssetsFromSingleAmountViaSmartAccount5115(uint256 depositAmount, address underlyingVault, AccountInstance memory managerAccount, SuperVaultStrategy targetStrategy) internal {
+    DepositViaSmartAccountVars memory vars;
+    vars.depositHookAddress = _getHookAddress(ETH, APPROVE_AND_DEPOSIT_5115_VAULT_HOOK_KEY);
+    vars.fulfillHooksAddresses = new address[](1);
+    vars.fulfillHooksAddresses[0] = vars.depositHookAddress;
+    vars.fulfillHooksData = new bytes[](1);
+    vars.fulfillHooksData[0] = _createApproveAndDeposit5115HookData(_getYieldSourceOracleId(bytes32(bytes(ERC5115_YIELD_SOURCE_ORACLE_KEY)), MANAGER), underlyingVault, address(asset5115), depositAmount, 0, false);
+    vars.expectedAssetsOrSharesOut = new uint256[](1);
+    vars.expectedAssetsOrSharesOut[0] = IStandardizedYield(address(underlyingVault)).previewDeposit(address(asset5115), depositAmount);
+    vars.argsForProofs = new bytes[](1);
+    vars.argsForProofs[0] = ISuperHookInspector(vars.fulfillHooksAddresses[0]).inspect(vars.fulfillHooksData[0]);
+    vars.executeArgs = ISuperVaultStrategy.ExecuteArgs({hooks: vars.fulfillHooksAddresses, hookCalldata: vars.fulfillHooksData, expectedAssetsOrSharesOut: vars.expectedAssetsOrSharesOut, globalProofs: _getMerkleProofsForHooks(vars.fulfillHooksAddresses, vars.argsForProofs), strategyProofs: new bytes32[][](1)});
+    vars.executeHooksHook = address(new SuperVaultExecuteHooksHook(address(targetStrategy)));
+    vars.hooksAddresses = new address[](1);
+    vars.hooksAddresses[0] = vars.executeHooksHook;
+    vars.hooksData = new bytes[](1);
+    vars.hooksData[0] = abi.encode(vars.executeArgs);
+    vars.entry = ISuperExecutor.ExecutorEntry({hooksAddresses: vars.hooksAddresses, hooksData: vars.hooksData});
+    vars.userOpData = _getExecOps(managerAccount, superExecutorOnEth, abi.encode(vars.entry));
+    executeOp(vars.userOpData);
+    (vars.pricePerShare) = _getSuperVaultPricePerShare();
+    vars.shares = depositAmount.mulDiv(targetStrategy.PRECISION(), vars.pricePerShare);
+    _trackDeposit(accountEth, vars.shares, depositAmount);
+}
+```
+
+### _createApproveAndDeposit5115HookData(bytes32,address,address,uint256,uint256,bool)
+
+- **Kind**: internal
+- **Source**: 94:419:669
+- **Link**: `test/utils/hooks/HooksHelpers.sol:HooksHelpers:_createApproveAndDeposit5115HookData(bytes32,address,address,uint256,uint256,bool)`
+
+```solidity
+function _createApproveAndDeposit5115HookData(bytes32 yieldSourceOracleId, address vault, address tokenIn, uint256 amount, uint256 minSharesOut, bool usePrevHookAmount) internal pure returns (bytes memory hookData) {
+    hookData = abi.encodePacked(yieldSourceOracleId, vault, tokenIn, amount, minSharesOut, usePrevHookAmount);
+}
+```
+
+### _getMerkleProofsForHooks(address[],bytes[])
+
+- **Kind**: internal
+- **Source**: 6398:1705:672
+- **Link**: `test/utils/merkle/helper/MerkleReader.sol:MerkleReader:_getMerkleProofsForHooks(address[],bytes[])`
+
+```solidity
+///  @notice Get Merkle proofs for multiple hooks with specific arguments (OPTIMIZED)
+///  @dev Uses efficient JS-based lookup to avoid gas-expensive Solidity operations
+///  @param hookAddresses Array of hook contract addresses
+///  @param encodedHookArgs Array of packed-encoded hook arguments corresponding to each hook
+///  @return proofs Array of Merkle proofs for each hook/args combination
+function _getMerkleProofsForHooks(address[] memory hookAddresses, bytes[] memory encodedHookArgs) internal returns (bytes32[][] memory proofs) {
+    if (hookAddresses.length != encodedHookArgs.length) revert InvalidArrayLengths();
+    if (hookAddresses.length == 0) revert EmptyInput();
+    string memory addressesArg = "";
+    string memory argsArg = "";
+    for (uint256 i = 0; i < hookAddresses.length; i++) {
+        if (i > 0) {
+            addressesArg = string.concat(addressesArg, ",");
+            argsArg = string.concat(argsArg, ",");
+        }
+        addressesArg = string.concat(addressesArg, vm.toString(hookAddresses[i]));
+        argsArg = string.concat(argsArg, vm.toString(encodedHookArgs[i]));
+    }
+    string[] memory cmd = new string[](6);
+    cmd[0] = "node";
+    cmd[1] = string.concat(vm.projectRoot(), "/test/utils/merkle/merkle-js/efficient-proof-lookup.js");
+    cmd[2] = "batch";
+    cmd[3] = addressesArg;
+    cmd[4] = argsArg;
+    cmd[5] = vm.toString(currentChainId);
+    bytes memory result = vm.ffi(cmd);
+    string memory resultStr = string(result);
+    proofs = abi.decode(vm.parseJson(resultStr), (bytes32[][]));
+    return proofs;
+}
+```
+
+### _getSuperVaultPricePerShare()
+
+- **Kind**: internal
+- **Source**: 112127:597:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:_getSuperVaultPricePerShare()`
+
+```solidity
+function _getSuperVaultPricePerShare() internal view returns (uint256 pricePerShare) {
+    uint256 totalSupplyAmount = vault.totalSupply();
+    if (totalSupplyAmount == 0) {
+        pricePerShare = vault.PRECISION();
+    } else {
+        (uint256 totalAssetsVault, ) = totalAssetHelper.totalAssets(address(strategy));
+        pricePerShare = totalAssetsVault.mulDiv(vault.PRECISION(), totalSupplyAmount, Math.Rounding.Floor);
+    }
+}
+```
+
+### mulDiv(uint256,uint256,uint256,enum Math.Rounding)
+
+- **Kind**: internal
+- **Source**: 11054:238:60
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/Math.sol:Math:mulDiv(uint256,uint256,uint256,enum Math.Rounding)`
+
+```solidity
+///  @dev Calculates x * y / denominator with full precision, following the selected rounding direction.
+function mulDiv(uint256 x, uint256 y, uint256 denominator, Rounding rounding) internal pure returns (uint256) {
+    return mulDiv(x, y, denominator) + SafeCast.toUint(unsignedRoundsUp(rounding) && (mulmod(x, y, denominator) > 0));
+}
+```
+
+### toUint(bool)
+
+- **Kind**: internal
+- **Source**: 34795:145:61
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol:SafeCast:toUint(bool)`
+
+```solidity
+///  @dev Cast a boolean (false or true) to a uint256 (0 or 1) with no jump.
+function toUint(bool b) internal pure returns (uint256 u) {
+    assembly ("memory-safe") {
+        u := iszero(iszero(b))
+    }
+}
+```
+
+### unsignedRoundsUp(enum Math.Rounding)
+
+- **Kind**: internal
+- **Source**: 32020:122:60
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/Math.sol:Math:unsignedRoundsUp(enum Math.Rounding)`
+
+```solidity
+///  @dev Returns whether a provided rounding mode is considered rounding up for unsigned integers.
+function unsignedRoundsUp(Rounding rounding) internal pure returns (bool) {
+    return (uint8(rounding) % 2) == 1;
+}
+```
+
+### mulDiv(uint256,uint256,uint256)
+
+- **Kind**: internal
+- **Source**: 7242:3683:60
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/Math.sol:Math:mulDiv(uint256,uint256,uint256)`
+
+```solidity
+///  @dev Calculates floor(x * y / denominator) with full precision. Throws if result overflows a uint256 or
+///  denominator == 0.
+///  Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv) with further edits by
+///  Uniswap Labs also under MIT license.
+function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 result) {
+    unchecked {
+        (uint256 high, uint256 low) = mul512(x, y);
+        if (high == 0) {
+            return low / denominator;
+        }
+        if (denominator <= high) {
+            Panic.panic(ternary(denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW));
+        }
+        uint256 remainder;
+        assembly ("memory-safe") {
+            remainder := mulmod(x, y, denominator)
+            high := sub(high, gt(remainder, low))
+            low := sub(low, remainder)
+        }
+        uint256 twos = denominator & (0 - denominator);
+        assembly ("memory-safe") {
+            denominator := div(denominator, twos)
+            low := div(low, twos)
+            twos := add(div(sub(0, twos), twos), 1)
+        }
+        low |= high * twos;
+        uint256 inverse = (3 * denominator) ^ 2;
+        inverse *= 2 - (denominator * inverse);
+        inverse *= 2 - (denominator * inverse);
+        inverse *= 2 - (denominator * inverse);
+        inverse *= 2 - (denominator * inverse);
+        inverse *= 2 - (denominator * inverse);
+        inverse *= 2 - (denominator * inverse);
+        result = low * inverse;
+        return result;
+    }
+}
+```
+
+### mul512(uint256,uint256)
+
+- **Kind**: internal
+- **Source**: 1027:550:60
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/Math.sol:Math:mul512(uint256,uint256)`
+
+```solidity
+///  @dev Return the 512-bit multiplication of two uint256.
+///  The result is stored in two 256 variables such that product = high * 2²⁵⁶ + low.
+function mul512(uint256 a, uint256 b) internal pure returns (uint256 high, uint256 low) {
+    assembly ("memory-safe") {
+        let mm := mulmod(a, b, not(0))
+        low := mul(a, b)
+        high := sub(sub(mm, low), lt(mm, low))
+    }
+}
+```
+
+### panic(uint256)
+
+- **Kind**: internal
+- **Source**: 1776:194:55
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/Panic.sol:Panic:panic(uint256)`
+
+```solidity
+/// @dev Reverts with a panic code. Recommended to use with
+///  the internal constants with predefined codes.
+function panic(uint256 code) internal pure {
+    assembly ("memory-safe") {
+        mstore(0x00, 0x4e487b71)
+        mstore(0x20, code)
+        revert(0x1c, 0x24)
+    }
+}
+```
+
+### ternary(bool,uint256,uint256)
+
+- **Kind**: internal
+- **Source**: 5071:294:60
+- **Link**: `lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/math/Math.sol:Math:ternary(bool,uint256,uint256)`
+
+```solidity
+///  @dev Branchless ternary evaluation for `a ? b : c`. Gas costs are constant.
+///  IMPORTANT: This function may reduce bytecode size and consume less gas when used standalone.
+///  However, the compiler may optimize Solidity ternary operations (i.e. `a ? b : c`) to only compute
+///  one branch when needed, making this function more expensive.
+function ternary(bool condition, uint256 a, uint256 b) internal pure returns (uint256) {
+    unchecked {
+        return b ^ ((a ^ b) * SafeCast.toUint(condition));
+    }
+}
+```
+
+### _trackDeposit(address,uint256,uint256)
+
+- **Kind**: internal
+- **Source**: 110828:238:576
+- **Link**: `test/integration/SuperVault/BaseSuperVaultTest.t.sol:BaseSuperVaultTest:_trackDeposit(address,uint256,uint256)`
+
+```solidity
+function _trackDeposit(address user, uint256 shares, uint256 assets) internal {
+    SuperVaultState storage state = superVaultStates[user];
+    state.accumulatorShares += shares;
+    state.accumulatorCostBasis += assets;
+}
+```
+
+## External Calls
+
+- **Vm::selectFork(uint256)**
+- **SuperVault::name()**
+- **SuperVault::symbol()**
+- **SuperVault::balanceOf(address)**
+- **IERC20Metadata::balanceOf(address)**
+- **IStandardizedYield::balanceOf(address)**
+
+## State Variable Reads
+
+- **stdstore** (`struct StdStorage`)
+- **vm** (`contract Vm`) [lib/forge-std/src/Vm.sol/interface_Vm.md]
+- **UINT256_MAX** (`uint256`)
+- **aggregator** (`contract SuperVaultAggregator`) [src/SuperVault/SuperVaultAggregator.sol/contract_SuperVaultAggregator.md]
+- **fluidVault** (`contract IERC4626`) [lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol/interface_IERC4626.md]
+- **aaveVault** (`contract IERC4626`) [lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/interfaces/IERC4626.sol/interface_IERC4626.md]
+- **pendleEthenaAddress** (`address`)
+- **superExecutorOnEth** (`contract ISuperExecutor`) [lib/v2-core/src/interfaces/ISuperExecutor.sol/interface_ISuperExecutor.md]
+- **contractAddresses** (`mapping(uint64 => mapping(string => address))`)
+- **VM_ADDR** (`address`)
+- **MIN_STAKE_VALUE** (`uint256`)
+- **MIN_UNSTAKE_DELAY** (`uint256`)
+- **instanceOnEth** (`struct AccountInstance`)
+- **hookAddresses** (`mapping(uint64 => mapping(string => address))`)
+- **asset5115** (`contract IERC20Metadata`) [lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol/interface_IERC20Metadata.md]
+- **accountEth** (`address`)
+- **currentChainId** (`uint256`)
+- **vault** (`contract SuperVault`) [src/SuperVault/SuperVault.sol/contract_SuperVault.md]
+- **totalAssetHelper** (`contract TotalAssetHelper`) [test/integration/SuperVault/TotalAssetHelper.sol/contract_TotalAssetHelper.md]
+- **strategy** (`contract SuperVaultStrategy`) [src/SuperVault/SuperVaultStrategy.sol/contract_SuperVaultStrategy.md]
+- **superVaultStates** (`mapping(address => struct BaseSuperVaultTest.SuperVaultState)`)
+
+## Call Tree
+
+```
+┌─ [0] ⚙️ FUNCTION: SuperVault5115Tests.test_Deposit5115_AndAllocateToYieldViaSmartAccountManager() (NodeID: 0)
+    💬 Args: [no args]
+    👁️  Def: public
+  ├─ [1] ⚙️ FUNCTION: Helpers._getTokens(address,address,uint256) (NodeID: 1)
+  │   💬 Args: [address(asset5115), managerAccount.account, 1 ether]
+  │   👁️  Def: internal
+  │ └─ [2] ⚙️ FUNCTION: StdCheats.deal(address,address,uint256) (NodeID: 2)
+  │     💬 Args: [token_, to_, amount_]
+  │     👁️  Def: internal
+  │   └─ [3] ⚙️ FUNCTION: StdCheats.deal(address,address,uint256,bool) (NodeID: 3)
+  │       💬 Args: [token, to, give, false]
+  │       👁️  Def: internal
+  │     ├─ [4] ⚙️ FUNCTION: stdStorage.target(struct StdStorage,address) (NodeID: 4)
+  │     │   💬 Args: [stdstore, token]
+  │     │   👁️  Def: internal
+  │     │ └─ [5] ⚙️ FUNCTION: stdStorageSafe.target(struct StdStorage,address) (NodeID: 5)
+  │     │     💬 Args: [self, _target]
+  │     │     👁️  Def: internal
+  │     ├─ [4] ⚙️ FUNCTION: stdStorage.sig(struct StdStorage,bytes4) (NodeID: 6)
+  │     │   💬 Args: [stdstore.target(token), 0x70a08231]
+  │     │   👁️  Def: internal
+  │     │ └─ [5] ⚙️ FUNCTION: stdStorageSafe.sig(struct StdStorage,bytes4) (NodeID: 7)
+  │     │     💬 Args: [self, _sig]
+  │     │     👁️  Def: internal
+  │     ├─ [4] ⚙️ FUNCTION: stdStorage.with_key(struct StdStorage,address) (NodeID: 8)
+  │     │   💬 Args: [stdstore.target(token).sig(0x70a08231), to]
+  │     │   👁️  Def: internal
+  │     │ └─ [5] ⚙️ FUNCTION: stdStorageSafe.with_key(struct StdStorage,address) (NodeID: 9)
+  │     │     💬 Args: [self, who]
+  │     │     👁️  Def: internal
+  │     ├─ [4] ⚙️ FUNCTION: stdStorage.checked_write(struct StdStorage,uint256) (NodeID: 10)
+  │     │   💬 Args: [stdstore.target(token).sig(0x70a08231).with_key(to), give]
+  │     │   👁️  Def: internal
+  │     │ └─ [5] ⚙️ FUNCTION: stdStorage.checked_write(struct StdStorage,bytes32) (NodeID: 11)
+  │     │     💬 Args: [self, bytes32(amt)]
+  │     │     👁️  Def: internal
+  │     │   ├─ [6] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 12)
+  │     │   │   💬 Args: [self]
+  │     │   │   👁️  Def: internal
+  │     │   │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 13)
+  │     │   │     💬 Args: [self._keys]
+  │     │   │     👁️  Def: private
+  │     │   ├─ [6] ⚙️ FUNCTION: stdStorage.find(struct StdStorage,bool) (NodeID: 14)
+  │     │   │   💬 Args: [self, false]
+  │     │   │   👁️  Def: internal
+  │     │   │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.find(struct StdStorage,bool) (NodeID: 15)
+  │     │   │     💬 Args: [self, _clear]
+  │     │   │     👁️  Def: internal
+  │     │   │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 16)
+  │     │   │   │   💬 Args: [self]
+  │     │   │   │   👁️  Def: internal
+  │     │   │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 17)
+  │     │   │   │     💬 Args: [self._keys]
+  │     │   │   │     👁️  Def: private
+  │     │   │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.clear(struct StdStorage) (NodeID: 18)
+  │     │   │   │   💬 Args: [self]
+  │     │   │   │   👁️  Def: internal
+  │     │   │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 19)
+  │     │   │   │   💬 Args: [self]
+  │     │   │   │   👁️  Def: internal
+  │     │   │   │ ├─ [9] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 20)
+  │     │   │   │ │   💬 Args: [self]
+  │     │   │   │ │   👁️  Def: internal
+  │     │   │   │ │ └─ [10] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 21)
+  │     │   │   │ │     💬 Args: [self._keys]
+  │     │   │   │ │     👁️  Def: private
+  │     │   │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 22)
+  │     │   │   │     💬 Args: [rdat, 32 * self._depth]
+  │     │   │   │     👁️  Def: private
+  │     │   │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.checkSlotMutatesCall(struct StdStorage,bytes32) (NodeID: 23)
+  │     │   │   │   💬 Args: [self, reads[i]]
+  │     │   │   │   👁️  Def: internal
+  │     │   │   │ ├─ [9] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 24)
+  │     │   │   │ │   💬 Args: [self]
+  │     │   │   │ │   👁️  Def: internal
+  │     │   │   │ │ ├─ [10] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 25)
+  │     │   │   │ │ │   💬 Args: [self]
+  │     │   │   │ │ │   👁️  Def: internal
+  │     │   │   │ │ │ └─ [11] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 26)
+  │     │   │   │ │ │     💬 Args: [self._keys]
+  │     │   │   │ │ │     👁️  Def: private
+  │     │   │   │ │ └─ [10] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 27)
+  │     │   │   │ │     💬 Args: [rdat, 32 * self._depth]
+  │     │   │   │ │     👁️  Def: private
+  │     │   │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 28)
+  │     │   │   │     💬 Args: [self]
+  │     │   │   │     👁️  Def: internal
+  │     │   │   │   ├─ [10] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 29)
+  │     │   │   │   │   💬 Args: [self]
+  │     │   │   │   │   👁️  Def: internal
+  │     │   │   │   │ └─ [11] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 30)
+  │     │   │   │   │     💬 Args: [self._keys]
+  │     │   │   │   │     👁️  Def: private
+  │     │   │   │   └─ [10] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 31)
+  │     │   │   │       💬 Args: [rdat, 32 * self._depth]
+  │     │   │   │       👁️  Def: private
+  │     │   │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.findOffsets(struct StdStorage,bytes32) (NodeID: 32)
+  │     │   │   │   💬 Args: [self, reads[i]]
+  │     │   │   │   👁️  Def: internal
+  │     │   │   │ ├─ [9] ⚙️ FUNCTION: stdStorageSafe.findOffset(struct StdStorage,bytes32,bool) (NodeID: 33)
+  │     │   │   │ │   💬 Args: [self, slot, true]
+  │     │   │   │ │   👁️  Def: internal
+  │     │   │   │ │ └─ [10] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 34)
+  │     │   │   │ │     💬 Args: [self]
+  │     │   │   │ │     👁️  Def: internal
+  │     │   │   │ │   ├─ [11] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 35)
+  │     │   │   │ │   │   💬 Args: [self]
+  │     │   │   │ │   │   👁️  Def: internal
+  │     │   │   │ │   │ └─ [12] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 36)
+  │     │   │   │ │   │     💬 Args: [self._keys]
+  │     │   │   │ │   │     👁️  Def: private
+  │     │   │   │ │   └─ [11] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 37)
+  │     │   │   │ │       💬 Args: [rdat, 32 * self._depth]
+  │     │   │   │ │       👁️  Def: private
+  │     │   │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.findOffset(struct StdStorage,bytes32,bool) (NodeID: 38)
+  │     │   │   │     💬 Args: [self, slot, false]
+  │     │   │   │     👁️  Def: internal
+  │     │   │   │   └─ [10] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 39)
+  │     │   │   │       💬 Args: [self]
+  │     │   │   │       👁️  Def: internal
+  │     │   │   │     ├─ [11] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 40)
+  │     │   │   │     │   💬 Args: [self]
+  │     │   │   │     │   👁️  Def: internal
+  │     │   │   │     │ └─ [12] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 41)
+  │     │   │   │     │     💬 Args: [self._keys]
+  │     │   │   │     │     👁️  Def: private
+  │     │   │   │     └─ [11] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 42)
+  │     │   │   │         💬 Args: [rdat, 32 * self._depth]
+  │     │   │   │         👁️  Def: private
+  │     │   │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.getMaskByOffsets(uint256,uint256) (NodeID: 43)
+  │     │   │   │   💬 Args: [offsetLeft, offsetRight]
+  │     │   │   │   👁️  Def: internal
+  │     │   │   └─ [8] ⚙️ FUNCTION: stdStorageSafe.clear(struct StdStorage) (NodeID: 44)
+  │     │   │       💬 Args: [self]
+  │     │   │       👁️  Def: internal
+  │     │   ├─ [6] ⚙️ FUNCTION: stdStorageSafe.getUpdatedSlotValue(bytes32,uint256,uint256,uint256) (NodeID: 45)
+  │     │   │   💬 Args: [curVal, uint256(set), data.offsetLeft, data.offsetRight]
+  │     │   │   👁️  Def: internal
+  │     │   │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.getMaskByOffsets(uint256,uint256) (NodeID: 46)
+  │     │   │     💬 Args: [offsetLeft, offsetRight]
+  │     │   │     👁️  Def: internal
+  │     │   ├─ [6] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 47)
+  │     │   │   💬 Args: [self]
+  │     │   │   👁️  Def: internal
+  │     │   │ ├─ [7] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 48)
+  │     │   │ │   💬 Args: [self]
+  │     │   │ │   👁️  Def: internal
+  │     │   │ │ └─ [8] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 49)
+  │     │   │ │     💬 Args: [self._keys]
+  │     │   │ │     👁️  Def: private
+  │     │   │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 50)
+  │     │   │     💬 Args: [rdat, 32 * self._depth]
+  │     │   │     👁️  Def: private
+  │     │   └─ [6] ⚙️ FUNCTION: stdStorage.clear(struct StdStorage) (NodeID: 51)
+  │     │       💬 Args: [self]
+  │     │       👁️  Def: internal
+  │     │     └─ [7] ⚙️ FUNCTION: stdStorageSafe.clear(struct StdStorage) (NodeID: 52)
+  │     │         💬 Args: [self]
+  │     │         👁️  Def: internal
+  │     ├─ [4] ⚙️ FUNCTION: stdStorage.target(struct StdStorage,address) (NodeID: 53)
+  │     │   💬 Args: [stdstore, token]
+  │     │   👁️  Def: internal
+  │     │ └─ [5] ⚙️ FUNCTION: stdStorageSafe.target(struct StdStorage,address) (NodeID: 54)
+  │     │     💬 Args: [self, _target]
+  │     │     👁️  Def: internal
+  │     ├─ [4] ⚙️ FUNCTION: stdStorage.sig(struct StdStorage,bytes4) (NodeID: 55)
+  │     │   💬 Args: [stdstore.target(token), 0x18160ddd]
+  │     │   👁️  Def: internal
+  │     │ └─ [5] ⚙️ FUNCTION: stdStorageSafe.sig(struct StdStorage,bytes4) (NodeID: 56)
+  │     │     💬 Args: [self, _sig]
+  │     │     👁️  Def: internal
+  │     └─ [4] ⚙️ FUNCTION: stdStorage.checked_write(struct StdStorage,uint256) (NodeID: 57)
+  │         💬 Args: [stdstore.target(token).sig(0x18160ddd), totSup]
+  │         👁️  Def: internal
+  │       └─ [5] ⚙️ FUNCTION: stdStorage.checked_write(struct StdStorage,bytes32) (NodeID: 58)
+  │           💬 Args: [self, bytes32(amt)]
+  │           👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 59)
+  │         │   💬 Args: [self]
+  │         │   👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 60)
+  │         │     💬 Args: [self._keys]
+  │         │     👁️  Def: private
+  │         ├─ [6] ⚙️ FUNCTION: stdStorage.find(struct StdStorage,bool) (NodeID: 61)
+  │         │   💬 Args: [self, false]
+  │         │   👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.find(struct StdStorage,bool) (NodeID: 62)
+  │         │     💬 Args: [self, _clear]
+  │         │     👁️  Def: internal
+  │         │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 63)
+  │         │   │   💬 Args: [self]
+  │         │   │   👁️  Def: internal
+  │         │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 64)
+  │         │   │     💬 Args: [self._keys]
+  │         │   │     👁️  Def: private
+  │         │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.clear(struct StdStorage) (NodeID: 65)
+  │         │   │   💬 Args: [self]
+  │         │   │   👁️  Def: internal
+  │         │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 66)
+  │         │   │   💬 Args: [self]
+  │         │   │   👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 67)
+  │         │   │ │   💬 Args: [self]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 68)
+  │         │   │ │     💬 Args: [self._keys]
+  │         │   │ │     👁️  Def: private
+  │         │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 69)
+  │         │   │     💬 Args: [rdat, 32 * self._depth]
+  │         │   │     👁️  Def: private
+  │         │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.checkSlotMutatesCall(struct StdStorage,bytes32) (NodeID: 70)
+  │         │   │   💬 Args: [self, reads[i]]
+  │         │   │   👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 71)
+  │         │   │ │   💬 Args: [self]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 72)
+  │         │   │ │ │   💬 Args: [self]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 73)
+  │         │   │ │ │     💬 Args: [self._keys]
+  │         │   │ │ │     👁️  Def: private
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 74)
+  │         │   │ │     💬 Args: [rdat, 32 * self._depth]
+  │         │   │ │     👁️  Def: private
+  │         │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 75)
+  │         │   │     💬 Args: [self]
+  │         │   │     👁️  Def: internal
+  │         │   │   ├─ [10] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 76)
+  │         │   │   │   💬 Args: [self]
+  │         │   │   │   👁️  Def: internal
+  │         │   │   │ └─ [11] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 77)
+  │         │   │   │     💬 Args: [self._keys]
+  │         │   │   │     👁️  Def: private
+  │         │   │   └─ [10] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 78)
+  │         │   │       💬 Args: [rdat, 32 * self._depth]
+  │         │   │       👁️  Def: private
+  │         │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.findOffsets(struct StdStorage,bytes32) (NodeID: 79)
+  │         │   │   💬 Args: [self, reads[i]]
+  │         │   │   👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: stdStorageSafe.findOffset(struct StdStorage,bytes32,bool) (NodeID: 80)
+  │         │   │ │   💬 Args: [self, slot, true]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 81)
+  │         │   │ │     💬 Args: [self]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ │   ├─ [11] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 82)
+  │         │   │ │   │   💬 Args: [self]
+  │         │   │ │   │   👁️  Def: internal
+  │         │   │ │   │ └─ [12] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 83)
+  │         │   │ │   │     💬 Args: [self._keys]
+  │         │   │ │   │     👁️  Def: private
+  │         │   │ │   └─ [11] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 84)
+  │         │   │ │       💬 Args: [rdat, 32 * self._depth]
+  │         │   │ │       👁️  Def: private
+  │         │   │ └─ [9] ⚙️ FUNCTION: stdStorageSafe.findOffset(struct StdStorage,bytes32,bool) (NodeID: 85)
+  │         │   │     💬 Args: [self, slot, false]
+  │         │   │     👁️  Def: internal
+  │         │   │   └─ [10] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 86)
+  │         │   │       💬 Args: [self]
+  │         │   │       👁️  Def: internal
+  │         │   │     ├─ [11] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 87)
+  │         │   │     │   💬 Args: [self]
+  │         │   │     │   👁️  Def: internal
+  │         │   │     │ └─ [12] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 88)
+  │         │   │     │     💬 Args: [self._keys]
+  │         │   │     │     👁️  Def: private
+  │         │   │     └─ [11] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 89)
+  │         │   │         💬 Args: [rdat, 32 * self._depth]
+  │         │   │         👁️  Def: private
+  │         │   ├─ [8] ⚙️ FUNCTION: stdStorageSafe.getMaskByOffsets(uint256,uint256) (NodeID: 90)
+  │         │   │   💬 Args: [offsetLeft, offsetRight]
+  │         │   │   👁️  Def: internal
+  │         │   └─ [8] ⚙️ FUNCTION: stdStorageSafe.clear(struct StdStorage) (NodeID: 91)
+  │         │       💬 Args: [self]
+  │         │       👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: stdStorageSafe.getUpdatedSlotValue(bytes32,uint256,uint256,uint256) (NodeID: 92)
+  │         │   💬 Args: [curVal, uint256(set), data.offsetLeft, data.offsetRight]
+  │         │   👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.getMaskByOffsets(uint256,uint256) (NodeID: 93)
+  │         │     💬 Args: [offsetLeft, offsetRight]
+  │         │     👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: stdStorageSafe.callTarget(struct StdStorage) (NodeID: 94)
+  │         │   💬 Args: [self]
+  │         │   👁️  Def: internal
+  │         │ ├─ [7] ⚙️ FUNCTION: stdStorageSafe.getCallParams(struct StdStorage) (NodeID: 95)
+  │         │ │   💬 Args: [self]
+  │         │ │   👁️  Def: internal
+  │         │ │ └─ [8] ⚙️ FUNCTION: stdStorageSafe.flatten(bytes32[]) (NodeID: 96)
+  │         │ │     💬 Args: [self._keys]
+  │         │ │     👁️  Def: private
+  │         │ └─ [7] ⚙️ FUNCTION: stdStorageSafe.bytesToBytes32(bytes,uint256) (NodeID: 97)
+  │         │     💬 Args: [rdat, 32 * self._depth]
+  │         │     👁️  Def: private
+  │         └─ [6] ⚙️ FUNCTION: stdStorage.clear(struct StdStorage) (NodeID: 98)
+  │             💬 Args: [self]
+  │             👁️  Def: internal
+  │           └─ [7] ⚙️ FUNCTION: stdStorageSafe.clear(struct StdStorage) (NodeID: 99)
+  │               💬 Args: [self]
+  │               👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: BaseSuperVaultTest._deployVaultWithSmartAccountManager(address,address,string,string) (NodeID: 100)
+  │   💬 Args: [managerAccount.account, address(asset5115), "SA-5115", "SA-5115"]
+  │   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(string,string) (NodeID: 101)
+  │   💬 Args: [_name, "SA-5115"]
+  │   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(string,string) (NodeID: 102)
+  │   💬 Args: [_symbol, "SA-5115"]
+  │   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: BaseSuperVaultTest._manageYieldSourcesViaSmartAccount(struct AccountInstance,contract SuperVaultStrategy) (NodeID: 103)
+  │   💬 Args: [managerAccount, newStrategy]
+  │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: BaseTest._getContract(uint64,string) (NodeID: 104)
+  │ │   💬 Args: [ETH, ERC4626_YIELD_SOURCE_ORACLE_KEY]
+  │ │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: BaseTest._getContract(uint64,string) (NodeID: 105)
+  │ │   💬 Args: [ETH, ERC4626_YIELD_SOURCE_ORACLE_KEY]
+  │ │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: BaseTest._getContract(uint64,string) (NodeID: 106)
+  │ │   💬 Args: [ETH, ERC5115_YIELD_SOURCE_ORACLE_KEY]
+  │ │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: InternalHelpers._getExecOps(struct AccountInstance,contract ISuperExecutor,bytes) (NodeID: 107)
+  │ │   💬 Args: [managerAccount, superExecutorOnEth, abi.encode(entry)]
+  │ │   👁️  Def: internal
+  │ │ └─ [3] ⚙️ FUNCTION: ModuleKitHelpers.getExecOps(struct AccountInstance,address,uint256,bytes,address) (NodeID: 108)
+  │ │     💬 Args: [instance, address(superExecutor), 0, abi.encodeCall(superExecutor.execute, (data)), address(instance.defaultValidator)]
+  │ │     👁️  Def: internal
+  │ └─ [2] ⚙️ FUNCTION: InternalHelpers.executeOp(struct UserOpData) (NodeID: 109)
+  │     💬 Args: [userOpData]
+  │     👁️  Def: public
+  │   └─ [3] ⚙️ FUNCTION: ModuleKitHelpers.execUserOps(struct UserOpData) (NodeID: 110)
+  │       💬 Args: [userOpData]
+  │       👁️  Def: internal
+  │     └─ [4] ⚙️ FUNCTION: ERC4337Helpers.exec4337(struct PackedUserOperation,contract IEntryPoint) (NodeID: 111)
+  │         💬 Args: [userOpData.userOp, userOpData.entrypoint]
+  │         👁️  Def: internal
+  │       └─ [5] ⚙️ FUNCTION: ERC4337Helpers.exec4337(struct PackedUserOperation[],contract IEntryPoint) (NodeID: 112)
+  │           💬 Args: [userOps, onEntryPoint]
+  │           👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.getExpectRevert() (NodeID: 113)
+  │         │   💬 Args: [no args]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.getSimulateUserOp() (NodeID: 114)
+  │         │   💬 Args: [no args]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Helpers.envOr(string,bool) (NodeID: 115)
+  │         │   💬 Args: ["SIMULATE", false]
+  │         │   👁️  Def: public
+  │         ├─ [6] ⚙️ FUNCTION: Simulator.simulateUserOp(struct PackedUserOperation,address) (NodeID: 116)
+  │         │   💬 Args: [userOps[0], address(onEntryPoint)]
+  │         │   👁️  Def: internal
+  │         │ ├─ [7] ⚙️ FUNCTION: Simulator._preSimulation() (NodeID: 117)
+  │         │ │   💬 Args: [no args]
+  │         │ │   👁️  Def: internal
+  │         │ │ ├─ [8] ⚙️ FUNCTION: Unknown.snapshotState() (NodeID: 118)
+  │         │ │ │   💬 Args: [no args]
+  │         │ │ │   👁️  Def: internal
+  │         │ │ ├─ [8] ⚙️ FUNCTION: Unknown.startMappingRecording() (NodeID: 119)
+  │         │ │ │   💬 Args: [no args]
+  │         │ │ │   👁️  Def: internal
+  │         │ │ └─ [8] ⚙️ FUNCTION: Unknown.startDebugTraceRecording() (NodeID: 120)
+  │         │ │     💬 Args: [no args]
+  │         │ │     👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: Simulator._postSimulation(struct UserOperationDetails) (NodeID: 121)
+  │         │     💬 Args: [userOpDetails]
+  │         │     👁️  Def: internal
+  │         │   ├─ [8] ⚙️ FUNCTION: Unknown.stopAndReturnDebugTraceRecording() (NodeID: 122)
+  │         │   │   💬 Args: [no args]
+  │         │   │   👁️  Def: internal
+  │         │   ├─ [8] ⚙️ FUNCTION: ERC4337SpecsParser.parseValidation(struct UserOperationDetails,struct VmSafe.DebugStep[]) (NodeID: 123)
+  │         │   │   💬 Args: [userOpDetails, debugTrace]
+  │         │   │   👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.getEntities(struct UserOperationDetails) (NodeID: 124)
+  │         │   │ │   💬 Args: [userOpDetails]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 125)
+  │         │   │ │ │   💬 Args: [factory, userOpDetails.entryPoint]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 126)
+  │         │   │ │ │   💬 Args: [paymaster, userOpDetails.entryPoint]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 127)
+  │         │   │ │     💬 Args: [aggregator, userOpDetails.entryPoint]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.filterDebugTrace(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 128)
+  │         │   │ │   💬 Args: [debugTrace, entities, userOpDetails.entryPoint]
+  │         │   │ │   👁️  Def: private
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 129)
+  │         │   │ │   💬 Args: [filteredUserOpSteps, entities]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isForbiddenOpcode(uint8) (NodeID: 130)
+  │         │   │ │ │   💬 Args: [debugTrace[i].opcode]
+  │         │   │ │ │   👁️  Def: private
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntityAndStaked(struct ERC4337SpecsParser.Entities,address) (NodeID: 131)
+  │         │   │ │     💬 Args: [entities, debugTrace[i].contractAddr]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 132)
+  │         │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isForbiddenOpcode(uint8) (NodeID: 133)
+  │         │   │ │ │   💬 Args: [debugTrace[i].opcode]
+  │         │   │ │ │   👁️  Def: private
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntityAndStaked(struct ERC4337SpecsParser.Entities,address) (NodeID: 134)
+  │         │   │ │     💬 Args: [entities, debugTrace[i].contractAddr]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateOutOfGas(struct VmSafe.DebugStep[]) (NodeID: 135)
+  │         │   │ │   💬 Args: [filteredUserOpSteps]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateOutOfGas(struct VmSafe.DebugStep[]) (NodeID: 136)
+  │         │   │ │   💬 Args: [filteredPaymasterUserOpSteps]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 137)
+  │         │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntity(struct ERC4337SpecsParser.Entities,address) (NodeID: 138)
+  │         │   │ │ │   💬 Args: [entities, currentAccessAccount]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 139)
+  │         │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.account]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 140)
+  │         │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 141)
+  │         │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 142)
+  │         │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 143)
+  │         │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │         │   │ │ │ │     👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 144)
+  │         │   │ │ │     💬 Args: [key, entity]
+  │         │   │ │ │     👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 145)
+  │         │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.paymaster]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 146)
+  │         │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 147)
+  │         │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 148)
+  │         │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 149)
+  │         │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │         │   │ │ │ │     👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 150)
+  │         │   │ │ │     💬 Args: [key, entity]
+  │         │   │ │ │     👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 151)
+  │         │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.factory]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 152)
+  │         │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 153)
+  │         │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 154)
+  │         │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 155)
+  │         │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │         │   │ │ │ │     👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 156)
+  │         │   │ │ │     💬 Args: [key, entity]
+  │         │   │ │ │     👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 157)
+  │         │   │ │     💬 Args: [currentAccessAccount]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 158)
+  │         │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntity(struct ERC4337SpecsParser.Entities,address) (NodeID: 159)
+  │         │   │ │ │   💬 Args: [entities, currentAccessAccount]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 160)
+  │         │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.account]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 161)
+  │         │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 162)
+  │         │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 163)
+  │         │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 164)
+  │         │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │         │   │ │ │ │     👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 165)
+  │         │   │ │ │     💬 Args: [key, entity]
+  │         │   │ │ │     👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 166)
+  │         │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.paymaster]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 167)
+  │         │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 168)
+  │         │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 169)
+  │         │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 170)
+  │         │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │         │   │ │ │ │     👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 171)
+  │         │   │ │ │     💬 Args: [key, entity]
+  │         │   │ │ │     👁️  Def: internal
+  │         │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 172)
+  │         │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.factory]
+  │         │   │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 173)
+  │         │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 174)
+  │         │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 175)
+  │         │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │         │   │ │ │ │ │   👁️  Def: internal
+  │         │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 176)
+  │         │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │         │   │ │ │ │     👁️  Def: internal
+  │         │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 177)
+  │         │   │ │ │     💬 Args: [key, entity]
+  │         │   │ │ │     👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 178)
+  │         │   │ │     💬 Args: [currentAccessAccount]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 179)
+  │         │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails.entryPoint]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 180)
+  │         │   │ │     💬 Args: [targetAddr]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 181)
+  │         │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails.entryPoint]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 182)
+  │         │   │ │     💬 Args: [targetAddr]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 183)
+  │         │   │ │   💬 Args: [filteredUserOpSteps, entities]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 184)
+  │         │   │ │     💬 Args: [targetAddr]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 185)
+  │         │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 186)
+  │         │   │ │     💬 Args: [targetAddr]
+  │         │   │ │     👁️  Def: internal
+  │         │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 187)
+  │         │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails]
+  │         │   │ │   👁️  Def: internal
+  │         │   │ └─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 188)
+  │         │   │     💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails]
+  │         │   │     👁️  Def: internal
+  │         │   ├─ [8] ⚙️ FUNCTION: Unknown.stopMappingRecording() (NodeID: 189)
+  │         │   │   💬 Args: [no args]
+  │         │   │   👁️  Def: internal
+  │         │   └─ [8] ⚙️ FUNCTION: Unknown.revertToState(uint256) (NodeID: 190)
+  │         │       💬 Args: [snapShotId]
+  │         │       👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.recordLogs() (NodeID: 191)
+  │         │   💬 Args: [no args]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: ERC4337Helpers.checkRevertMessage(bytes) (NodeID: 192)
+  │         │   💬 Args: [ctx.returnData]
+  │         │   👁️  Def: internal
+  │         │ ├─ [7] ⚙️ FUNCTION: Unknown.getExpectRevertMessage() (NodeID: 193)
+  │         │ │   💬 Args: [no args]
+  │         │ │   👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: ERC4337Helpers.parseFailedOpWithRevert(bytes,bytes) (NodeID: 194)
+  │         │     💬 Args: [actualReason, revertMessage]
+  │         │     👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.getRecordedLogs() (NodeID: 195)
+  │         │   💬 Args: [no args]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: ERC4337Helpers.getUserOpRevertReason(struct VmSafe.Log[],bytes32) (NodeID: 196)
+  │         │   💬 Args: [logs, userOpHash]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 197)
+  │         │   💬 Args: [account]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: ERC4337Helpers.checkRevertMessage(bytes) (NodeID: 198)
+  │         │   💬 Args: [getUserOpRevertReason(logs, userOpHash)]
+  │         │   👁️  Def: internal
+  │         │ ├─ [7] ⚙️ FUNCTION: ERC4337Helpers.getUserOpRevertReason(struct VmSafe.Log[],bytes32) (NodeID: 201)
+  │         │ │   💬 Args: [logs, userOpHash]
+  │         │ │   👁️  Def: internal
+  │         │ ├─ [7] ⚙️ FUNCTION: Unknown.getExpectRevertMessage() (NodeID: 199)
+  │         │ │   💬 Args: [no args]
+  │         │ │   👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: ERC4337Helpers.parseFailedOpWithRevert(bytes,bytes) (NodeID: 200)
+  │         │     💬 Args: [actualReason, revertMessage]
+  │         │     👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.clearExpectRevert() (NodeID: 202)
+  │         │   💬 Args: [no args]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.writeInstalledModule(struct InstalledModule,address) (NodeID: 203)
+  │         │   💬 Args: [InstalledModule(moduleType, module), logs[i].emitter]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.getInstalledModules(address) (NodeID: 204)
+  │         │   💬 Args: [logs[i].emitter]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.removeInstalledModule(uint256,address) (NodeID: 205)
+  │         │   💬 Args: [j, logs[i].emitter]
+  │         │   👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Unknown.getGasIdentifier() (NodeID: 206)
+  │         │   💬 Args: [no args]
+  │         │   👁️  Def: internal
+  │         │ └─ [7] ⚙️ FUNCTION: Unknown.readString(bytes32) (NodeID: 207)
+  │         │     💬 Args: [slot]
+  │         │     👁️  Def: internal
+  │         ├─ [6] ⚙️ FUNCTION: Helpers.envOr(string,bool) (NodeID: 208)
+  │         │   💬 Args: ["GAS", false]
+  │         │   👁️  Def: public
+  │         └─ [6] ⚙️ FUNCTION: ERC4337Helpers.calculateGas(struct PackedUserOperation[],contract IEntryPoint,address,string,uint256) (NodeID: 209)
+  │             💬 Args: [userOps, onEntryPoint, ctx.beneficiary, gasIdentifier, totalUserOpGas]
+  │             👁️  Def: internal
+  │           └─ [7] ⚙️ FUNCTION: GasParser.parseAndWriteGas(bytes,address,string,address,uint256) (NodeID: 210)
+  │               💬 Args: [userOpCalldata, address(onEntryPoint), gasIdentifier, userOps[0].sender, totalUserOpGas]
+  │               👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: Unknown.getArbitrumL1Gas(bytes) (NodeID: 211)
+  │             │   💬 Args: [userOpCalldata]
+  │             │   👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: LibZip.flzCompress(bytes) (NodeID: 212)
+  │             │ │   💬 Args: [data]
+  │             │ │   👁️  Def: internal
+  │             │ └─ [9] ⚙️ FUNCTION: Unknown.getCallDataGas(bytes) (NodeID: 213)
+  │             │     💬 Args: [compressed]
+  │             │     👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: Unknown.getOpStackL1Gas(bytes) (NodeID: 214)
+  │             │   💬 Args: [userOpCalldata]
+  │             │   👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.ud(uint256) (NodeID: 215)
+  │             │ │   💬 Args: [0.684e18]
+  │             │ │   👁️  Def: internal
+  │             │ └─ [9] ⚙️ FUNCTION: Unknown.intoUint256(UD60x18) (NodeID: 216)
+  │             │     💬 Args: [PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)).mul(opStackScalar)]
+  │             │     👁️  Def: internal
+  │             │   ├─ [10] ⚙️ FUNCTION: PRBMathCastingUint256.intoUD60x18(uint256) (NodeID: 217)
+  │             │   │   💬 Args: [getCallDataGas(data)]
+  │             │   │   👁️  Def: internal
+  │             │   │ └─ [11] ⚙️ FUNCTION: Unknown.getCallDataGas(bytes) (NodeID: 218)
+  │             │   │     💬 Args: [data]
+  │             │   │     👁️  Def: internal
+  │             │   └─ [10] ⚙️ FUNCTION: Unknown.mul(UD60x18,UD60x18) (NodeID: 219)
+  │             │       💬 Args: [PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)), opStackScalar]
+  │             │       👁️  Def: internal
+  │             │     └─ [11] ⚙️ FUNCTION: Unknown.wrap(uint256) (NodeID: 220)
+  │             │         💬 Args: [Common.mulDiv18(x.unwrap(), y.unwrap())]
+  │             │         👁️  Def: internal
+  │             │       └─ [12] ⚙️ FUNCTION: Unknown.mulDiv18(uint256,uint256) (NodeID: 221)
+  │             │           💬 Args: [Common, x.unwrap(), y.unwrap()]
+  │             │           👁️  Def: internal
+  │             │         ├─ [13] ⚙️ FUNCTION: Unknown.unwrap(UD60x18) (NodeID: 222)
+  │             │         │   💬 Args: [x]
+  │             │         │   👁️  Def: internal
+  │             │         └─ [13] ⚙️ FUNCTION: Unknown.unwrap(UD60x18) (NodeID: 223)
+  │             │             💬 Args: [y]
+  │             │             👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: Unknown.exists(string) (NodeID: 224)
+  │             │   💬 Args: [fileName]
+  │             │   👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: Unknown.readFile(string) (NodeID: 225)
+  │             │   💬 Args: [fileName]
+  │             │   👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: Unknown.parsePrevGasReport(string) (NodeID: 226)
+  │             │   💬 Args: [fileContent]
+  │             │   👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 227)
+  │             │ │   💬 Args: [parseJson(fileContent, ".Total")]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 228)
+  │             │ │     💬 Args: [fileContent, ".Total"]
+  │             │ │     👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 229)
+  │             │ │   💬 Args: [parseJson(fileContent, ".Phases.Creation")]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 230)
+  │             │ │     💬 Args: [fileContent, ".Phases.Creation"]
+  │             │ │     👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 231)
+  │             │ │   💬 Args: [parseJson(fileContent, ".Phases.Validation")]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 232)
+  │             │ │     💬 Args: [fileContent, ".Phases.Validation"]
+  │             │ │     👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 233)
+  │             │ │   💬 Args: [parseJson(fileContent, ".Phases.Execution")]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 234)
+  │             │ │     💬 Args: [fileContent, ".Phases.Execution"]
+  │             │ │     👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 235)
+  │             │ │   💬 Args: [parseJson(fileContent, ".Calldata.Arbitrum")]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 236)
+  │             │ │     💬 Args: [fileContent, ".Calldata.Arbitrum"]
+  │             │ │     👁️  Def: internal
+  │             │ └─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 237)
+  │             │     💬 Args: [parseJson(fileContent, ".Calldata.OP-Stack")]
+  │             │     👁️  Def: internal
+  │             │   └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 238)
+  │             │       💬 Args: [fileContent, ".Calldata.OP-Stack"]
+  │             │       👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: GasParser.formatGasToWrite(string,struct GasCalculations,struct GasCalculations) (NodeID: 239)
+  │             │   💬 Args: [gasIdentifier, prevGasCalculations, gasCalculations]
+  │             │   👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 240)
+  │             │ │   💬 Args: [jsonObj, "Total", formatGasValue({prevValue: prevGasCalculations.total, newValue: gasCalculations.total})]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 241)
+  │             │ │     💬 Args: [prevGasCalculations.total, gasCalculations.total]
+  │             │ │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 242)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 243)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 244)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 245)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 246)
+  │             │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │             │ │       👁️  Def: internal
+  │             │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 247)
+  │             │ │         💬 Args: [value]
+  │             │ │         👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 248)
+  │             │ │   💬 Args: [phasesObj, "Creation", formatGasValue({prevValue: prevGasCalculations.creation, newValue: gasCalculations.creation})]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 249)
+  │             │ │     💬 Args: [prevGasCalculations.creation, gasCalculations.creation]
+  │             │ │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 250)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 251)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 252)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 253)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 254)
+  │             │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │             │ │       👁️  Def: internal
+  │             │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 255)
+  │             │ │         💬 Args: [value]
+  │             │ │         👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 256)
+  │             │ │   💬 Args: [phasesObj, "Validation", formatGasValue({prevValue: prevGasCalculations.validation, newValue: gasCalculations.validation})]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 257)
+  │             │ │     💬 Args: [prevGasCalculations.validation, gasCalculations.validation]
+  │             │ │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 258)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 259)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 260)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 261)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 262)
+  │             │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │             │ │       👁️  Def: internal
+  │             │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 263)
+  │             │ │         💬 Args: [value]
+  │             │ │         👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 264)
+  │             │ │   💬 Args: [phasesObj, "Execution", formatGasValue({prevValue: prevGasCalculations.execution, newValue: gasCalculations.execution})]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 265)
+  │             │ │     💬 Args: [prevGasCalculations.execution, gasCalculations.execution]
+  │             │ │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 266)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 267)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 268)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 269)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 270)
+  │             │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │             │ │       👁️  Def: internal
+  │             │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 271)
+  │             │ │         💬 Args: [value]
+  │             │ │         👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 272)
+  │             │ │   💬 Args: [l2sObj, "OP-Stack", formatGasValue({prevValue: prevGasCalculations.opStack, newValue: gasCalculations.opStack})]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 273)
+  │             │ │     💬 Args: [prevGasCalculations.opStack, gasCalculations.opStack]
+  │             │ │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 274)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 275)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 276)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 277)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 278)
+  │             │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │             │ │       👁️  Def: internal
+  │             │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 279)
+  │             │ │         💬 Args: [value]
+  │             │ │         👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 280)
+  │             │ │   💬 Args: [l2sObj, "Arbitrum", formatGasValue({prevValue: prevGasCalculations.arbitrum, newValue: gasCalculations.arbitrum})]
+  │             │ │   👁️  Def: internal
+  │             │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 281)
+  │             │ │     💬 Args: [prevGasCalculations.arbitrum, gasCalculations.arbitrum]
+  │             │ │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 282)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 283)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 284)
+  │             │ │   │   💬 Args: [int256(newValue)]
+  │             │ │   │   👁️  Def: internal
+  │             │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 285)
+  │             │ │   │     💬 Args: [value]
+  │             │ │   │     👁️  Def: internal
+  │             │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 286)
+  │             │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │             │ │       👁️  Def: internal
+  │             │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 287)
+  │             │ │         💬 Args: [value]
+  │             │ │         👁️  Def: internal
+  │             │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 288)
+  │             │ │   💬 Args: [jsonObj, "Phases", phasesOutput]
+  │             │ │   👁️  Def: internal
+  │             │ └─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 289)
+  │             │     💬 Args: [jsonObj, "Calldata", l2sOutput]
+  │             │     👁️  Def: internal
+  │             ├─ [8] ⚙️ FUNCTION: Unknown.writeJson(string,string) (NodeID: 290)
+  │             │   💬 Args: [finalJson, fileName]
+  │             │   👁️  Def: internal
+  │             └─ [8] ⚙️ FUNCTION: Unknown.writeGasIdentifier(string) (NodeID: 291)
+  │                 💬 Args: [""]
+  │                 👁️  Def: internal
+  │               └─ [9] ⚙️ FUNCTION: Unknown.writeString(bytes32,string) (NodeID: 292)
+  │                   💬 Args: [slot, id]
+  │                   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: BaseSuperVaultTest._deposit(uint256,address,address) (NodeID: 293)
+  │   💬 Args: [depositAmount, newVaultAddr, address(asset5115)]
+  │   👁️  Def: internal
+  │ └─ [2] ⚙️ FUNCTION: BaseSuperVaultTest.__deposit(struct AccountInstance,uint256,address,address) (NodeID: 294)
+  │     💬 Args: [instanceOnEth, depositAmount, superVault, asset_]
+  │     👁️  Def: internal
+  │   ├─ [3] ⚙️ FUNCTION: BaseTest._getHookAddress(uint64,string) (NodeID: 295)
+  │   │   💬 Args: [ETH, APPROVE_AND_DEPOSIT_4626_VAULT_HOOK_KEY]
+  │   │   👁️  Def: internal
+  │   ├─ [3] ⚙️ FUNCTION: InternalHelpers._createApproveAndDeposit4626HookData(bytes32,address,address,uint256,bool,address,uint256) (NodeID: 296)
+  │   │   💬 Args: [_getYieldSourceOracleId(bytes32(bytes(ERC4626_YIELD_SOURCE_ORACLE_KEY)), MANAGER), superVault, asset_, depositAmount, false, address(0), 0]
+  │   │   👁️  Def: internal
+  │   │ └─ [4] ⚙️ FUNCTION: InternalHelpers._getYieldSourceOracleId(bytes32,address) (NodeID: 297)
+  │   │     💬 Args: [bytes32(bytes(ERC4626_YIELD_SOURCE_ORACLE_KEY)), MANAGER]
+  │   │     👁️  Def: internal
+  │   ├─ [3] ⚙️ FUNCTION: InternalHelpers._getExecOps(struct AccountInstance,contract ISuperExecutor,bytes) (NodeID: 298)
+  │   │   💬 Args: [accInst, superExecutorOnEth, abi.encode(entry)]
+  │   │   👁️  Def: internal
+  │   │ └─ [4] ⚙️ FUNCTION: ModuleKitHelpers.getExecOps(struct AccountInstance,address,uint256,bytes,address) (NodeID: 299)
+  │   │     💬 Args: [instance, address(superExecutor), 0, abi.encodeCall(superExecutor.execute, (data)), address(instance.defaultValidator)]
+  │   │     👁️  Def: internal
+  │   └─ [3] ⚙️ FUNCTION: InternalHelpers.executeOp(struct UserOpData) (NodeID: 300)
+  │       💬 Args: [userOpData]
+  │       👁️  Def: public
+  │     └─ [4] ⚙️ FUNCTION: ModuleKitHelpers.execUserOps(struct UserOpData) (NodeID: 301)
+  │         💬 Args: [userOpData]
+  │         👁️  Def: internal
+  │       └─ [5] ⚙️ FUNCTION: ERC4337Helpers.exec4337(struct PackedUserOperation,contract IEntryPoint) (NodeID: 302)
+  │           💬 Args: [userOpData.userOp, userOpData.entrypoint]
+  │           👁️  Def: internal
+  │         └─ [6] ⚙️ FUNCTION: ERC4337Helpers.exec4337(struct PackedUserOperation[],contract IEntryPoint) (NodeID: 303)
+  │             💬 Args: [userOps, onEntryPoint]
+  │             👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.getExpectRevert() (NodeID: 304)
+  │           │   💬 Args: [no args]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.getSimulateUserOp() (NodeID: 305)
+  │           │   💬 Args: [no args]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Helpers.envOr(string,bool) (NodeID: 306)
+  │           │   💬 Args: ["SIMULATE", false]
+  │           │   👁️  Def: public
+  │           ├─ [7] ⚙️ FUNCTION: Simulator.simulateUserOp(struct PackedUserOperation,address) (NodeID: 307)
+  │           │   💬 Args: [userOps[0], address(onEntryPoint)]
+  │           │   👁️  Def: internal
+  │           │ ├─ [8] ⚙️ FUNCTION: Simulator._preSimulation() (NodeID: 308)
+  │           │ │   💬 Args: [no args]
+  │           │ │   👁️  Def: internal
+  │           │ │ ├─ [9] ⚙️ FUNCTION: Unknown.snapshotState() (NodeID: 309)
+  │           │ │ │   💬 Args: [no args]
+  │           │ │ │   👁️  Def: internal
+  │           │ │ ├─ [9] ⚙️ FUNCTION: Unknown.startMappingRecording() (NodeID: 310)
+  │           │ │ │   💬 Args: [no args]
+  │           │ │ │   👁️  Def: internal
+  │           │ │ └─ [9] ⚙️ FUNCTION: Unknown.startDebugTraceRecording() (NodeID: 311)
+  │           │ │     💬 Args: [no args]
+  │           │ │     👁️  Def: internal
+  │           │ └─ [8] ⚙️ FUNCTION: Simulator._postSimulation(struct UserOperationDetails) (NodeID: 312)
+  │           │     💬 Args: [userOpDetails]
+  │           │     👁️  Def: internal
+  │           │   ├─ [9] ⚙️ FUNCTION: Unknown.stopAndReturnDebugTraceRecording() (NodeID: 313)
+  │           │   │   💬 Args: [no args]
+  │           │   │   👁️  Def: internal
+  │           │   ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.parseValidation(struct UserOperationDetails,struct VmSafe.DebugStep[]) (NodeID: 314)
+  │           │   │   💬 Args: [userOpDetails, debugTrace]
+  │           │   │   👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.getEntities(struct UserOperationDetails) (NodeID: 315)
+  │           │   │ │   💬 Args: [userOpDetails]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 316)
+  │           │   │ │ │   💬 Args: [factory, userOpDetails.entryPoint]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 317)
+  │           │   │ │ │   💬 Args: [paymaster, userOpDetails.entryPoint]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 318)
+  │           │   │ │     💬 Args: [aggregator, userOpDetails.entryPoint]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.filterDebugTrace(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 319)
+  │           │   │ │   💬 Args: [debugTrace, entities, userOpDetails.entryPoint]
+  │           │   │ │   👁️  Def: private
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 320)
+  │           │   │ │   💬 Args: [filteredUserOpSteps, entities]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isForbiddenOpcode(uint8) (NodeID: 321)
+  │           │   │ │ │   💬 Args: [debugTrace[i].opcode]
+  │           │   │ │ │   👁️  Def: private
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isEntityAndStaked(struct ERC4337SpecsParser.Entities,address) (NodeID: 322)
+  │           │   │ │     💬 Args: [entities, debugTrace[i].contractAddr]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 323)
+  │           │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isForbiddenOpcode(uint8) (NodeID: 324)
+  │           │   │ │ │   💬 Args: [debugTrace[i].opcode]
+  │           │   │ │ │   👁️  Def: private
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isEntityAndStaked(struct ERC4337SpecsParser.Entities,address) (NodeID: 325)
+  │           │   │ │     💬 Args: [entities, debugTrace[i].contractAddr]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateOutOfGas(struct VmSafe.DebugStep[]) (NodeID: 326)
+  │           │   │ │   💬 Args: [filteredUserOpSteps]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateOutOfGas(struct VmSafe.DebugStep[]) (NodeID: 327)
+  │           │   │ │   💬 Args: [filteredPaymasterUserOpSteps]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 328)
+  │           │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isEntity(struct ERC4337SpecsParser.Entities,address) (NodeID: 329)
+  │           │   │ │ │   💬 Args: [entities, currentAccessAccount]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 330)
+  │           │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.account]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 331)
+  │           │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 332)
+  │           │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ ├─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 333)
+  │           │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ └─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 334)
+  │           │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │           │   │ │ │ │     👁️  Def: internal
+  │           │   │ │ │ └─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 335)
+  │           │   │ │ │     💬 Args: [key, entity]
+  │           │   │ │ │     👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 336)
+  │           │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.paymaster]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 337)
+  │           │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 338)
+  │           │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ ├─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 339)
+  │           │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ └─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 340)
+  │           │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │           │   │ │ │ │     👁️  Def: internal
+  │           │   │ │ │ └─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 341)
+  │           │   │ │ │     💬 Args: [key, entity]
+  │           │   │ │ │     👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 342)
+  │           │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.factory]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 343)
+  │           │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 344)
+  │           │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ ├─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 345)
+  │           │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ └─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 346)
+  │           │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │           │   │ │ │ │     👁️  Def: internal
+  │           │   │ │ │ └─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 347)
+  │           │   │ │ │     💬 Args: [key, entity]
+  │           │   │ │ │     👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 348)
+  │           │   │ │     💬 Args: [currentAccessAccount]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 349)
+  │           │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isEntity(struct ERC4337SpecsParser.Entities,address) (NodeID: 350)
+  │           │   │ │ │   💬 Args: [entities, currentAccessAccount]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 351)
+  │           │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.account]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 352)
+  │           │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 353)
+  │           │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ ├─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 354)
+  │           │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ └─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 355)
+  │           │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │           │   │ │ │ │     👁️  Def: internal
+  │           │   │ │ │ └─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 356)
+  │           │   │ │ │     💬 Args: [key, entity]
+  │           │   │ │ │     👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 357)
+  │           │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.paymaster]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 358)
+  │           │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 359)
+  │           │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ ├─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 360)
+  │           │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ └─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 361)
+  │           │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │           │   │ │ │ │     👁️  Def: internal
+  │           │   │ │ │ └─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 362)
+  │           │   │ │ │     💬 Args: [key, entity]
+  │           │   │ │ │     👁️  Def: internal
+  │           │   │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 363)
+  │           │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.factory]
+  │           │   │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 364)
+  │           │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ ├─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 365)
+  │           │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ ├─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 366)
+  │           │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │           │   │ │ │ │ │   👁️  Def: internal
+  │           │   │ │ │ │ └─ [13] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 367)
+  │           │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │           │   │ │ │ │     👁️  Def: internal
+  │           │   │ │ │ └─ [12] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 368)
+  │           │   │ │ │     💬 Args: [key, entity]
+  │           │   │ │ │     👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 369)
+  │           │   │ │     💬 Args: [currentAccessAccount]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 370)
+  │           │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails.entryPoint]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 371)
+  │           │   │ │     💬 Args: [targetAddr]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 372)
+  │           │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails.entryPoint]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 373)
+  │           │   │ │     💬 Args: [targetAddr]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 374)
+  │           │   │ │   💬 Args: [filteredUserOpSteps, entities]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 375)
+  │           │   │ │     💬 Args: [targetAddr]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 376)
+  │           │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 377)
+  │           │   │ │     💬 Args: [targetAddr]
+  │           │   │ │     👁️  Def: internal
+  │           │   │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 378)
+  │           │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails]
+  │           │   │ │   👁️  Def: internal
+  │           │   │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 379)
+  │           │   │     💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails]
+  │           │   │     👁️  Def: internal
+  │           │   ├─ [9] ⚙️ FUNCTION: Unknown.stopMappingRecording() (NodeID: 380)
+  │           │   │   💬 Args: [no args]
+  │           │   │   👁️  Def: internal
+  │           │   └─ [9] ⚙️ FUNCTION: Unknown.revertToState(uint256) (NodeID: 381)
+  │           │       💬 Args: [snapShotId]
+  │           │       👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.recordLogs() (NodeID: 382)
+  │           │   💬 Args: [no args]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: ERC4337Helpers.checkRevertMessage(bytes) (NodeID: 383)
+  │           │   💬 Args: [ctx.returnData]
+  │           │   👁️  Def: internal
+  │           │ ├─ [8] ⚙️ FUNCTION: Unknown.getExpectRevertMessage() (NodeID: 384)
+  │           │ │   💬 Args: [no args]
+  │           │ │   👁️  Def: internal
+  │           │ └─ [8] ⚙️ FUNCTION: ERC4337Helpers.parseFailedOpWithRevert(bytes,bytes) (NodeID: 385)
+  │           │     💬 Args: [actualReason, revertMessage]
+  │           │     👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.getRecordedLogs() (NodeID: 386)
+  │           │   💬 Args: [no args]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: ERC4337Helpers.getUserOpRevertReason(struct VmSafe.Log[],bytes32) (NodeID: 387)
+  │           │   💬 Args: [logs, userOpHash]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 388)
+  │           │   💬 Args: [account]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: ERC4337Helpers.checkRevertMessage(bytes) (NodeID: 389)
+  │           │   💬 Args: [getUserOpRevertReason(logs, userOpHash)]
+  │           │   👁️  Def: internal
+  │           │ ├─ [8] ⚙️ FUNCTION: ERC4337Helpers.getUserOpRevertReason(struct VmSafe.Log[],bytes32) (NodeID: 392)
+  │           │ │   💬 Args: [logs, userOpHash]
+  │           │ │   👁️  Def: internal
+  │           │ ├─ [8] ⚙️ FUNCTION: Unknown.getExpectRevertMessage() (NodeID: 390)
+  │           │ │   💬 Args: [no args]
+  │           │ │   👁️  Def: internal
+  │           │ └─ [8] ⚙️ FUNCTION: ERC4337Helpers.parseFailedOpWithRevert(bytes,bytes) (NodeID: 391)
+  │           │     💬 Args: [actualReason, revertMessage]
+  │           │     👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.clearExpectRevert() (NodeID: 393)
+  │           │   💬 Args: [no args]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.writeInstalledModule(struct InstalledModule,address) (NodeID: 394)
+  │           │   💬 Args: [InstalledModule(moduleType, module), logs[i].emitter]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.getInstalledModules(address) (NodeID: 395)
+  │           │   💬 Args: [logs[i].emitter]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.removeInstalledModule(uint256,address) (NodeID: 396)
+  │           │   💬 Args: [j, logs[i].emitter]
+  │           │   👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Unknown.getGasIdentifier() (NodeID: 397)
+  │           │   💬 Args: [no args]
+  │           │   👁️  Def: internal
+  │           │ └─ [8] ⚙️ FUNCTION: Unknown.readString(bytes32) (NodeID: 398)
+  │           │     💬 Args: [slot]
+  │           │     👁️  Def: internal
+  │           ├─ [7] ⚙️ FUNCTION: Helpers.envOr(string,bool) (NodeID: 399)
+  │           │   💬 Args: ["GAS", false]
+  │           │   👁️  Def: public
+  │           └─ [7] ⚙️ FUNCTION: ERC4337Helpers.calculateGas(struct PackedUserOperation[],contract IEntryPoint,address,string,uint256) (NodeID: 400)
+  │               💬 Args: [userOps, onEntryPoint, ctx.beneficiary, gasIdentifier, totalUserOpGas]
+  │               👁️  Def: internal
+  │             └─ [8] ⚙️ FUNCTION: GasParser.parseAndWriteGas(bytes,address,string,address,uint256) (NodeID: 401)
+  │                 💬 Args: [userOpCalldata, address(onEntryPoint), gasIdentifier, userOps[0].sender, totalUserOpGas]
+  │                 👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: Unknown.getArbitrumL1Gas(bytes) (NodeID: 402)
+  │               │   💬 Args: [userOpCalldata]
+  │               │   👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: LibZip.flzCompress(bytes) (NodeID: 403)
+  │               │ │   💬 Args: [data]
+  │               │ │   👁️  Def: internal
+  │               │ └─ [10] ⚙️ FUNCTION: Unknown.getCallDataGas(bytes) (NodeID: 404)
+  │               │     💬 Args: [compressed]
+  │               │     👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: Unknown.getOpStackL1Gas(bytes) (NodeID: 405)
+  │               │   💬 Args: [userOpCalldata]
+  │               │   👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.ud(uint256) (NodeID: 406)
+  │               │ │   💬 Args: [0.684e18]
+  │               │ │   👁️  Def: internal
+  │               │ └─ [10] ⚙️ FUNCTION: Unknown.intoUint256(UD60x18) (NodeID: 407)
+  │               │     💬 Args: [PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)).mul(opStackScalar)]
+  │               │     👁️  Def: internal
+  │               │   ├─ [11] ⚙️ FUNCTION: PRBMathCastingUint256.intoUD60x18(uint256) (NodeID: 408)
+  │               │   │   💬 Args: [getCallDataGas(data)]
+  │               │   │   👁️  Def: internal
+  │               │   │ └─ [12] ⚙️ FUNCTION: Unknown.getCallDataGas(bytes) (NodeID: 409)
+  │               │   │     💬 Args: [data]
+  │               │   │     👁️  Def: internal
+  │               │   └─ [11] ⚙️ FUNCTION: Unknown.mul(UD60x18,UD60x18) (NodeID: 410)
+  │               │       💬 Args: [PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)), opStackScalar]
+  │               │       👁️  Def: internal
+  │               │     └─ [12] ⚙️ FUNCTION: Unknown.wrap(uint256) (NodeID: 411)
+  │               │         💬 Args: [Common.mulDiv18(x.unwrap(), y.unwrap())]
+  │               │         👁️  Def: internal
+  │               │       └─ [13] ⚙️ FUNCTION: Unknown.mulDiv18(uint256,uint256) (NodeID: 412)
+  │               │           💬 Args: [Common, x.unwrap(), y.unwrap()]
+  │               │           👁️  Def: internal
+  │               │         ├─ [14] ⚙️ FUNCTION: Unknown.unwrap(UD60x18) (NodeID: 413)
+  │               │         │   💬 Args: [x]
+  │               │         │   👁️  Def: internal
+  │               │         └─ [14] ⚙️ FUNCTION: Unknown.unwrap(UD60x18) (NodeID: 414)
+  │               │             💬 Args: [y]
+  │               │             👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: Unknown.exists(string) (NodeID: 415)
+  │               │   💬 Args: [fileName]
+  │               │   👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: Unknown.readFile(string) (NodeID: 416)
+  │               │   💬 Args: [fileName]
+  │               │   👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: Unknown.parsePrevGasReport(string) (NodeID: 417)
+  │               │   💬 Args: [fileContent]
+  │               │   👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 418)
+  │               │ │   💬 Args: [parseJson(fileContent, ".Total")]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 419)
+  │               │ │     💬 Args: [fileContent, ".Total"]
+  │               │ │     👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 420)
+  │               │ │   💬 Args: [parseJson(fileContent, ".Phases.Creation")]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 421)
+  │               │ │     💬 Args: [fileContent, ".Phases.Creation"]
+  │               │ │     👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 422)
+  │               │ │   💬 Args: [parseJson(fileContent, ".Phases.Validation")]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 423)
+  │               │ │     💬 Args: [fileContent, ".Phases.Validation"]
+  │               │ │     👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 424)
+  │               │ │   💬 Args: [parseJson(fileContent, ".Phases.Execution")]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 425)
+  │               │ │     💬 Args: [fileContent, ".Phases.Execution"]
+  │               │ │     👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 426)
+  │               │ │   💬 Args: [parseJson(fileContent, ".Calldata.Arbitrum")]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 427)
+  │               │ │     💬 Args: [fileContent, ".Calldata.Arbitrum"]
+  │               │ │     👁️  Def: internal
+  │               │ └─ [10] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 428)
+  │               │     💬 Args: [parseJson(fileContent, ".Calldata.OP-Stack")]
+  │               │     👁️  Def: internal
+  │               │   └─ [11] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 429)
+  │               │       💬 Args: [fileContent, ".Calldata.OP-Stack"]
+  │               │       👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: GasParser.formatGasToWrite(string,struct GasCalculations,struct GasCalculations) (NodeID: 430)
+  │               │   💬 Args: [gasIdentifier, prevGasCalculations, gasCalculations]
+  │               │   👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 431)
+  │               │ │   💬 Args: [jsonObj, "Total", formatGasValue({prevValue: prevGasCalculations.total, newValue: gasCalculations.total})]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 432)
+  │               │ │     💬 Args: [prevGasCalculations.total, gasCalculations.total]
+  │               │ │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 433)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 434)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 435)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 436)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   └─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 437)
+  │               │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │               │ │       👁️  Def: internal
+  │               │ │     └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 438)
+  │               │ │         💬 Args: [value]
+  │               │ │         👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 439)
+  │               │ │   💬 Args: [phasesObj, "Creation", formatGasValue({prevValue: prevGasCalculations.creation, newValue: gasCalculations.creation})]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 440)
+  │               │ │     💬 Args: [prevGasCalculations.creation, gasCalculations.creation]
+  │               │ │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 441)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 442)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 443)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 444)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   └─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 445)
+  │               │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │               │ │       👁️  Def: internal
+  │               │ │     └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 446)
+  │               │ │         💬 Args: [value]
+  │               │ │         👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 447)
+  │               │ │   💬 Args: [phasesObj, "Validation", formatGasValue({prevValue: prevGasCalculations.validation, newValue: gasCalculations.validation})]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 448)
+  │               │ │     💬 Args: [prevGasCalculations.validation, gasCalculations.validation]
+  │               │ │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 449)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 450)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 451)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 452)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   └─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 453)
+  │               │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │               │ │       👁️  Def: internal
+  │               │ │     └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 454)
+  │               │ │         💬 Args: [value]
+  │               │ │         👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 455)
+  │               │ │   💬 Args: [phasesObj, "Execution", formatGasValue({prevValue: prevGasCalculations.execution, newValue: gasCalculations.execution})]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 456)
+  │               │ │     💬 Args: [prevGasCalculations.execution, gasCalculations.execution]
+  │               │ │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 457)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 458)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 459)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 460)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   └─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 461)
+  │               │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │               │ │       👁️  Def: internal
+  │               │ │     └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 462)
+  │               │ │         💬 Args: [value]
+  │               │ │         👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 463)
+  │               │ │   💬 Args: [l2sObj, "OP-Stack", formatGasValue({prevValue: prevGasCalculations.opStack, newValue: gasCalculations.opStack})]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 464)
+  │               │ │     💬 Args: [prevGasCalculations.opStack, gasCalculations.opStack]
+  │               │ │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 465)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 466)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 467)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 468)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   └─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 469)
+  │               │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │               │ │       👁️  Def: internal
+  │               │ │     └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 470)
+  │               │ │         💬 Args: [value]
+  │               │ │         👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 471)
+  │               │ │   💬 Args: [l2sObj, "Arbitrum", formatGasValue({prevValue: prevGasCalculations.arbitrum, newValue: gasCalculations.arbitrum})]
+  │               │ │   👁️  Def: internal
+  │               │ │ └─ [11] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 472)
+  │               │ │     💬 Args: [prevGasCalculations.arbitrum, gasCalculations.arbitrum]
+  │               │ │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 473)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 474)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   ├─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 475)
+  │               │ │   │   💬 Args: [int256(newValue)]
+  │               │ │   │   👁️  Def: internal
+  │               │ │   │ └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 476)
+  │               │ │   │     💬 Args: [value]
+  │               │ │   │     👁️  Def: internal
+  │               │ │   └─ [12] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 477)
+  │               │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │               │ │       👁️  Def: internal
+  │               │ │     └─ [13] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 478)
+  │               │ │         💬 Args: [value]
+  │               │ │         👁️  Def: internal
+  │               │ ├─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 479)
+  │               │ │   💬 Args: [jsonObj, "Phases", phasesOutput]
+  │               │ │   👁️  Def: internal
+  │               │ └─ [10] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 480)
+  │               │     💬 Args: [jsonObj, "Calldata", l2sOutput]
+  │               │     👁️  Def: internal
+  │               ├─ [9] ⚙️ FUNCTION: Unknown.writeJson(string,string) (NodeID: 481)
+  │               │   💬 Args: [finalJson, fileName]
+  │               │   👁️  Def: internal
+  │               └─ [9] ⚙️ FUNCTION: Unknown.writeGasIdentifier(string) (NodeID: 482)
+  │                   💬 Args: [""]
+  │                   👁️  Def: internal
+  │                 └─ [10] ⚙️ FUNCTION: Unknown.writeString(bytes32,string) (NodeID: 483)
+  │                     💬 Args: [slot, id]
+  │                     👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertGt(uint256,uint256,string) (NodeID: 484)
+  │   💬 Args: [userShares, 0, "No shares minted to user"]
+  │   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(uint256,uint256,string) (NodeID: 485)
+  │   💬 Args: [asset5115.balanceOf(address(newStrategy)), depositAmount, "Wrong strategy balance"]
+  │   👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: BaseSuperVaultTest._depositFreeAssetsFromSingleAmountViaSmartAccount5115(uint256,address,struct AccountInstance,contract SuperVaultStrategy) (NodeID: 486)
+  │   💬 Args: [depositAmount, pendleEthenaAddress, managerAccount, newStrategy]
+  │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: BaseTest._getHookAddress(uint64,string) (NodeID: 487)
+  │ │   💬 Args: [ETH, APPROVE_AND_DEPOSIT_5115_VAULT_HOOK_KEY]
+  │ │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: HooksHelpers._createApproveAndDeposit5115HookData(bytes32,address,address,uint256,uint256,bool) (NodeID: 488)
+  │ │   💬 Args: [_getYieldSourceOracleId(bytes32(bytes(ERC5115_YIELD_SOURCE_ORACLE_KEY)), MANAGER), underlyingVault, address(asset5115), depositAmount, 0, false]
+  │ │   👁️  Def: internal
+  │ │ └─ [3] ⚙️ FUNCTION: InternalHelpers._getYieldSourceOracleId(bytes32,address) (NodeID: 489)
+  │ │     💬 Args: [bytes32(bytes(ERC5115_YIELD_SOURCE_ORACLE_KEY)), MANAGER]
+  │ │     👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: MerkleReader._getMerkleProofsForHooks(address[],bytes[]) (NodeID: 490)
+  │ │   💬 Args: [vars.fulfillHooksAddresses, vars.argsForProofs]
+  │ │   👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: InternalHelpers._getExecOps(struct AccountInstance,contract ISuperExecutor,bytes) (NodeID: 491)
+  │ │   💬 Args: [managerAccount, superExecutorOnEth, abi.encode(vars.entry)]
+  │ │   👁️  Def: internal
+  │ │ └─ [3] ⚙️ FUNCTION: ModuleKitHelpers.getExecOps(struct AccountInstance,address,uint256,bytes,address) (NodeID: 492)
+  │ │     💬 Args: [instance, address(superExecutor), 0, abi.encodeCall(superExecutor.execute, (data)), address(instance.defaultValidator)]
+  │ │     👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: InternalHelpers.executeOp(struct UserOpData) (NodeID: 493)
+  │ │   💬 Args: [vars.userOpData]
+  │ │   👁️  Def: public
+  │ │ └─ [3] ⚙️ FUNCTION: ModuleKitHelpers.execUserOps(struct UserOpData) (NodeID: 494)
+  │ │     💬 Args: [userOpData]
+  │ │     👁️  Def: internal
+  │ │   └─ [4] ⚙️ FUNCTION: ERC4337Helpers.exec4337(struct PackedUserOperation,contract IEntryPoint) (NodeID: 495)
+  │ │       💬 Args: [userOpData.userOp, userOpData.entrypoint]
+  │ │       👁️  Def: internal
+  │ │     └─ [5] ⚙️ FUNCTION: ERC4337Helpers.exec4337(struct PackedUserOperation[],contract IEntryPoint) (NodeID: 496)
+  │ │         💬 Args: [userOps, onEntryPoint]
+  │ │         👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.getExpectRevert() (NodeID: 497)
+  │ │       │   💬 Args: [no args]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.getSimulateUserOp() (NodeID: 498)
+  │ │       │   💬 Args: [no args]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Helpers.envOr(string,bool) (NodeID: 499)
+  │ │       │   💬 Args: ["SIMULATE", false]
+  │ │       │   👁️  Def: public
+  │ │       ├─ [6] ⚙️ FUNCTION: Simulator.simulateUserOp(struct PackedUserOperation,address) (NodeID: 500)
+  │ │       │   💬 Args: [userOps[0], address(onEntryPoint)]
+  │ │       │   👁️  Def: internal
+  │ │       │ ├─ [7] ⚙️ FUNCTION: Simulator._preSimulation() (NodeID: 501)
+  │ │       │ │   💬 Args: [no args]
+  │ │       │ │   👁️  Def: internal
+  │ │       │ │ ├─ [8] ⚙️ FUNCTION: Unknown.snapshotState() (NodeID: 502)
+  │ │       │ │ │   💬 Args: [no args]
+  │ │       │ │ │   👁️  Def: internal
+  │ │       │ │ ├─ [8] ⚙️ FUNCTION: Unknown.startMappingRecording() (NodeID: 503)
+  │ │       │ │ │   💬 Args: [no args]
+  │ │       │ │ │   👁️  Def: internal
+  │ │       │ │ └─ [8] ⚙️ FUNCTION: Unknown.startDebugTraceRecording() (NodeID: 504)
+  │ │       │ │     💬 Args: [no args]
+  │ │       │ │     👁️  Def: internal
+  │ │       │ └─ [7] ⚙️ FUNCTION: Simulator._postSimulation(struct UserOperationDetails) (NodeID: 505)
+  │ │       │     💬 Args: [userOpDetails]
+  │ │       │     👁️  Def: internal
+  │ │       │   ├─ [8] ⚙️ FUNCTION: Unknown.stopAndReturnDebugTraceRecording() (NodeID: 506)
+  │ │       │   │   💬 Args: [no args]
+  │ │       │   │   👁️  Def: internal
+  │ │       │   ├─ [8] ⚙️ FUNCTION: ERC4337SpecsParser.parseValidation(struct UserOperationDetails,struct VmSafe.DebugStep[]) (NodeID: 507)
+  │ │       │   │   💬 Args: [userOpDetails, debugTrace]
+  │ │       │   │   👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.getEntities(struct UserOperationDetails) (NodeID: 508)
+  │ │       │   │ │   💬 Args: [userOpDetails]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 509)
+  │ │       │   │ │ │   💬 Args: [factory, userOpDetails.entryPoint]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 510)
+  │ │       │   │ │ │   💬 Args: [paymaster, userOpDetails.entryPoint]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isStaked(address,address) (NodeID: 511)
+  │ │       │   │ │     💬 Args: [aggregator, userOpDetails.entryPoint]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.filterDebugTrace(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 512)
+  │ │       │   │ │   💬 Args: [debugTrace, entities, userOpDetails.entryPoint]
+  │ │       │   │ │   👁️  Def: private
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 513)
+  │ │       │   │ │   💬 Args: [filteredUserOpSteps, entities]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isForbiddenOpcode(uint8) (NodeID: 514)
+  │ │       │   │ │ │   💬 Args: [debugTrace[i].opcode]
+  │ │       │   │ │ │   👁️  Def: private
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntityAndStaked(struct ERC4337SpecsParser.Entities,address) (NodeID: 515)
+  │ │       │   │ │     💬 Args: [entities, debugTrace[i].contractAddr]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 516)
+  │ │       │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isForbiddenOpcode(uint8) (NodeID: 517)
+  │ │       │   │ │ │   💬 Args: [debugTrace[i].opcode]
+  │ │       │   │ │ │   👁️  Def: private
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntityAndStaked(struct ERC4337SpecsParser.Entities,address) (NodeID: 518)
+  │ │       │   │ │     💬 Args: [entities, debugTrace[i].contractAddr]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateOutOfGas(struct VmSafe.DebugStep[]) (NodeID: 519)
+  │ │       │   │ │   💬 Args: [filteredUserOpSteps]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateOutOfGas(struct VmSafe.DebugStep[]) (NodeID: 520)
+  │ │       │   │ │   💬 Args: [filteredPaymasterUserOpSteps]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 521)
+  │ │       │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntity(struct ERC4337SpecsParser.Entities,address) (NodeID: 522)
+  │ │       │   │ │ │   💬 Args: [entities, currentAccessAccount]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 523)
+  │ │       │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.account]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 524)
+  │ │       │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 525)
+  │ │       │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 526)
+  │ │       │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 527)
+  │ │       │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │ │       │   │ │ │ │     👁️  Def: internal
+  │ │       │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 528)
+  │ │       │   │ │ │     💬 Args: [key, entity]
+  │ │       │   │ │ │     👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 529)
+  │ │       │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.paymaster]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 530)
+  │ │       │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 531)
+  │ │       │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 532)
+  │ │       │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 533)
+  │ │       │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │ │       │   │ │ │ │     👁️  Def: internal
+  │ │       │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 534)
+  │ │       │   │ │ │     💬 Args: [key, entity]
+  │ │       │   │ │ │     👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 535)
+  │ │       │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.factory]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 536)
+  │ │       │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 537)
+  │ │       │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 538)
+  │ │       │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 539)
+  │ │       │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │ │       │   │ │ │ │     👁️  Def: internal
+  │ │       │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 540)
+  │ │       │   │ │ │     💬 Args: [key, entity]
+  │ │       │   │ │ │     👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 541)
+  │ │       │   │ │     💬 Args: [currentAccessAccount]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateBannedStorageLocations(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 542)
+  │ │       │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isEntity(struct ERC4337SpecsParser.Entities,address) (NodeID: 543)
+  │ │       │   │ │ │   💬 Args: [entities, currentAccessAccount]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 544)
+  │ │       │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.account]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 545)
+  │ │       │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 546)
+  │ │       │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 547)
+  │ │       │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 548)
+  │ │       │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │ │       │   │ │ │ │     👁️  Def: internal
+  │ │       │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 549)
+  │ │       │   │ │ │     💬 Args: [key, entity]
+  │ │       │   │ │ │     👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 550)
+  │ │       │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.paymaster]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 551)
+  │ │       │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 552)
+  │ │       │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 553)
+  │ │       │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 554)
+  │ │       │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │ │       │   │ │ │ │     👁️  Def: internal
+  │ │       │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 555)
+  │ │       │   │ │ │     💬 Args: [key, entity]
+  │ │       │   │ │ │     👁️  Def: internal
+  │ │       │   │ │ ├─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isAssociatedStorage(bytes32,address,address) (NodeID: 556)
+  │ │       │   │ │ │   💬 Args: [currentSlot, currentAccessAccount, entities.factory]
+  │ │       │   │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 557)
+  │ │       │   │ │ │ │   💬 Args: [currentSlot, entity]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ ├─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.getMappingParent(address,bytes32) (NodeID: 558)
+  │ │       │   │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ ├─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 559)
+  │ │       │   │ │ │ │ │   💬 Args: [currentAccessAccount, currentSlot]
+  │ │       │   │ │ │ │ │   👁️  Def: internal
+  │ │       │   │ │ │ │ └─ [12] ⚙️ FUNCTION: Unknown.getMappingKeyAndParentOf(address,bytes32) (NodeID: 560)
+  │ │       │   │ │ │ │     💬 Args: [currentAccessAccount, bytes32(uint256(currentSlot) - k)]
+  │ │       │   │ │ │ │     👁️  Def: internal
+  │ │       │   │ │ │ └─ [11] ⚙️ FUNCTION: ERC4337SpecsParser.slotMatchesEntity(bytes32,address) (NodeID: 561)
+  │ │       │   │ │ │     💬 Args: [key, entity]
+  │ │       │   │ │ │     👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 562)
+  │ │       │   │ │     💬 Args: [currentAccessAccount]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 563)
+  │ │       │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails.entryPoint]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 564)
+  │ │       │   │ │     💬 Args: [targetAddr]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCalls(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,address) (NodeID: 565)
+  │ │       │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails.entryPoint]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 566)
+  │ │       │   │ │     💬 Args: [targetAddr]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 567)
+  │ │       │   │ │   💬 Args: [filteredUserOpSteps, entities]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 568)
+  │ │       │   │ │     💬 Args: [targetAddr]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateExtOpcodes(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities) (NodeID: 569)
+  │ │       │   │ │   💬 Args: [filteredPaymasterUserOpSteps, entities]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ │ └─ [10] ⚙️ FUNCTION: ERC4337SpecsParser.isPrecompile(address) (NodeID: 570)
+  │ │       │   │ │     💬 Args: [targetAddr]
+  │ │       │   │ │     👁️  Def: internal
+  │ │       │   │ ├─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 571)
+  │ │       │   │ │   💬 Args: [filteredUserOpSteps, entities, userOpDetails]
+  │ │       │   │ │   👁️  Def: internal
+  │ │       │   │ └─ [9] ⚙️ FUNCTION: ERC4337SpecsParser.validateCreate(struct VmSafe.DebugStep[],struct ERC4337SpecsParser.Entities,struct UserOperationDetails) (NodeID: 572)
+  │ │       │   │     💬 Args: [filteredPaymasterUserOpSteps, entities, userOpDetails]
+  │ │       │   │     👁️  Def: internal
+  │ │       │   ├─ [8] ⚙️ FUNCTION: Unknown.stopMappingRecording() (NodeID: 573)
+  │ │       │   │   💬 Args: [no args]
+  │ │       │   │   👁️  Def: internal
+  │ │       │   └─ [8] ⚙️ FUNCTION: Unknown.revertToState(uint256) (NodeID: 574)
+  │ │       │       💬 Args: [snapShotId]
+  │ │       │       👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.recordLogs() (NodeID: 575)
+  │ │       │   💬 Args: [no args]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: ERC4337Helpers.checkRevertMessage(bytes) (NodeID: 576)
+  │ │       │   💬 Args: [ctx.returnData]
+  │ │       │   👁️  Def: internal
+  │ │       │ ├─ [7] ⚙️ FUNCTION: Unknown.getExpectRevertMessage() (NodeID: 577)
+  │ │       │ │   💬 Args: [no args]
+  │ │       │ │   👁️  Def: internal
+  │ │       │ └─ [7] ⚙️ FUNCTION: ERC4337Helpers.parseFailedOpWithRevert(bytes,bytes) (NodeID: 578)
+  │ │       │     💬 Args: [actualReason, revertMessage]
+  │ │       │     👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.getRecordedLogs() (NodeID: 579)
+  │ │       │   💬 Args: [no args]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: ERC4337Helpers.getUserOpRevertReason(struct VmSafe.Log[],bytes32) (NodeID: 580)
+  │ │       │   💬 Args: [logs, userOpHash]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.getLabel(address) (NodeID: 581)
+  │ │       │   💬 Args: [account]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: ERC4337Helpers.checkRevertMessage(bytes) (NodeID: 582)
+  │ │       │   💬 Args: [getUserOpRevertReason(logs, userOpHash)]
+  │ │       │   👁️  Def: internal
+  │ │       │ ├─ [7] ⚙️ FUNCTION: ERC4337Helpers.getUserOpRevertReason(struct VmSafe.Log[],bytes32) (NodeID: 585)
+  │ │       │ │   💬 Args: [logs, userOpHash]
+  │ │       │ │   👁️  Def: internal
+  │ │       │ ├─ [7] ⚙️ FUNCTION: Unknown.getExpectRevertMessage() (NodeID: 583)
+  │ │       │ │   💬 Args: [no args]
+  │ │       │ │   👁️  Def: internal
+  │ │       │ └─ [7] ⚙️ FUNCTION: ERC4337Helpers.parseFailedOpWithRevert(bytes,bytes) (NodeID: 584)
+  │ │       │     💬 Args: [actualReason, revertMessage]
+  │ │       │     👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.clearExpectRevert() (NodeID: 586)
+  │ │       │   💬 Args: [no args]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.writeInstalledModule(struct InstalledModule,address) (NodeID: 587)
+  │ │       │   💬 Args: [InstalledModule(moduleType, module), logs[i].emitter]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.getInstalledModules(address) (NodeID: 588)
+  │ │       │   💬 Args: [logs[i].emitter]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.removeInstalledModule(uint256,address) (NodeID: 589)
+  │ │       │   💬 Args: [j, logs[i].emitter]
+  │ │       │   👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Unknown.getGasIdentifier() (NodeID: 590)
+  │ │       │   💬 Args: [no args]
+  │ │       │   👁️  Def: internal
+  │ │       │ └─ [7] ⚙️ FUNCTION: Unknown.readString(bytes32) (NodeID: 591)
+  │ │       │     💬 Args: [slot]
+  │ │       │     👁️  Def: internal
+  │ │       ├─ [6] ⚙️ FUNCTION: Helpers.envOr(string,bool) (NodeID: 592)
+  │ │       │   💬 Args: ["GAS", false]
+  │ │       │   👁️  Def: public
+  │ │       └─ [6] ⚙️ FUNCTION: ERC4337Helpers.calculateGas(struct PackedUserOperation[],contract IEntryPoint,address,string,uint256) (NodeID: 593)
+  │ │           💬 Args: [userOps, onEntryPoint, ctx.beneficiary, gasIdentifier, totalUserOpGas]
+  │ │           👁️  Def: internal
+  │ │         └─ [7] ⚙️ FUNCTION: GasParser.parseAndWriteGas(bytes,address,string,address,uint256) (NodeID: 594)
+  │ │             💬 Args: [userOpCalldata, address(onEntryPoint), gasIdentifier, userOps[0].sender, totalUserOpGas]
+  │ │             👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: Unknown.getArbitrumL1Gas(bytes) (NodeID: 595)
+  │ │           │   💬 Args: [userOpCalldata]
+  │ │           │   👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: LibZip.flzCompress(bytes) (NodeID: 596)
+  │ │           │ │   💬 Args: [data]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ └─ [9] ⚙️ FUNCTION: Unknown.getCallDataGas(bytes) (NodeID: 597)
+  │ │           │     💬 Args: [compressed]
+  │ │           │     👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: Unknown.getOpStackL1Gas(bytes) (NodeID: 598)
+  │ │           │   💬 Args: [userOpCalldata]
+  │ │           │   👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.ud(uint256) (NodeID: 599)
+  │ │           │ │   💬 Args: [0.684e18]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ └─ [9] ⚙️ FUNCTION: Unknown.intoUint256(UD60x18) (NodeID: 600)
+  │ │           │     💬 Args: [PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)).mul(opStackScalar)]
+  │ │           │     👁️  Def: internal
+  │ │           │   ├─ [10] ⚙️ FUNCTION: PRBMathCastingUint256.intoUD60x18(uint256) (NodeID: 601)
+  │ │           │   │   💬 Args: [getCallDataGas(data)]
+  │ │           │   │   👁️  Def: internal
+  │ │           │   │ └─ [11] ⚙️ FUNCTION: Unknown.getCallDataGas(bytes) (NodeID: 602)
+  │ │           │   │     💬 Args: [data]
+  │ │           │   │     👁️  Def: internal
+  │ │           │   └─ [10] ⚙️ FUNCTION: Unknown.mul(UD60x18,UD60x18) (NodeID: 603)
+  │ │           │       💬 Args: [PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)), opStackScalar]
+  │ │           │       👁️  Def: internal
+  │ │           │     └─ [11] ⚙️ FUNCTION: Unknown.wrap(uint256) (NodeID: 604)
+  │ │           │         💬 Args: [Common.mulDiv18(x.unwrap(), y.unwrap())]
+  │ │           │         👁️  Def: internal
+  │ │           │       └─ [12] ⚙️ FUNCTION: Unknown.mulDiv18(uint256,uint256) (NodeID: 605)
+  │ │           │           💬 Args: [Common, x.unwrap(), y.unwrap()]
+  │ │           │           👁️  Def: internal
+  │ │           │         ├─ [13] ⚙️ FUNCTION: Unknown.unwrap(UD60x18) (NodeID: 606)
+  │ │           │         │   💬 Args: [x]
+  │ │           │         │   👁️  Def: internal
+  │ │           │         └─ [13] ⚙️ FUNCTION: Unknown.unwrap(UD60x18) (NodeID: 607)
+  │ │           │             💬 Args: [y]
+  │ │           │             👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: Unknown.exists(string) (NodeID: 608)
+  │ │           │   💬 Args: [fileName]
+  │ │           │   👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: Unknown.readFile(string) (NodeID: 609)
+  │ │           │   💬 Args: [fileName]
+  │ │           │   👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: Unknown.parsePrevGasReport(string) (NodeID: 610)
+  │ │           │   💬 Args: [fileContent]
+  │ │           │   👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 611)
+  │ │           │ │   💬 Args: [parseJson(fileContent, ".Total")]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 612)
+  │ │           │ │     💬 Args: [fileContent, ".Total"]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 613)
+  │ │           │ │   💬 Args: [parseJson(fileContent, ".Phases.Creation")]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 614)
+  │ │           │ │     💬 Args: [fileContent, ".Phases.Creation"]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 615)
+  │ │           │ │   💬 Args: [parseJson(fileContent, ".Phases.Validation")]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 616)
+  │ │           │ │     💬 Args: [fileContent, ".Phases.Validation"]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 617)
+  │ │           │ │   💬 Args: [parseJson(fileContent, ".Phases.Execution")]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 618)
+  │ │           │ │     💬 Args: [fileContent, ".Phases.Execution"]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 619)
+  │ │           │ │   💬 Args: [parseJson(fileContent, ".Calldata.Arbitrum")]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 620)
+  │ │           │ │     💬 Args: [fileContent, ".Calldata.Arbitrum"]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ └─ [9] ⚙️ FUNCTION: Unknown.parseUintFromASCII(bytes) (NodeID: 621)
+  │ │           │     💬 Args: [parseJson(fileContent, ".Calldata.OP-Stack")]
+  │ │           │     👁️  Def: internal
+  │ │           │   └─ [10] ⚙️ FUNCTION: Unknown.parseJson(string,string) (NodeID: 622)
+  │ │           │       💬 Args: [fileContent, ".Calldata.OP-Stack"]
+  │ │           │       👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: GasParser.formatGasToWrite(string,struct GasCalculations,struct GasCalculations) (NodeID: 623)
+  │ │           │   💬 Args: [gasIdentifier, prevGasCalculations, gasCalculations]
+  │ │           │   👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 624)
+  │ │           │ │   💬 Args: [jsonObj, "Total", formatGasValue({prevValue: prevGasCalculations.total, newValue: gasCalculations.total})]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 625)
+  │ │           │ │     💬 Args: [prevGasCalculations.total, gasCalculations.total]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 626)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 627)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 628)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 629)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 630)
+  │ │           │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │ │           │ │       👁️  Def: internal
+  │ │           │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 631)
+  │ │           │ │         💬 Args: [value]
+  │ │           │ │         👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 632)
+  │ │           │ │   💬 Args: [phasesObj, "Creation", formatGasValue({prevValue: prevGasCalculations.creation, newValue: gasCalculations.creation})]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 633)
+  │ │           │ │     💬 Args: [prevGasCalculations.creation, gasCalculations.creation]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 634)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 635)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 636)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 637)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 638)
+  │ │           │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │ │           │ │       👁️  Def: internal
+  │ │           │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 639)
+  │ │           │ │         💬 Args: [value]
+  │ │           │ │         👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 640)
+  │ │           │ │   💬 Args: [phasesObj, "Validation", formatGasValue({prevValue: prevGasCalculations.validation, newValue: gasCalculations.validation})]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 641)
+  │ │           │ │     💬 Args: [prevGasCalculations.validation, gasCalculations.validation]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 642)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 643)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 644)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 645)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 646)
+  │ │           │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │ │           │ │       👁️  Def: internal
+  │ │           │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 647)
+  │ │           │ │         💬 Args: [value]
+  │ │           │ │         👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 648)
+  │ │           │ │   💬 Args: [phasesObj, "Execution", formatGasValue({prevValue: prevGasCalculations.execution, newValue: gasCalculations.execution})]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 649)
+  │ │           │ │     💬 Args: [prevGasCalculations.execution, gasCalculations.execution]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 650)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 651)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 652)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 653)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 654)
+  │ │           │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │ │           │ │       👁️  Def: internal
+  │ │           │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 655)
+  │ │           │ │         💬 Args: [value]
+  │ │           │ │         👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 656)
+  │ │           │ │   💬 Args: [l2sObj, "OP-Stack", formatGasValue({prevValue: prevGasCalculations.opStack, newValue: gasCalculations.opStack})]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 657)
+  │ │           │ │     💬 Args: [prevGasCalculations.opStack, gasCalculations.opStack]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 658)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 659)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 660)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 661)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 662)
+  │ │           │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │ │           │ │       👁️  Def: internal
+  │ │           │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 663)
+  │ │           │ │         💬 Args: [value]
+  │ │           │ │         👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 664)
+  │ │           │ │   💬 Args: [l2sObj, "Arbitrum", formatGasValue({prevValue: prevGasCalculations.arbitrum, newValue: gasCalculations.arbitrum})]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ │ └─ [10] ⚙️ FUNCTION: Unknown.formatGasValue(uint256,uint256) (NodeID: 665)
+  │ │           │ │     💬 Args: [prevGasCalculations.arbitrum, gasCalculations.arbitrum]
+  │ │           │ │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 666)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 667)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   ├─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 668)
+  │ │           │ │   │   💬 Args: [int256(newValue)]
+  │ │           │ │   │   👁️  Def: internal
+  │ │           │ │   │ └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 669)
+  │ │           │ │   │     💬 Args: [value]
+  │ │           │ │   │     👁️  Def: internal
+  │ │           │ │   └─ [11] ⚙️ FUNCTION: Unknown.formatGas(int256) (NodeID: 670)
+  │ │           │ │       💬 Args: [int256(newValue) - int256(prevValue)]
+  │ │           │ │       👁️  Def: internal
+  │ │           │ │     └─ [12] ⚙️ FUNCTION: Unknown.toString(int256) (NodeID: 671)
+  │ │           │ │         💬 Args: [value]
+  │ │           │ │         👁️  Def: internal
+  │ │           │ ├─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 672)
+  │ │           │ │   💬 Args: [jsonObj, "Phases", phasesOutput]
+  │ │           │ │   👁️  Def: internal
+  │ │           │ └─ [9] ⚙️ FUNCTION: Unknown.serializeString(string,string,string) (NodeID: 673)
+  │ │           │     💬 Args: [jsonObj, "Calldata", l2sOutput]
+  │ │           │     👁️  Def: internal
+  │ │           ├─ [8] ⚙️ FUNCTION: Unknown.writeJson(string,string) (NodeID: 674)
+  │ │           │   💬 Args: [finalJson, fileName]
+  │ │           │   👁️  Def: internal
+  │ │           └─ [8] ⚙️ FUNCTION: Unknown.writeGasIdentifier(string) (NodeID: 675)
+  │ │               💬 Args: [""]
+  │ │               👁️  Def: internal
+  │ │             └─ [9] ⚙️ FUNCTION: Unknown.writeString(bytes32,string) (NodeID: 676)
+  │ │                 💬 Args: [slot, id]
+  │ │                 👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: BaseSuperVaultTest._getSuperVaultPricePerShare() (NodeID: 677)
+  │ │   💬 Args: [no args]
+  │ │   👁️  Def: internal
+  │ │ └─ [3] ⚙️ FUNCTION: Math.mulDiv(uint256,uint256,uint256,enum Math.Rounding) (NodeID: 678)
+  │ │     💬 Args: [totalAssetsVault, vault.PRECISION(), totalSupplyAmount, Math.Rounding.Floor]
+  │ │     👁️  Def: internal
+  │ │   ├─ [4] ⚙️ FUNCTION: SafeCast.toUint(bool) (NodeID: 679)
+  │ │   │   💬 Args: [unsignedRoundsUp(rounding) && (mulmod(x, y, denominator) > 0)]
+  │ │   │   👁️  Def: internal
+  │ │   │ └─ [5] ⚙️ FUNCTION: Math.unsignedRoundsUp(enum Math.Rounding) (NodeID: 680)
+  │ │   │     💬 Args: [rounding]
+  │ │   │     👁️  Def: internal
+  │ │   └─ [4] ⚙️ FUNCTION: Math.mulDiv(uint256,uint256,uint256) (NodeID: 681)
+  │ │       💬 Args: [x, y, denominator]
+  │ │       👁️  Def: internal
+  │ │     ├─ [5] ⚙️ FUNCTION: Math.mul512(uint256,uint256) (NodeID: 682)
+  │ │     │   💬 Args: [x, y]
+  │ │     │   👁️  Def: internal
+  │ │     └─ [5] ⚙️ FUNCTION: Panic.panic(uint256) (NodeID: 683)
+  │ │         💬 Args: [ternary(denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW)]
+  │ │         👁️  Def: internal
+  │ │       └─ [6] ⚙️ FUNCTION: Math.ternary(bool,uint256,uint256) (NodeID: 684)
+  │ │           💬 Args: [denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW]
+  │ │           👁️  Def: internal
+  │ │         └─ [7] ⚙️ FUNCTION: SafeCast.toUint(bool) (NodeID: 685)
+  │ │             💬 Args: [condition]
+  │ │             👁️  Def: internal
+  │ ├─ [2] ⚙️ FUNCTION: Math.mulDiv(uint256,uint256,uint256) (NodeID: 686)
+  │ │   💬 Args: [depositAmount, targetStrategy.PRECISION(), vars.pricePerShare]
+  │ │   👁️  Def: internal
+  │ │ ├─ [3] ⚙️ FUNCTION: Math.mul512(uint256,uint256) (NodeID: 687)
+  │ │ │   💬 Args: [x, y]
+  │ │ │   👁️  Def: internal
+  │ │ └─ [3] ⚙️ FUNCTION: Panic.panic(uint256) (NodeID: 688)
+  │ │     💬 Args: [ternary(denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW)]
+  │ │     👁️  Def: internal
+  │ │   └─ [4] ⚙️ FUNCTION: Math.ternary(bool,uint256,uint256) (NodeID: 689)
+  │ │       💬 Args: [denominator == 0, Panic.DIVISION_BY_ZERO, Panic.UNDER_OVERFLOW]
+  │ │       👁️  Def: internal
+  │ │     └─ [5] ⚙️ FUNCTION: SafeCast.toUint(bool) (NodeID: 690)
+  │ │         💬 Args: [condition]
+  │ │         👁️  Def: internal
+  │ └─ [2] ⚙️ FUNCTION: BaseSuperVaultTest._trackDeposit(address,uint256,uint256) (NodeID: 691)
+  │     💬 Args: [accountEth, vars.shares, depositAmount]
+  │     👁️  Def: internal
+  ├─ [1] ⚙️ FUNCTION: StdAssertions.assertGt(uint256,uint256,string) (NodeID: 692)
+  │   💬 Args: [pendleEthena.balanceOf(address(newStrategy)), 0, "No shares allocated"]
+  │   👁️  Def: internal
+  └─ [1] ⚙️ FUNCTION: StdAssertions.assertEq(uint256,uint256,string) (NodeID: 693)
+      💬 Args: [asset5115.balanceOf(address(newStrategy)), 0, "Strategy should have no free assets after allocation"]
+      👁️  Def: internal
+```
