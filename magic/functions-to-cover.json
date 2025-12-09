@@ -1,0 +1,131 @@
+{
+  "Context": {
+    "functions_to_cover": [
+      "_msgSender"
+    ]
+  },
+  "ContextUpgradeable": {
+    "functions_to_cover": [
+      "_msgSender"
+    ]
+  },
+  "ERC20Upgradeable": {
+    "functions_to_cover": [
+      "_approve",
+      "_burn",
+      "_getERC20Storage",
+      "_mint",
+      "_spendAllowance",
+      "_transfer",
+      "_update",
+      "allowance",
+      "approve",
+      "balanceOf",
+      "transfer",
+      "transferFrom"
+    ]
+  },
+  "SuperGovernor": {
+    "functions_to_cover": [
+      "executeFeeUpdate",
+      "executeMinStalenessChange",
+      "executeUpkeepClaim",
+      "executeUpkeepPaymentsChange",
+      "proposeFee",
+      "proposeGlobalHooksRoot",
+      "proposeMinStaleness",
+      "proposeUpkeepPaymentsChange"
+    ]
+  },
+  "SuperVault": {
+    "functions_to_cover": [
+      "_getManagementFeeConfig",
+      "_getStoredPPS",
+      "_isOperator",
+      "_validateController",
+      "_validateControllerAndReceiver",
+      "asset",
+      "burnShares",
+      "cancelRedeemRequest",
+      "claimableRedeemRequest",
+      "convertToAssets",
+      "deposit",
+      "invalidateNonce",
+      "maxRedeem",
+      "maxWithdraw",
+      "mint",
+      "pendingRedeemRequest",
+      "previewDeposit",
+      "previewMint",
+      "redeem",
+      "requestRedeem",
+      "setOperator",
+      "withdraw"
+    ]
+  },
+  "SuperVaultEscrow": {
+    "functions_to_cover": [
+      "_onlyVault",
+      "escrowShares",
+      "initialize",
+      "returnShares"
+    ]
+  },
+  "SuperVaultStrategy": {
+    "functions_to_cover": [
+      "_addYieldSource",
+      "_decodeHookUsePrevHookAmount",
+      "_getSuperVaultAggregator",
+      "_getTokenBalance",
+      "_handleCancelRedeemRequest",
+      "_handleClaimCancelRedeem",
+      "_handleClaimRedeem",
+      "_handleRequestRedeem",
+      "_isManager",
+      "_isPPSNotUpdated",
+      "_isPPSStale",
+      "_isPaused",
+      "_isPrimaryManager",
+      "_isRegisteredHook",
+      "_manageYieldSource",
+      "_processExactFulfillmentBatch",
+      "_processSingleHookExecution",
+      "_removeYieldSource",
+      "_requireVault",
+      "_safeTokenTransfer",
+      "_updateYieldSourceOracle",
+      "_validateHook",
+      "_validateStrategyState",
+      "executeHooks",
+      "executeVaultFeeConfigUpdate",
+      "fulfillCancelRedeemRequests",
+      "fulfillRedeemRequests",
+      "getStoredPPS",
+      "getSuperVaultState",
+      "handleOperations4626Deposit",
+      "handleOperations4626Mint",
+      "handleOperations7540",
+      "manageYieldSource",
+      "manageYieldSources",
+      "proposeVaultFeeConfigUpdate"
+    ]
+  },
+  "UnsafeSuperVaultAggregator": {
+    "functions_to_cover": [
+      "_getSuperBank",
+      "_validStrategy",
+      "addSecondaryManager",
+      "cancelChangePrimaryManager",
+      "changePrimaryManager",
+      "claimUpkeep",
+      "createVault",
+      "depositUpkeep",
+      "executeChangePrimaryManager",
+      "executeWithdrawUpkeep",
+      "proposeChangePrimaryManager",
+      "proposeWithdrawUpkeep",
+      "removeSecondaryManager",
+      "updateDeviationThreshold"
+    ]
+  }
+}
