@@ -1,0 +1,98 @@
+[
+  {
+    "target_function": "superGovernor_proposeFee",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "10000"
+  },
+  {
+    "target_function": "superGovernor_executeUpkeepClaim",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVaultAggregator.claimableUpkeep()"
+  },
+  {
+    "target_function": "superVault_approve",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "superVault.balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_burnShares",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVault.balanceOf(superVault.escrow())"
+  },
+  {
+    "target_function": "superVault_deposit",
+    "type": "max",
+    "value": "uint256 assets",
+    "access": "MockERC20(superVault.asset()).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_mint",
+    "type": "max",
+    "value": "uint256 shares",
+    "access": "superVault.convertToShares(MockERC20(superVault.asset()).balanceOf(_getActor()))"
+  },
+  {
+    "target_function": "superVault_redeem",
+    "type": "max",
+    "value": "uint256 shares",
+    "access": "superVault.maxRedeem(_getActor())"
+  },
+  {
+    "target_function": "superVault_withdraw",
+    "type": "max",
+    "value": "uint256 assets",
+    "access": "superVault.maxWithdraw(_getActor())"
+  },
+  {
+    "target_function": "superVault_requestRedeem",
+    "type": "max",
+    "value": "uint256 shares",
+    "access": "superVault.balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_transfer",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "superVault.balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVault_transferFrom",
+    "type": "max",
+    "value": "uint256 value",
+    "access": "superVault.balanceOf(_getRandomActor(entropyFrom))"
+  },
+  {
+    "target_function": "superVaultStrategy_proposeVaultFeeConfigUpdate",
+    "type": "max",
+    "value": "uint256 performanceFeeBps",
+    "access": "5100"
+  },
+  {
+    "target_function": "superVaultStrategy_proposeVaultFeeConfigUpdate",
+    "type": "max",
+    "value": "uint256 managementFeeBps",
+    "access": "10000"
+  },
+  {
+    "target_function": "superVaultAggregator_claimUpkeep",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "superVaultAggregator.claimableUpkeep()"
+  },
+  {
+    "target_function": "superVaultAggregator_depositUpkeep",
+    "type": "max",
+    "value": "uint256 amount",
+    "access": "MockERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).balanceOf(_getActor())"
+  },
+  {
+    "target_function": "superVaultAggregator_updateDeviationThreshold",
+    "type": "max",
+    "value": "uint256 deviationThreshold_",
+    "access": "1e18"
+  }
+]
