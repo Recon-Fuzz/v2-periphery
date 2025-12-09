@@ -139,6 +139,31 @@ abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
         }
     }
 
+    /// @dev Test redeem when escrow has insufficient balance
+    /// This attempts to cover the NOT_ENOUGH_ASSETS revert at line 534
+    function superVault_redeemWithInsufficientEscrowBalance_clamped() public {
+        address actor = _getActor();
+        
+        // Step 1: Ensure actor has redeemable shares
+        uint256 maxRedeemable = superVault.maxRedeem(actor);
+        if (maxRedeemable == 0) return;
+        
+        // Step 2: Calculate the assets that would be needed
+        uint256 sharesToRedeem = maxRedeemable % (maxRedeemable + 1);
+        if (sharesToRedeem == 0) return;
+        
+        uint256 averageWithdrawPrice = superVaultStrategy.getAverageWithdrawPrice(actor);
+        if (averageWithdrawPrice == 0) return;
+        
+        uint256 assetsNeeded = sharesToRedeem * averageWithdrawPrice / 1e18;
+        
+        // Step 3: Try to drain escrow balance below what's needed
+        // This is tricky because we can't directly control escrow balance
+        // But we can try calling redeem which should hit the check
+        vm.prank(actor);
+        try superVault.redeem(sharesToRedeem, actor, actor) {} catch {}
+    }
+
     /// @dev Complete withdraw flow: similar to redeem but uses withdraw instead
     function superVault_completeWithdrawFlow_clamped() public {
         address actor = _getActor();

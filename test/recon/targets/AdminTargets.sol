@@ -38,6 +38,62 @@ abstract contract AdminTargets is BaseTargetFunctions, Properties {
         executeHooksSuccess = true;
     }
 
+    /// @dev Test executeHooks with inflated expected output
+    /// Attempts to trigger MINIMUM_OUTPUT_AMOUNT_ASSETS_NOT_MET revert at line 764
+    function superVaultStrategy_executeHooks_inflatedExpectedOutput_clamped() public {
+        // Get yield source and create a simple hook execution
+        address yieldSource = _getYieldSource();
+        YieldSourceType sourceType = _getCurrentYieldSourceType();
+        address oracle = _getYieldSourceOracleForType(sourceType);
+        
+        // Get strategy balance to work with
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance == 0) return;
+        
+        // Use a small amount for the operation
+        uint256 amount = strategyBalance % (strategyBalance + 1);
+        if (amount == 0) return;
+        
+        // Create deposit hook args
+        address hook;
+        bytes memory hookCalldata;
+        
+        if (sourceType == YieldSourceType.ERC4626) {
+            hook = address(deposit4626Hook);
+            hookCalldata = abi.encode(yieldSource, amount);
+        } else if (sourceType == YieldSourceType.ERC7540) {
+            hook = address(deposit7540Hook);
+            hookCalldata = abi.encode(yieldSource, amount);
+        } else if (sourceType == YieldSourceType.ERC5115) {
+            hook = address(deposit5115Hook);
+            hookCalldata = abi.encode(yieldSource, amount);
+        } else {
+            return;
+        }
+        
+        address[] memory hooks = new address[](1);
+        hooks[0] = hook;
+        
+        bytes[] memory hookCalldataArray = new bytes[](1);
+        hookCalldataArray[0] = hookCalldata;
+        
+        // Set an unrealistically high expected output to trigger the revert
+        uint256[] memory expectedAssetsOrSharesOut = new uint256[](1);
+        expectedAssetsOrSharesOut[0] = type(uint256).max; // Unrealistic expectation
+        
+        ISuperVaultStrategy.ExecuteArgs memory args = ISuperVaultStrategy.ExecuteArgs({
+            hooks: hooks,
+            hookCalldata: hookCalldataArray,
+            expectedAssetsOrSharesOut: expectedAssetsOrSharesOut,
+            globalProofs: new bytes32[][](1),
+            strategyProofs: new bytes32[][](1)
+        });
+        
+        // This should revert with MINIMUM_OUTPUT_AMOUNT_ASSETS_NOT_MET
+        vm.prank(address(this));
+        try superVaultStrategy.executeHooks(args) {} catch {}
+    }
+
     // Functions that require SuperGovernor access
     /// @dev removed because we're bypassing hook validation
     // function superVaultAggregator_setHooksRootUpdateTimelock(

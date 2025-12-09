@@ -63,6 +63,67 @@ abstract contract SuperVaultAggregatorTargets is
         superVaultAggregator_createVault(params);
     }
 
+    /// @dev Create vault with too many secondary managers to trigger revert
+    /// Attempts to trigger TOO_MANY_SECONDARY_MANAGERS at line 205
+    function superVaultAggregator_createVault_tooManySecondaryManagers_clamped() public {
+        uint256 minStaleness = superGovernor.getMinStaleness();
+        
+        // Try to add 6 secondary managers (max is 5)
+        uint256 numManagers = 6;
+        
+        address[] memory secondaryManagers = new address[](numManagers);
+        for (uint256 i = 0; i < numManagers; i++) {
+            secondaryManagers[i] = address(uint160(0x5000 + i));
+        }
+        
+        ISuperVaultAggregator.VaultCreationParams memory params = ISuperVaultAggregator.VaultCreationParams({
+            asset: _getAsset(),
+            name: "VaultTooManyManagers",
+            symbol: "VTMM",
+            mainManager: _getActor(),
+            secondaryManagers: secondaryManagers,
+            minUpdateInterval: minStaleness % (minStaleness + 1),
+            maxStaleness: minStaleness,
+            feeConfig: ISuperVaultStrategy.FeeConfig({
+                performanceFeeBps: 1000,
+                managementFeeBps: 100,
+                recipient: feeRecipient
+            })
+        });
+        
+        // This should revert with TOO_MANY_SECONDARY_MANAGERS
+        vm.prank(_getActor());
+        try superVaultAggregator.createVault(params) {} catch {}
+    }
+
+    /// @dev Create vault with max staleness too low to trigger revert
+    /// Attempts to trigger MAX_STALENESS_TOO_LOW at line 189
+    function superVaultAggregator_createVault_lowMaxStaleness_clamped() public {
+        uint256 minStaleness = superGovernor.getMinStaleness();
+        
+        // Set maxStaleness below the minimum (should revert)
+        uint256 maxStaleness = minStaleness > 0 ? minStaleness - 1 : 0;
+        
+        ISuperVaultAggregator.VaultCreationParams memory params = ISuperVaultAggregator.VaultCreationParams({
+            asset: _getAsset(),
+            name: "VaultLowStaleness",
+            symbol: "VLS",
+            mainManager: _getActor(),
+            secondaryManagers: new address[](0),
+            minUpdateInterval: 0,
+            maxStaleness: maxStaleness, // This is too low
+            feeConfig: ISuperVaultStrategy.FeeConfig({
+                performanceFeeBps: 1000,
+                managementFeeBps: 100,
+                recipient: feeRecipient
+            })
+        });
+        
+        // This should revert with MAX_STALENESS_TOO_LOW
+        vm.prank(_getActor());
+        try superVaultAggregator.createVault(params) {} catch {}
+    }
+
     /// @dev Create vault with secondary managers to cover that path
     function superVaultAggregator_createVault_withSecondaryManagers_clamped(uint256 numManagers) public {
         uint256 minStaleness = superGovernor.getMinStaleness();

@@ -144,6 +144,42 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         superVaultStrategy_fulfillRedeemRequests(controllers, totalAssetsOut);
     }
 
+    /// @dev Test fulfillRedeemRequests with insufficient strategy balance
+    /// Attempts to trigger INSUFFICIENT_LIQUIDITY revert at line 356
+    function superVaultStrategy_fulfillRedeemRequests_insufficientLiquidity_clamped(address controller) public {
+        // Only fulfill if there's a pending redeem request
+        uint256 pendingShares = superVaultStrategy.getSuperVaultState(controller).pendingRedeemRequest;
+        if (pendingShares == 0) return;
+
+        // Get current PPS to calculate assets out
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+
+        // Calculate maximum theoretical assets needed
+        uint256 theoreticalAssets = pendingShares * currentPPS / 1e18;
+        
+        // Get strategy balance
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        
+        // Try to fulfill with more assets than available
+        // This should trigger the INSUFFICIENT_LIQUIDITY revert
+        uint256 assetsOut = theoreticalAssets;
+        if (assetsOut <= strategyBalance) {
+            // Increase to exceed balance
+            assetsOut = strategyBalance + 1;
+        }
+
+        address[] memory controllers = new address[](1);
+        controllers[0] = controller;
+
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = assetsOut;
+
+        // This should revert with INSUFFICIENT_LIQUIDITY
+        vm.prank(address(this));
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {} catch {}
+    }
+
     /// @dev Combined handler: request redeem then immediately fulfill it
     /// This ensures the redeem workflow is properly exercised
     function superVaultStrategy_requestAndFulfillRedeem_clamped() public {
@@ -165,6 +201,91 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         
         // Step 2: Fulfill the redeem request
         superVaultStrategy_fulfillRedeemRequests_clamped(controller);
+    }
+
+    /// @dev Test fulfillRedeemRequests with out-of-bounds totalAssetsOut
+    /// Attempts to trigger BOUNDS_EXCEEDED revert at line 808
+    function superVaultStrategy_fulfillRedeemRequests_boundsExceeded_clamped(address controller, uint256 entropy) public {
+        // Only fulfill if there's a pending redeem request
+        uint256 pendingShares = superVaultStrategy.getSuperVaultState(controller).pendingRedeemRequest;
+        if (pendingShares == 0) return;
+
+        // Get current PPS to calculate theoretical assets
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+
+        uint256 theoreticalAssets = pendingShares * currentPPS / 1e18;
+
+        // Get slippage parameters to calculate valid range
+        ISuperVaultStrategy.SuperVaultState memory state = superVaultStrategy.getSuperVaultState(controller);
+        uint16 slippageBps = state.redeemSlippageBps > 0 ? state.redeemSlippageBps : 500;
+        
+        // Calculate minAssetsOut
+        uint256 minAssetsOut;
+        if (state.averageRequestPPS > 0) {
+            uint256 baseAssets = pendingShares * state.averageRequestPPS / 1e18;
+            minAssetsOut = baseAssets - (baseAssets * slippageBps / 10000);
+        } else {
+            minAssetsOut = theoreticalAssets - (theoreticalAssets * slippageBps / 10000);
+        }
+
+        // Choose an assetsOut value that's out of bounds
+        uint256 assetsOut;
+        if (entropy % 2 == 0) {
+            // Below minimum
+            if (minAssetsOut > 0) {
+                assetsOut = minAssetsOut - 1;
+            } else {
+                return;
+            }
+        } else {
+            // Above theoretical
+            assetsOut = theoreticalAssets + 1;
+        }
+
+        address[] memory controllers = new address[](1);
+        controllers[0] = controller;
+
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = assetsOut;
+
+        // This should revert with BOUNDS_EXCEEDED
+        vm.prank(address(this));
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {} catch {}
+    }
+
+    /// @dev Test operations with veto status enabled
+    /// Attempts to trigger OPERATIONS_BLOCKED_BY_VETO revert at lines 166, 214
+    function superVaultStrategy_operationsWithVeto_clamped(address controller) public {
+        // Step 1: Enable global hooks root veto
+        vm.prank(address(superGovernor));
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Step 2: Try to perform a deposit operation (should revert)
+        uint256 assetsGross = IERC20(superVault.asset()).balanceOf(_getActor());
+        if (assetsGross > 0) {
+            assetsGross = assetsGross % (assetsGross + 1);
+            if (assetsGross > 0) {
+                MockERC20(superVault.asset()).approve(address(superVaultStrategy), assetsGross);
+                vm.prank(address(superVault)); // Only vault can call this
+                try superVaultStrategy.handleOperations4626Deposit(controller, assetsGross) {} catch {}
+            }
+        }
+        
+        // Step 3: Try to perform a mint operation (should also revert)
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS > 0) {
+            uint256 sharesNet = 1000e18;
+            uint256 assetsNet = sharesNet * currentPPS / 1e18;
+            uint256 assetsGross2 = assetsNet + 100; // Add some for fees
+            
+            vm.prank(address(superVault)); // Only vault can call this
+            try superVaultStrategy.handleOperations4626Mint(controller, sharesNet, assetsGross2, assetsNet) {} catch {}
+        }
+        
+        // Step 4: Disable veto for subsequent tests
+        vm.prank(address(superGovernor));
+        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
     }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
