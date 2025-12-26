@@ -189,6 +189,15 @@
   "superVaultAggregator_executeWithdrawUpkeep": [
     "request.effectiveTime != 0 && block.timestamp >= request.effectiveTime && withdrawalAmount != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.UPKEEP_TOKEN()) && SUPER_GOVERNOR.UPKEEP_TOKEN() && upkeepToken.safeTransfer(mainManager, withdrawalAmount)"
   ],
+  "superVault_mint_clamped": [
+    "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+    "pps == 0",
+    "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+  ],
+  "superVault_redeem_clamped": [
+    "withdrawPrice == 0 && strategy.getAverageWithdrawPrice(owner)",
+    "withdrawPrice != 0 && strategy.getAverageWithdrawPrice(owner)"
+  ],
   "superVault_approve": [
     "owner != 0 && spender != 0 && true",
     "owner != 0 && spender != 0 && !(true)"
