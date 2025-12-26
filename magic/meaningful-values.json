@@ -1,0 +1,146 @@
+[
+    {
+        "target_function": "deposit",
+        "type": "max",
+        "value": "uint256 assets",
+        "access": "MockERC20(_getAsset()).balanceOf(_getActor())"
+    },
+    {
+        "target_function": "mint",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.previewDeposit(MockERC20(_getAsset()).balanceOf(_getActor()))"
+    },
+    {
+        "target_function": "requestRedeem",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "redeem",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.maxRedeem(_getActor())"
+    },
+    {
+        "target_function": "withdraw",
+        "type": "max",
+        "value": "uint256 assets",
+        "access": "superVault.maxWithdraw(_getActor())"
+    },
+    {
+        "target_function": "transfer",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "approve",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "transferFrom",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "burnShares",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVault.balanceOf(superVault.escrow())"
+    },
+    {
+        "target_function": "proposeFee",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "10000"
+    },
+    {
+        "target_function": "executeUpkeepClaim",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVaultAggregator.claimableUpkeep()"
+    },
+    {
+        "target_function": "depositUpkeep",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "MockERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).balanceOf(_getActor())"
+    },
+    {
+        "target_function": "proposeVaultFeeConfigUpdate",
+        "type": "max",
+        "value": "uint256 performanceFeeBps",
+        "access": "5100"
+    },
+    {
+        "target_function": "proposeVaultFeeConfigUpdate",
+        "type": "max",
+        "value": "uint256 managementFeeBps",
+        "access": "10000"
+    },
+    {
+        "target_function": "addSecondaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "removeSecondaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "proposeChangePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "cancelChangePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "executeChangePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "updateDeviationThreshold",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "proposeWithdrawUpkeep",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "executeWithdrawUpkeep",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "escrowShares",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "returnShares",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVault.balanceOf(address(superVaultEscrow))"
+    }
+]
