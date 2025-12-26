@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {BaseTargetFunctions} from "@chimera/BaseTargetFunctions.sol";
 import {vm} from "@chimera/Hevm.sol";
 import {Panic} from "@recon/Panic.sol";
+import {MockERC20} from "@recon/MockERC20.sol";
 
 import {
     ISuperVaultStrategy
@@ -18,6 +19,85 @@ abstract contract SuperVaultAggregatorTargets is
     Properties
 {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
+
+    function superVaultAggregator_depositUpkeep_clamped(uint256 amount) public {
+        // Clamp amount to actor's UPKEEP_TOKEN balance
+        amount = amount % (MockERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).balanceOf(_getActor()) + 1);
+        
+        // Approve the aggregator
+        vm.prank(_getActor());
+        MockERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).approve(address(superVaultAggregator), amount);
+        
+        // Call the unclamped handler
+        superVaultAggregator_depositUpkeep(amount);
+    }
+
+    function superVaultAggregator_addSecondaryManager_clamped(address manager) public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_addSecondaryManager(strategy, manager);
+    }
+
+    function superVaultAggregator_removeSecondaryManager_clamped(address manager) public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_removeSecondaryManager(strategy, manager);
+    }
+
+    function superVaultAggregator_proposeChangePrimaryManager_clamped(
+        address newManager,
+        address feeRecipient
+    ) public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_proposeChangePrimaryManager(strategy, newManager, feeRecipient);
+    }
+
+    function superVaultAggregator_cancelChangePrimaryManager_clamped() public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_cancelChangePrimaryManager(strategy);
+    }
+
+    function superVaultAggregator_executeChangePrimaryManager_clamped() public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_executeChangePrimaryManager(strategy);
+    }
+
+    function superVaultAggregator_updateDeviationThreshold_clamped(uint256 deviationThreshold_) public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_updateDeviationThreshold(strategy, deviationThreshold_);
+    }
+
+    function superVaultAggregator_proposeWithdrawUpkeep_clamped() public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_proposeWithdrawUpkeep(strategy);
+    }
+
+    function superVaultAggregator_executeWithdrawUpkeep_clamped() public {
+        // Use exact strategy address
+        address strategy = address(superVaultStrategy);
+        
+        // Call the unclamped handler
+        superVaultAggregator_executeWithdrawUpkeep(strategy);
+    }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 

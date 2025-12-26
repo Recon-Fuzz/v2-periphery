@@ -16,6 +16,92 @@ import {Properties} from "../Properties.sol";
 abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
 
+    function superVault_approve_clamped(address spender, uint256 value) public {
+        // Clamp value to actor's balance
+        value = value % (superVault.balanceOf(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVault_approve(spender, value);
+    }
+
+    function superVault_deposit_clamped(uint256 assets) public {
+        // Clamp assets to actor's balance
+        assets = assets % (MockERC20(_getAsset()).balanceOf(_getActor()) + 1);
+        
+        // Approve the vault
+        vm.prank(_getActor());
+        MockERC20(_getAsset()).approve(address(superVault), assets);
+        
+        // Call the unclamped handler
+        superVault_deposit(assets);
+    }
+
+    function superVault_mint_clamped(uint256 shares) public {
+        uint256 maxShares = superVault.previewDeposit(MockERC20(_getAsset()).balanceOf(_getActor()));
+        // Clamp shares to preview of actor's balance
+        shares = shares % (maxShares + 1);
+        
+        // Approve the vault with enough assets
+        uint256 assetsNeeded = superVault.previewMint(shares);
+        vm.prank(_getActor());
+        MockERC20(_getAsset()).approve(address(superVault), assetsNeeded);
+        
+        // Call the unclamped handler
+        superVault_mint(shares);
+    }
+
+    function superVault_requestRedeem_clamped(uint256 shares) public {
+        // Clamp shares to actor's balance
+        shares = shares % (superVault.balanceOf(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVault_requestRedeem(shares);
+    }
+
+    function superVault_redeem_clamped(uint256 shares) public {
+        // Clamp shares to maxRedeem for actor
+        shares = shares % (superVault.maxRedeem(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVault_redeem(shares);
+    }
+
+    function superVault_withdraw_clamped(uint256 assets) public {
+        // Clamp assets to maxWithdraw for actor
+        assets = assets % (superVault.maxWithdraw(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVault_withdraw(assets);
+    }
+
+    function superVault_transfer_clamped(uint256 entropy, uint256 value) public {
+        // Clamp value to actor's balance
+        value = value % (superVault.balanceOf(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVault_transfer(entropy, value);
+    }
+
+    function superVault_transferFrom_clamped(
+        uint256 entropyFrom,
+        uint256 entropyTo,
+        uint256 value
+    ) public {
+        // Clamp value to sender's balance
+        value = value % (superVault.balanceOf(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVault_transferFrom(entropyFrom, entropyTo, value);
+    }
+
+    function superVault_burnShares_clamped(uint256 amount) public {
+        // Clamp amount to escrow's balance
+        amount = amount % (superVault.balanceOf(superVault.escrow()) + 1);
+        
+        // Call the unclamped handler
+        superVault_burnShares(amount);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superVault_approve(address spender, uint256 value) public asActor {

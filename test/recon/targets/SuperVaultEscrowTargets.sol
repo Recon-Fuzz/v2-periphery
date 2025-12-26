@@ -14,6 +14,23 @@ import "src/SuperVault/SuperVaultEscrow.sol";
 
 abstract contract SuperVaultEscrowTargets is BaseTargetFunctions, Properties {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
+
+    function superVaultEscrow_escrowShares_clamped(address from, uint256 amount) public {
+        // Clamp amount to actor's balance
+        amount = amount % (superVault.balanceOf(_getActor()) + 1);
+        
+        // Call the unclamped handler
+        superVaultEscrow_escrowShares(from, amount);
+    }
+
+    function superVaultEscrow_returnShares_clamped(address to, uint256 amount) public {
+        // Clamp amount to escrow's balance
+        amount = amount % (superVault.balanceOf(address(superVaultEscrow)) + 1);
+        
+        // Call the unclamped handler
+        superVaultEscrow_returnShares(to, amount);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
     function superVaultEscrow_escrowShares(address from, uint256 amount) public asActor {
         superVaultEscrow.escrowShares(from, amount);

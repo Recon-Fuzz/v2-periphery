@@ -16,6 +16,21 @@ import {Properties} from "../Properties.sol";
 abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
 
+    function superVaultStrategy_proposeVaultFeeConfigUpdate_clamped(
+        uint256 performanceFeeBps,
+        uint256 managementFeeBps,
+        address recipient
+    ) public {
+        // Clamp performanceFeeBps to max 5100 (51%)
+        performanceFeeBps = performanceFeeBps % (5100 + 1);
+        
+        // Clamp managementFeeBps to max 10000 (100%)
+        managementFeeBps = managementFeeBps % (10000 + 1);
+        
+        // Call the unclamped handler
+        superVaultStrategy_proposeVaultFeeConfigUpdate(performanceFeeBps, managementFeeBps, recipient);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superVaultStrategy_executeVaultFeeConfigUpdate() public asActor {
