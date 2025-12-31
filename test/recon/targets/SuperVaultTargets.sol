@@ -81,6 +81,14 @@ abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
         );
     }
 
+    function superVault_claimCancelRedeemRequest(
+        uint256 requestId,
+        address receiver,
+        address controller
+    ) public asActor {
+        superVault.claimCancelRedeemRequest(requestId, receiver, controller);
+    }
+
     /// @dev Property: previewDeposit returns the correct amounts compared to executing a deposit
     function superVault_deposit(
         uint256 assets

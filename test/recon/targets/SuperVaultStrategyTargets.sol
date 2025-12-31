@@ -84,4 +84,8 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
             recipient
         );
     }
+
+    function superVaultStrategy_skimPerformanceFee() public asActor {
+        superVaultStrategy.skimPerformanceFee();
+    }
 }
