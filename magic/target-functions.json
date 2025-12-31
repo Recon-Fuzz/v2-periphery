@@ -1,0 +1,81 @@
+[
+  {
+    "contract": "SuperGovernor",
+    "target_functions": [
+      "executeFeeUpdate",
+      "executeMinStalenessChange",
+      "executeUpkeepClaim",
+      "executeUpkeepPaymentsChange",
+      "proposeFee",
+      "proposeGlobalHooksRoot",
+      "proposeMinStaleness",
+      "proposeUpkeepPaymentsChange"
+    ]
+  },
+  {
+    "contract": "SuperVault",
+    "target_functions": [
+      "approve",
+      "asset",
+      "burnShares",
+      "cancelRedeemRequest",
+      "claimCancelRedeemRequest",
+      "claimableRedeemRequest",
+      "convertToAssets",
+      "deposit",
+      "invalidateNonce",
+      "mint",
+      "pendingRedeemRequest",
+      "previewDeposit",
+      "previewMint",
+      "redeem",
+      "requestRedeem",
+      "setOperator",
+      "transfer",
+      "transferFrom",
+      "withdraw"
+    ]
+  },
+  {
+    "contract": "SuperVaultEscrow",
+    "target_functions": [
+      "escrowShares",
+      "initialize",
+      "returnShares"
+    ]
+  },
+  {
+    "contract": "SuperVaultStrategy",
+    "target_functions": [
+      "executeHooks",
+      "executeVaultFeeConfigUpdate",
+      "fulfillCancelRedeemRequests",
+      "fulfillRedeemRequests",
+      "getSuperVaultState",
+      "handleOperations4626Deposit",
+      "handleOperations4626Mint",
+      "handleOperations7540",
+      "manageYieldSource",
+      "manageYieldSources",
+      "proposeVaultFeeConfigUpdate",
+      "skimPerformanceFee"
+    ]
+  },
+  {
+    "contract": "UnsafeSuperVaultAggregator",
+    "target_functions": [
+      "addSecondaryManager",
+      "cancelChangePrimaryManager",
+      "changePrimaryManager",
+      "claimUpkeep",
+      "createVault",
+      "depositUpkeep",
+      "executeChangePrimaryManager",
+      "executeWithdrawUpkeep",
+      "proposeChangePrimaryManager",
+      "proposeWithdrawUpkeep",
+      "removeSecondaryManager",
+      "updateDeviationThreshold"
+    ]
+  }
+]
