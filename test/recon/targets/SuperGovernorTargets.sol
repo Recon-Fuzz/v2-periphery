@@ -9,6 +9,19 @@ import {SuperGovernor, FeeType} from "src/SuperGovernor.sol";
 abstract contract SuperGovernorTargets is BaseTargetFunctions, Properties {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
 
+    function superGovernor_proposeFee_clamped(
+        FeeType feeType,
+        uint256 value
+    ) public {
+        value = value % (10_000 + 1); // BPS_MAX = 10_000
+        superGovernor_proposeFee(feeType, value);
+    }
+
+    function superGovernor_executeUpkeepClaim_clamped(uint256 amount) public {
+        amount = amount % (superVaultAggregator.claimableUpkeep() + 1);
+        superGovernor_executeUpkeepClaim(amount);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superGovernor_proposeFee(

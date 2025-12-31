@@ -16,6 +16,58 @@ import {Properties} from "../Properties.sol";
 abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
 
+    function superVault_approve_clamped(address spender, uint256 value) public {
+        value = value % (superVault.balanceOf(_getActor()) + 1);
+        superVault_approve(spender, value);
+    }
+
+    function superVault_burnShares_clamped(uint256 amount) public {
+        amount = amount % (superVault.balanceOf(address(superVaultEscrow)) + 1);
+        superVault_burnShares(amount);
+    }
+
+    function superVault_deposit_clamped(uint256 assets) public {
+        assets = assets % (MockERC20(superVault.asset()).balanceOf(_getActor()) + 1);
+        MockERC20(superVault.asset()).approve(address(superVault), assets);
+        superVault_deposit(assets);
+    }
+
+    function superVault_mint_clamped(uint256 shares) public {
+        shares = shares % (superVault.convertToShares(MockERC20(superVault.asset()).balanceOf(_getActor())) + 1);
+        uint256 assets = superVault.previewMint(shares);
+        MockERC20(superVault.asset()).approve(address(superVault), assets);
+        superVault_mint(shares);
+    }
+
+    function superVault_redeem_clamped(uint256 shares) public {
+        shares = shares % (superVault.maxRedeem(_getActor()) + 1);
+        superVault_redeem(shares);
+    }
+
+    function superVault_withdraw_clamped(uint256 assets) public {
+        assets = assets % (superVault.maxWithdraw(_getActor()) + 1);
+        superVault_withdraw(assets);
+    }
+
+    function superVault_requestRedeem_clamped(uint256 shares) public {
+        shares = shares % (superVault.balanceOf(_getActor()) + 1);
+        superVault_requestRedeem(shares);
+    }
+
+    function superVault_transfer_clamped(uint256 entropy, uint256 value) public {
+        value = value % (superVault.balanceOf(_getActor()) + 1);
+        superVault_transfer(entropy, value);
+    }
+
+    function superVault_transferFrom_clamped(
+        uint256 entropyFrom,
+        uint256 entropyTo,
+        uint256 value
+    ) public {
+        value = value % (superVault.balanceOf(_getRandomActor(entropyFrom)) + 1);
+        superVault_transferFrom(entropyFrom, entropyTo, value);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superVault_approve(address spender, uint256 value) public asActor {

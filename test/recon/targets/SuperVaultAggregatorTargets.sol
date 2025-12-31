@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {BaseTargetFunctions} from "@chimera/BaseTargetFunctions.sol";
 import {vm} from "@chimera/Hevm.sol";
 import {Panic} from "@recon/Panic.sol";
+import {MockERC20} from "@recon/MockERC20.sol";
 
 import {
     ISuperVaultStrategy
@@ -18,6 +19,25 @@ abstract contract SuperVaultAggregatorTargets is
     Properties
 {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
+
+    function superVaultAggregator_claimUpkeep_clamped(uint256 amount) public {
+        amount = amount % (superVaultAggregator.claimableUpkeep() + 1);
+        superVaultAggregator_claimUpkeep(amount);
+    }
+
+    function superVaultAggregator_depositUpkeep_clamped(uint256 amount) public {
+        amount = amount % (MockERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).balanceOf(_getActor()) + 1);
+        MockERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).approve(address(superVaultAggregator), amount);
+        superVaultAggregator_depositUpkeep(amount);
+    }
+
+    function superVaultAggregator_updateDeviationThreshold_clamped(
+        address strategy,
+        uint256 deviationThreshold_
+    ) public {
+        deviationThreshold_ = deviationThreshold_ % (1e18 + 1);
+        superVaultAggregator_updateDeviationThreshold(strategy, deviationThreshold_);
+    }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
