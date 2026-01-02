@@ -5,8 +5,9 @@
   "workflow_action": "continue",
   "message": "Echidna completed successfully",
   "coverage_files": [
-    "echidna/covered.1767369080.txt"
+    "echidna/covered.1767369080.txt",
+    "echidna/covered.1767372467.txt"
   ],
   "coverage_generated": true,
-  "timestamp": "2026-01-02T12:51:24.667073"
+  "timestamp": "2026-01-02T13:47:51.747684"
 }

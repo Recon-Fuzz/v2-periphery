@@ -1,0 +1,508 @@
+{
+  "timestamp": "1767372467",
+  "lcov_file": "echidna/covered.1767372467.lcov",
+  "missing_coverage": [
+    {
+      "function": "maxRedeem",
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 412,
+        "end": 416
+      },
+      "uncovered_code": {
+        "line_range": "415",
+        "last_covered_line": 414,
+        "code": [
+          "414: [LAST COVERED]         if (withdrawPrice == 0) return 0;",
+          "415:         return maxWithdraw(owner).mulDiv(PRECISION, withdrawPrice, Math.Rounding.Floor);"
+        ]
+      }
+    },
+    {
+      "function": "redeem",
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 511,
+        "end": 543
+      },
+      "uncovered_code": {
+        "line_range": "528-542",
+        "last_covered_line": 525,
+        "code": [
+          "525: [LAST COVERED]         if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE();",
+          "528:         assets = shares.mulDiv(averageWithdrawPrice, PRECISION, Math.Rounding.Floor);",
+          "530:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
+          "531:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();",
+          "533:         uint256 escrowBalance = _asset.balanceOf(escrow);",
+          "534:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();",
+          "537:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);",
+          "540:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);",
+          "542:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
+        ]
+      }
+    },
+    {
+      "function": "withdraw",
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 476,
+        "end": 508
+      },
+      "uncovered_code": {
+        "line_range": "492-507",
+        "last_covered_line": 490,
+        "code": [
+          "490: [LAST COVERED]         if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE();",
+          "492:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
+          "493:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();",
+          "496:         shares = assets.mulDiv(PRECISION, averageWithdrawPrice, Math.Rounding.Ceil);",
+          "498:         uint256 escrowBalance = _asset.balanceOf(escrow);",
+          "499:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();",
+          "502:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);",
+          "505:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);",
+          "507:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
+        ]
+      }
+    },
+    {
+      "function": "executeHooks",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 273,
+        "end": 297
+      },
+      "uncovered_code": {
+        "line_range": "290",
+        "last_covered_line": 289,
+        "code": [
+          "289: [LAST COVERED]             if (!_validateHook(hook, args.hookCalldata[i], args.globalProofs[i], args.strategyProofs[i])) {",
+          "290:                 revert HOOK_VALIDATION_FAILED();"
+        ]
+      }
+    },
+    {
+      "function": "fulfillRedeemRequests",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 318,
+        "end": 368
+      },
+      "uncovered_code": {
+        "line_range": "329-367",
+        "last_covered_line": 327,
+        "code": [
+          "327: [LAST COVERED]         _validateStrategyState(_getSuperVaultAggregator());",
+          "329:         uint256 len = controllers.length;",
+          "330:         if (len == 0 || totalAssetsOut.length != len) revert INVALID_ARRAY_LENGTH();",
+          "332:         FulfillRedeemVars memory vars;",
+          "333:         vars.currentPPS = getStoredPPS();",
+          "334:         if (vars.currentPPS == 0) revert INVALID_PPS();",
+          "337:         for (uint256 i; i < len; ++i) {",
+          "339:             if (i > 0 && controllers[i] <= controllers[i - 1]) revert CONTROLLERS_NOT_SORTED_UNIQUE();",
+          "342:             uint256 pendingShares = superVaultState[controllers[i]].pendingRedeemRequest;",
+          "343:             vars.totalRequestedShares += pendingShares;",
+          "346:             if (pendingShares == 0) revert ZERO_SHARE_FULFILLMENT_DISALLOWED();",
+          "349:             _processExactFulfillmentBatch(controllers[i], totalAssetsOut[i], vars.currentPPS, pendingShares);",
+          "350:             vars.totalNetAssetsOut += totalAssetsOut[i];",
+          "354:         vars.strategyBalance = _getTokenBalance(address(_asset), address(this));",
+          "355:         if (vars.strategyBalance < vars.totalNetAssetsOut) {",
+          "356:             revert INSUFFICIENT_LIQUIDITY();",
+          "360:         ISuperVault(_vault).burnShares(vars.totalRequestedShares);",
+          "363:         if (vars.totalNetAssetsOut > 0) {",
+          "364:             _asset.safeTransfer(ISuperVault(_vault).escrow(), vars.totalNetAssetsOut);",
+          "367:         emit RedeemRequestsFulfilled(controllers, vars.totalRequestedShares, vars.currentPPS);"
+        ]
+      }
+    },
+    {
+      "function": "handleOperations4626Deposit",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 157,
+        "end": 195
+      },
+      "uncovered_code": {
+        "line_range": "166",
+        "last_covered_line": 165,
+        "code": [
+          "165: [LAST COVERED]         if (aggregator.isGlobalHooksRootVetoed()) {",
+          "166:             revert OPERATIONS_BLOCKED_BY_VETO();"
+        ]
+      }
+    },
+    {
+      "function": "handleOperations4626Mint",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 198,
+        "end": 234
+      },
+      "uncovered_code": {
+        "line_range": "214",
+        "last_covered_line": 213,
+        "code": [
+          "213: [LAST COVERED]         if (aggregator.isGlobalHooksRootVetoed()) {",
+          "214:             revert OPERATIONS_BLOCKED_BY_VETO();"
+        ]
+      }
+    },
+    {
+      "function": "handleOperations7540",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 251,
+        "end": 267
+      },
+      "uncovered_code": {
+        "line_range": "261",
+        "last_covered_line": 260,
+        "code": [
+          "260: [LAST COVERED]         } else if (operation == Operation.ClaimRedeem) {",
+          "261:             _handleClaimRedeem(controller, receiver, amount); // amount = assets"
+        ]
+      }
+    },
+    {
+      "function": "handleOperations7540",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 251,
+        "end": 267
+      },
+      "uncovered_code": {
+        "line_range": "265",
+        "last_covered_line": 263,
+        "code": [
+          "263: [LAST COVERED]             _handleCancelRedeemRequest(controller);",
+          "265:             revert ACTION_TYPE_DISALLOWED();"
+        ]
+      }
+    },
+    {
+      "function": "initialize",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 122,
+        "end": 150
+      },
+      "uncovered_code": {
+        "line_range": "129",
+        "last_covered_line": 128,
+        "code": [
+          "128: [LAST COVERED]                 && feeConfigData.recipient == address(0)",
+          "129:         ) revert ZERO_ADDRESS();"
+        ]
+      }
+    },
+    {
+      "function": "skimPerformanceFee",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 373,
+        "end": 456
+      },
+      "uncovered_code": {
+        "line_range": "384",
+        "last_covered_line": 383,
+        "code": [
+          "383: [LAST COVERED]         if (block.timestamp < lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) {",
+          "384:             revert SKIM_TIMELOCK_ACTIVE();"
+        ]
+      }
+    },
+    {
+      "function": "skimPerformanceFee",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 373,
+        "end": 456
+      },
+      "uncovered_code": {
+        "line_range": "407-455",
+        "last_covered_line": 403,
+        "code": [
+          "403: [LAST COVERED]             return;",
+          "407:         uint256 ppsGrowth = currentPPS - hwmPps;",
+          "411:         uint256 profit = Math.mulDiv(ppsGrowth, totalSupplyLocal, PRECISION, Math.Rounding.Floor);",
+          "414:         if (profit == 0) return;",
+          "417:         uint256 fee = Math.mulDiv(profit, feeConfig.performanceFeeBps, BPS_PRECISION, Math.Rounding.Ceil);",
+          "420:         if (fee == 0) return;",
+          "423:         uint256 sfFee =",
+          "424:             Math.mulDiv(fee, SUPER_GOVERNOR.getFee(FeeType.PERFORMANCE_FEE_SHARE), BPS_PRECISION, Math.Rounding.Floor);",
+          "425:         uint256 recipientFee = fee - sfFee;",
+          "428:         if (_getTokenBalance(address(_asset), address(this)) < fee) revert NOT_ENOUGH_FREE_ASSETS_FEE_SKIM();",
+          "431:         _safeTokenTransfer(address(_asset), SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.TREASURY()), sfFee);",
+          "432:         _safeTokenTransfer(address(_asset), feeConfig.recipient, recipientFee);",
+          "434:         emit PerformanceFeeSkimmed(fee, sfFee);",
+          "438:         uint256 ppsReduction = Math.mulDiv(fee, PRECISION, totalSupplyLocal, Math.Rounding.Floor);",
+          "441:         if (ppsReduction >= currentPPS) revert INVALID_PPS();",
+          "443:         uint256 newPPS = currentPPS - ppsReduction;",
+          "446:         if (newPPS == 0) revert INVALID_PPS();",
+          "450:         vaultHwmPps = newPPS;",
+          "452:         emit HWMPPSUpdated(newPPS, currentPPS, profit, fee);",
+          "455:         aggregator.updatePPSAfterSkim(newPPS, fee);"
+        ]
+      }
+    },
+    {
+      "function": "initializer",
+      "contract": "Initializable",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol",
+      "function_range": {
+        "start": 104,
+        "end": 132
+      },
+      "uncovered_code": {
+        "line_range": "121",
+        "last_covered_line": 120,
+        "code": [
+          "120: [LAST COVERED]         if (!initialSetup && !construction) {",
+          "121:             revert InvalidInitialization();"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_1",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 81,
+        "end": 93
+      },
+      "uncovered_code": {
+        "line_range": "87",
+        "last_covered_line": 86,
+        "code": [
+          "86: [LAST COVERED]             ) == 0",
+          "87:         ) return true;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_2",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 96,
+        "end": 111
+      },
+      "uncovered_code": {
+        "line_range": "101",
+        "last_covered_line": 100,
+        "code": [
+          "100: [LAST COVERED]             ) == 0",
+          "101:         ) return true;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_3",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 118,
+        "end": 134
+      },
+      "uncovered_code": {
+        "line_range": "124",
+        "last_covered_line": 123,
+        "code": [
+          "123: [LAST COVERED]         try IERC7540Like(erc7540Target).maxMint(actor) {} catch {",
+          "124:             return false;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_3",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 118,
+        "end": 134
+      },
+      "uncovered_code": {
+        "line_range": "130",
+        "last_covered_line": 129,
+        "code": [
+          "129: [LAST COVERED]         try IERC7540Like(erc7540Target).maxWithdraw(actor) {} catch {",
+          "130:             return false;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_4_deposit",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 139,
+        "end": 165
+      },
+      "uncovered_code": {
+        "line_range": "153-157",
+        "last_covered_line": 152,
+        "code": [
+          "152: [LAST COVERED]         uint256 sum = maxDep + amt;",
+          "153:         if (sum == 0) {",
+          "154:             return true; // Needs to be greater than 0, skip",
+          "157:         try IERC7540Like(erc7540Target).deposit(maxDep + amt, actor) {"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_4_mint",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 167,
+        "end": 191
+      },
+      "uncovered_code": {
+        "line_range": "179-183",
+        "last_covered_line": 178,
+        "code": [
+          "178: [LAST COVERED]         uint256 sum = maxDep + amt;",
+          "179:         if (sum == 0) {",
+          "180:             return true; // Needs to be greater than 0, skip",
+          "183:         try IERC7540Like(erc7540Target).mint(maxDep + amt, actor) {"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_4_redeem",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 219,
+        "end": 243
+      },
+      "uncovered_code": {
+        "line_range": "232",
+        "last_covered_line": 231,
+        "code": [
+          "231: [LAST COVERED]         if (sum == 0) {",
+          "232:             return true; // Needs to be greater than 0"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_4_redeem",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 219,
+        "end": 243
+      },
+      "uncovered_code": {
+        "line_range": "236",
+        "last_covered_line": 235,
+        "code": [
+          "235: [LAST COVERED]         try IERC7540Like(erc7540Target).redeem(maxDep + amt, actor, actor) {",
+          "236:             return false;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_4_withdraw",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 193,
+        "end": 217
+      },
+      "uncovered_code": {
+        "line_range": "206",
+        "last_covered_line": 205,
+        "code": [
+          "205: [LAST COVERED]         if (sum == 0) {",
+          "206:             return true; // Needs to be greater than 0"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_5",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 248,
+        "end": 278
+      },
+      "uncovered_code": {
+        "line_range": "261",
+        "last_covered_line": 260,
+        "code": [
+          "260: [LAST COVERED]         if (balWeWillUse == 0) {",
+          "261:             return true; // Skip"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_5",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 248,
+        "end": 278
+      },
+      "uncovered_code": {
+        "line_range": "272",
+        "last_covered_line": 267,
+        "code": [
+          "267: [LAST COVERED]                 actor,",
+          "272:             return false;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_6",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 281,
+        "end": 297
+      },
+      "uncovered_code": {
+        "line_range": "290",
+        "last_covered_line": 289,
+        "code": [
+          "289: [LAST COVERED]         try IERC7540Like(erc7540Target).previewRedeem(0) {",
+          "290:             return false;"
+        ]
+      }
+    },
+    {
+      "function": "erc7540_6",
+      "contract": "ERC7540Properties",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+      "function_range": {
+        "start": 281,
+        "end": 297
+      },
+      "uncovered_code": {
+        "line_range": "293",
+        "last_covered_line": 292,
+        "code": [
+          "292: [LAST COVERED]         try IERC7540Like(erc7540Target).previewWithdraw(0) {",
+          "293:             return false;"
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "functions_analyzed": 165,
+    "functions_with_missing_coverage": 20,
+    "uncovered_sections": 26,
+    "full_coverage": false
+  }
+}
