@@ -809,7 +809,7 @@ abstract contract TargetFunctions is
     }
     
     // ----------------------------------------------------------------------------
-    // Shortcuts for: superVaultStrategy_manageYieldSource
+    // Shortcuts for: superVault_manageYieldSource
     // Prerequisites: none
     // Paths: 4 execution paths based on YieldSourceAction type
     // ----------------------------------------------------------------------------
@@ -835,6 +835,134 @@ abstract contract TargetFunctions is
             address(0),
             ISuperVaultStrategy.YieldSourceAction.Remove
         );
+    }
+    
+    // PATH 1: actionType == YieldSourceAction.Add
+    /// @notice Shortcut: add new yield source
+    function shortcut_manageYieldSource_add(uint256 sourceEntropy) public {
+        address source = _getRandomActor(sourceEntropy);
+        address oracle = _getRandomActor(sourceEntropy + 1);
+        
+        vm.prank(address(this));
+        superVaultStrategy.manageYieldSource(
+            source,
+            oracle,
+            ISuperVaultStrategy.YieldSourceAction.Add
+        );
+    }
+    
+    // PATH 2: actionType == YieldSourceAction.UpdateOracle
+    /// @notice Shortcut: add yield source -> update its oracle
+    function shortcut_manageYieldSource_updateOracle(uint256 sourceEntropy) public {
+        address source = _getRandomActor(sourceEntropy);
+        address oldOracle = _getRandomActor(sourceEntropy + 1);
+        address newOracle = _getRandomActor(sourceEntropy + 2);
+        
+        // First add a yield source
+        vm.prank(address(this));
+        superVaultStrategy.manageYieldSource(
+            source,
+            oldOracle,
+            ISuperVaultStrategy.YieldSourceAction.Add
+        );
+        
+        // Then update its oracle
+        vm.prank(address(this));
+        superVaultStrategy.manageYieldSource(
+            source,
+            newOracle,
+            ISuperVaultStrategy.YieldSourceAction.UpdateOracle
+        );
+    }
+    
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 4 Fixes - Async Redemption Workflow
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Complete async redemption workflow to enable withdraw coverage
+    /// @dev This addresses coverage gaps in withdraw, redeem, maxRedeem, and handleOperations7540 (ClaimRedeem)
+    /// Root Cause: The fuzzer doesn't execute the complete async redemption workflow in sequence
+    /// Solution: Shortcut function that does: deposit -> requestRedeem -> fulfillRedeemRequests -> withdraw
+    function shortcut_withdraw_completeAsyncWorkflow(
+        uint256 depositAmount,
+        uint256 redeemShares,
+        uint256 withdrawAssets
+    ) public {
+        // Step 1: Deposit to get shares
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Request redeem
+        superVault_requestRedeem_clamped(redeemShares);
+        
+        // Step 3: Fulfill the redemption request using the existing workflow
+        address[] memory controllers = new address[](1);
+        controllers[0] = _getActor();
+        
+        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        
+        // Step 4: Withdraw from escrow (this covers lines 492-507 in SuperVault.sol)
+        superVault_withdraw_clamped(withdrawAssets);
+    }
+    
+    /// @notice Coverage Fix: Complete async redemption workflow to enable redeem coverage
+    /// @dev This addresses coverage gaps in redeem and handleOperations7540 (ClaimRedeem)
+    /// Root Cause: Same as withdraw - incomplete async workflow
+    /// Solution: Shortcut function that does: deposit -> requestRedeem -> fulfillRedeemRequests -> redeem
+    function shortcut_redeem_completeAsyncWorkflow(
+        uint256 depositAmount,
+        uint256 redeemShares,
+        uint256 finalRedeemShares
+    ) public {
+        // Step 1: Deposit to get shares
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Request redeem
+        superVault_requestRedeem_clamped(redeemShares);
+        
+        // Step 3: Fulfill the redemption request using the existing workflow
+        address[] memory controllers = new address[](1);
+        controllers[0] = _getActor();
+        
+        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        
+        // Step 4: Redeem from escrow (this covers lines 528-542 in SuperVault.sol)
+        superVault_redeem_clamped(finalRedeemShares);
+    }
+    
+    /// @notice Coverage Fix: Multi-user async redemption workflow
+    /// @dev Ensures maxRedeem returns non-zero values for multiple users
+    function shortcut_withdraw_multiUserAsyncWorkflow(
+        uint256 depositAmount1,
+        uint256 depositAmount2,
+        uint256 redeemShares1,
+        uint256 redeemShares2,
+        uint256 withdrawAssets1
+    ) public {
+        address actor1 = _getActor();
+        
+        // User 1: deposit and request redeem
+        superVault_deposit_clamped(depositAmount1);
+        superVault_requestRedeem_clamped(redeemShares1);
+        
+        // User 2: deposit and request redeem
+        switchActor(1);
+        superVault_deposit_clamped(depositAmount2);
+        superVault_requestRedeem_clamped(redeemShares2);
+        
+        // Fulfill for both users using existing workflow
+        address[] memory controllers = new address[](2);
+        controllers[0] = actor1;
+        controllers[1] = _getActor();
+        
+        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        
+        // User 1 withdraws
+        switchActor(0);
+        superVault_withdraw_clamped(withdrawAssets1);
+    }
+    
+    /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
+
     }
     
     // PATH 1: actionType == YieldSourceAction.Add
