@@ -69,17 +69,15 @@ abstract contract TargetFunctions is
     // ----------------------------------------------------------------------------
     
     /// @notice Shortcut: proposeFee -> warp time -> executeFeeUpdate
-    function shortcut_executeFeeUpdate_afterProposal(uint256 feeTypeEntropy, uint256 value) public {
-        FeeType feeType = FeeType(feeTypeEntropy % 2);
-        
+    function shortcut_executeFeeUpdate_afterProposal(uint256 value) public {
         // Call prerequisite using CLAMPED handler
-        superGovernor_proposeFee_clamped(feeType, value);
+        superGovernor_proposeFee_clamped(value);
         
         // Warp time to make execution valid
         vm.warp(block.timestamp + 7 days + 1);
         
         // Call target
-        superGovernor_executeFeeUpdate(feeType);
+        superGovernor_executeFeeUpdate(FeeType.REVENUE_SHARE);
     }
     
     // ----------------------------------------------------------------------------

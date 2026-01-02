@@ -8,6 +8,7 @@ import {Panic} from "@recon/Panic.sol";
 import {MockERC20} from "@recon/MockERC20.sol";
 
 import "src/SuperVault/SuperVaultStrategy.sol";
+import {IHookExecutionData} from "src/interfaces/IHookExecutionData.sol";
 
 import {YieldSourceType} from "test/recon/managers/YieldManager.sol";
 import {BeforeAfter, OpType} from "../BeforeAfter.sol";
@@ -39,15 +40,34 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
 
     function superVaultStrategy_proposeVaultFeeConfigUpdate_clamped(
         uint256 performanceFeeBps,
-        uint256 managementFeeBps,
-        address recipient
+        uint256 managementFeeBps
     ) public {
         performanceFeeBps = performanceFeeBps % (5100 + 1); // MAX_PERFORMANCE_FEE = 5100
         managementFeeBps = managementFeeBps % (10_000 + 1); // BPS_PRECISION = 10_000
-        superVaultStrategy_proposeVaultFeeConfigUpdate(performanceFeeBps, managementFeeBps, recipient);
+        superVaultStrategy_proposeVaultFeeConfigUpdate(performanceFeeBps, managementFeeBps, _getActor());
     }
 
+    function superVaultStrategy_handleOperations7540_clamped(
+        ISuperVaultStrategy.Operation operation,
+        uint256 amount
+    ) public {
+        amount = amount % (superVaultStrategy.claimableWithdraw(_getActor()) + 1);
+        superVaultStrategy_handleOperations7540(operation, _getActor(), _getActor(), amount);
+    }
+
+
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
+
+    function superVaultStrategy_fulfillCancelRedeemRequests(
+        address[] memory controllers
+    ) public asActor {
+        superVaultStrategy.fulfillCancelRedeemRequests(controllers);
+    }
+
+    function superVaultStrategy_getSuperVaultState() public view stateless returns (ISuperVaultStrategy.SuperVaultState memory) {
+        return superVaultStrategy.getSuperVaultState(_getActor());
+    }
 
     function superVaultStrategy_executeVaultFeeConfigUpdate() public asActor {
         superVaultStrategy.executeVaultFeeConfigUpdate();

@@ -68,7 +68,52 @@ abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
         superVault_transferFrom(entropyFrom, entropyTo, value);
     }
 
+    function superVault_invalidateNonce_clamped() public {
+        bytes32 nonce = bytes32(uint256(1));
+        superVault_invalidateNonce(nonce);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
+
+    function superVault_asset() public view stateless returns (address) {
+        return superVault.asset();
+    }
+
+    function superVault_balanceOf() public view stateless returns (uint256) {
+        return superVault.balanceOf(_getActor());
+    }
+
+    function superVault_convertToAssets(uint256 shares) public view stateless returns (uint256) {
+        return superVault.convertToAssets(shares);
+    }
+
+    function superVault_convertToShares(uint256 assets) public view stateless returns (uint256) {
+        return superVault.convertToShares(assets);
+    }
+
+    function superVault_previewDeposit(uint256 assets) public view stateless returns (uint256) {
+        return superVault.previewDeposit(assets);
+    }
+
+    function superVault_previewMint(uint256 shares) public view stateless returns (uint256) {
+        return superVault.previewMint(shares);
+    }
+
+    function superVault_maxRedeem() public view stateless returns (uint256) {
+        return superVault.maxRedeem(_getActor());
+    }
+
+    function superVault_maxWithdraw() public view stateless returns (uint256) {
+        return superVault.maxWithdraw(_getActor());
+    }
+
+    function superVault_pendingRedeemRequest() public view stateless returns (uint256) {
+        return superVault.pendingRedeemRequest(0, _getActor());
+    }
+
+    function superVault_claimableRedeemRequest() public view stateless returns (uint256) {
+        return superVault.claimableRedeemRequest(0, _getActor());
+    }
 
     function superVault_approve(address spender, uint256 value) public asActor {
         superVault.approve(spender, value);

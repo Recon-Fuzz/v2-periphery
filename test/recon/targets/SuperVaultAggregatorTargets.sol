@@ -32,14 +32,64 @@ abstract contract SuperVaultAggregatorTargets is
     }
 
     function superVaultAggregator_updateDeviationThreshold_clamped(
-        address strategy,
         uint256 deviationThreshold_
     ) public {
-        deviationThreshold_ = deviationThreshold_ % (1e18 + 1);
-        superVaultAggregator_updateDeviationThreshold(strategy, deviationThreshold_);
+        deviationThreshold_ = deviationThreshold_ % (superVaultAggregator.getDeviationThreshold(address(superVaultStrategy)) + 1);
+        superVaultAggregator_updateDeviationThreshold(address(superVaultStrategy), deviationThreshold_);
+    }
+
+    function superVaultAggregator_addSecondaryManager_clamped() public {
+        superVaultAggregator_addSecondaryManager(address(superVaultStrategy), _getActor());
+    }
+
+    function superVaultAggregator_proposeChangePrimaryManager_clamped() public {
+        superVaultAggregator_proposeChangePrimaryManager(address(superVaultStrategy), _getActor(), _getActor());
+    }
+
+
+
+    function superVaultAggregator_createVault_clamped(uint256 maxStaleness) public {
+        maxStaleness = maxStaleness % (superGovernor.getMinStaleness() + 1);
+        
+        ISuperVaultAggregator.VaultCreationParams memory params = ISuperVaultAggregator.VaultCreationParams({
+            asset: _getAsset(),
+            name: "SuperVault",
+            symbol: "SV",
+            mainManager: _getActor(),
+            secondaryManagers: new address[](0),
+            minUpdateInterval: 5,
+            maxStaleness: maxStaleness,
+            feeConfig: ISuperVaultStrategy.FeeConfig({
+                performanceFeeBps: 1000,
+                managementFeeBps: 100,
+                recipient: _getActor()
+            })
+        });
+        
+        superVaultAggregator_createVault(params);
+    }
+
+    function superVaultAggregator_cancelChangePrimaryManager_clamped() public {
+        superVaultAggregator_cancelChangePrimaryManager(address(superVaultStrategy));
+    }
+
+    function superVaultAggregator_executeChangePrimaryManager_clamped() public {
+        superVaultAggregator_executeChangePrimaryManager(address(superVaultStrategy));
+    }
+
+    function superVaultAggregator_proposeWithdrawUpkeep_clamped() public {
+        superVaultAggregator_proposeWithdrawUpkeep(address(superVaultStrategy));
+    }
+
+    function superVaultAggregator_executeWithdrawUpkeep_clamped() public {
+        superVaultAggregator_executeWithdrawUpkeep(address(superVaultStrategy));
     }
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
+
+    function superVaultAggregator_claimableUpkeep() public view stateless returns (uint256) {
+        return superVaultAggregator.claimableUpkeep();
+    }
 
     function superVaultAggregator_addSecondaryManager(
         address strategy,
