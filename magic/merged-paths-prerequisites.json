@@ -1,0 +1,908 @@
+{
+  "mint": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "executeFeeUpdate": {
+    "prerequisite_functions": [
+      "proposeFee"
+    ],
+    "paths": []
+  },
+  "shortcut_executeChangePrimaryManager_afterProposal": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && manager != 0 && _strategyData[strategy].mainManager != manager && _strategyData[strategy].secondaryManagers.length() < MAX_SECONDARY_MANAGERS && _strategyData[strategy].secondaryManagers.add(manager)"
+    ]
+  },
+  "shortcut_executeVaultFeeConfigUpdate_afterProposal": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && performanceFeeBps <= MAX_PERFORMANCE_FEE && managementFeeBps <= BPS_PRECISION && recipient != 0"
+    ]
+  },
+  "doomsday_previewDepositEquivalence": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+    ]
+  },
+  "doomsday_previewMintEquivalence": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps != 0 && feeBps >= BPS_PRECISION && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps != 0 && feeBps != 0 && feeBps < BPS_PRECISION && strategy.getConfigInfo()"
+    ]
+  },
+  "superGovernor_executeFeeUpdate": {
+    "prerequisite_functions": [],
+    "paths": [
+      "effectiveTime != 0 && block.timestamp >= effectiveTime"
+    ]
+  },
+  "proposeUpkeepPaymentsChange": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVault_deposit": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+    ]
+  },
+  "superVaultAggregator_changePrimaryManager": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == SUPER_GOVERNOR && (newManager != 0) || (feeRecipient == 0) && pendingUpkeepWithdrawals[strategy].effectiveTime != 0 && strategy.changeFeeRecipient(feeRecipient)",
+      "msg.sender == SUPER_GOVERNOR && (newManager != 0) || (feeRecipient == 0) && pendingUpkeepWithdrawals[strategy].effectiveTime == 0 && strategy.changeFeeRecipient(feeRecipient)"
+    ]
+  },
+  "superVaultEscrow_returnShares": {
+    "prerequisite_functions": [],
+    "paths": [
+      "amount != 0 && vault.safeTransfer(to, amount)"
+    ]
+  },
+  "proposeFee": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVaultEscrow_initialize": {
+    "prerequisite_functions": [],
+    "paths": [
+      "!(initialized) && vaultAddress != 0"
+    ]
+  },
+  "superVault_claimCancelRedeemRequest": {
+    "prerequisite_functions": [],
+    "paths": [
+      "(receiver != 0) || (controller == 0) && controller != msg.sender && _isOperator(controller, msg.sender) && receiver == controller && strategy.claimableCancelRedeemRequest(controller) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimCancelRedeem, controller, 0, 0) && escrow.returnShares(receiver, shares)",
+      "(receiver != 0) || (controller == 0) && controller == msg.sender && strategy.claimableCancelRedeemRequest(controller) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimCancelRedeem, controller, 0, 0) && escrow.returnShares(receiver, shares)"
+    ]
+  },
+  "shortcut_transferFrom_afterApprove": {
+    "prerequisite_functions": [],
+    "paths": [
+      "owner != 0 && spender != 0 && true",
+      "owner != 0 && spender != 0 && !(true)"
+    ]
+  },
+  "asset": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "depositUpkeep": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "executeHooks": {
+    "prerequisite_functions": [
+      "manageYieldSource"
+    ],
+    "paths": []
+  },
+  "yieldSource_setDecimalsOffset": {
+    "prerequisite_functions": [],
+    "paths": [
+      "totalSupply != 0",
+      "totalSupply == 0"
+    ]
+  },
+  "balanceOf": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "property_comparePreviewMintAndConvertToAssets": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps != 0 && feeBps >= BPS_PRECISION && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps != 0 && feeBps != 0 && feeBps < BPS_PRECISION && strategy.getConfigInfo()"
+    ]
+  },
+  "claimCancelRedeemRequest": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "cancelRedeemRequest",
+      "fulfillCancelRedeemRequests"
+    ],
+    "paths": []
+  },
+  "pendingRedeemRequest": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "createVault": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "maxRedeem": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVaultAggregator_createVault": {
+    "prerequisite_functions": [],
+    "paths": [
+      "((params.asset != 0) || (params.mainManager == 0)) || (params.feeConfig.recipient == 0) && (params.name.length != 0) || (params.symbol.length == 0) && success && params.maxStaleness >= SUPER_GOVERNOR.getMinStaleness() && _strategyData[strategy].secondaryManagers.length() <= MAX_SECONDARY_MANAGERS && VAULT_IMPLEMENTATION.cloneDeterministic(vars.salt) && ESCROW_IMPLEMENTATION.cloneDeterministic(vars.salt) && STRATEGY_IMPLEMENTATION.cloneDeterministic(vars.salt) && superVault.initialize(params.asset, params.name, params.symbol, strategy, escrow) && escrow.initialize(superVault) && strategy.initialize(superVault, params.feeConfig) && params.asset.tryGetAssetDecimals()"
+    ]
+  },
+  "proposeMinStaleness": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "withdraw": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "fulfillRedeemRequests"
+    ],
+    "paths": []
+  },
+  "superVaultStrategy_handleOperations7540": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _vault && operation == Operation.RedeemRequest && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && amount != 0 && controller != 0 && currentPPS != 0 && state.pendingRedeemRequest > 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && operation != Operation.RedeemRequest && operation != Operation.ClaimCancelRedeem && operation != Operation.ClaimRedeem && operation == Operation.CancelRedeemRequest && controller != 0 && state.pendingRedeemRequest != 0 && !(state.pendingCancelRedeemRequest) && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && operation != Operation.RedeemRequest && operation == Operation.ClaimCancelRedeem && controller != 0 && pendingShares != 0 && state.pendingCancelRedeemRequest && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && operation == Operation.RedeemRequest && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && amount != 0 && controller != 0 && currentPPS != 0 && state.pendingRedeemRequest <= 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && operation != Operation.RedeemRequest && operation != Operation.ClaimCancelRedeem && operation == Operation.ClaimRedeem && amount != 0 && controller != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()"
+    ]
+  },
+  "superVaultStrategy_skimPerformanceFee": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && block.timestamp >= (lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) && totalSupplyLocal != 0 && currentPPS != 0 && currentPPS > hwmPps && profit != 0 && fee != 0 && _getTokenBalance(address(_asset), address(this)) >= fee && sfFee > 0 && recipientFee > 0 && ppsReduction < currentPPS && newPPS != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && aggregator.getLastUnpauseTimestamp(this) && vault.totalSupply() && aggregator.getPPS(this) && SUPER_GOVERNOR.getFee(FeeType.PERFORMANCE_FEE_SHARE) && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.TREASURY()) && SUPER_GOVERNOR.TREASURY() && _asset.safeTransfer(SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.TREASURY()), sfFee) && _asset.safeTransfer(feeConfig.recipient, recipientFee) && aggregator.updatePPSAfterSkim(newPPS, fee)",
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && block.timestamp >= (lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) && totalSupplyLocal != 0 && currentPPS != 0 && currentPPS > hwmPps && profit != 0 && fee != 0 && _getTokenBalance(address(_asset), address(this)) >= fee && sfFee <= 0 && recipientFee <= 0 && ppsReduction < currentPPS && newPPS != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && aggregator.getLastUnpauseTimestamp(this) && vault.totalSupply() && aggregator.getPPS(this) && SUPER_GOVERNOR.getFee(FeeType.PERFORMANCE_FEE_SHARE) && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.TREASURY()) && SUPER_GOVERNOR.TREASURY() && aggregator.updatePPSAfterSkim(newPPS, fee)",
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && block.timestamp >= (lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) && totalSupplyLocal == 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && aggregator.getLastUnpauseTimestamp(this) && vault.totalSupply()",
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && block.timestamp >= (lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) && totalSupplyLocal != 0 && currentPPS != 0 && currentPPS <= hwmPps && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && aggregator.getLastUnpauseTimestamp(this) && vault.totalSupply() && aggregator.getPPS(this)",
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && block.timestamp >= (lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) && totalSupplyLocal != 0 && currentPPS != 0 && currentPPS > hwmPps && profit == 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && aggregator.getLastUnpauseTimestamp(this) && vault.totalSupply() && aggregator.getPPS(this)",
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && block.timestamp >= (lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) && totalSupplyLocal != 0 && currentPPS != 0 && currentPPS > hwmPps && profit != 0 && fee == 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && aggregator.getLastUnpauseTimestamp(this) && vault.totalSupply() && aggregator.getPPS(this)"
+    ]
+  },
+  "proposeWithdrawUpkeep": {
+    "prerequisite_functions": [
+      "depositUpkeep"
+    ],
+    "paths": []
+  },
+  "superVaultAggregator_executeWithdrawUpkeep": {
+    "prerequisite_functions": [],
+    "paths": [
+      "request.effectiveTime != 0 && block.timestamp >= request.effectiveTime && withdrawalAmount != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.UPKEEP_TOKEN()) && SUPER_GOVERNOR.UPKEEP_TOKEN() && upkeepToken.safeTransfer(mainManager, withdrawalAmount)"
+    ]
+  },
+  "shortcut_cancelChangePrimaryManager_afterProposal": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && manager != 0 && _strategyData[strategy].mainManager != manager && _strategyData[strategy].secondaryManagers.length() < MAX_SECONDARY_MANAGERS && _strategyData[strategy].secondaryManagers.add(manager)"
+    ]
+  },
+  "superVaultAggregator_proposeChangePrimaryManager": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_strategyData[strategy].secondaryManagers.contains(msg.sender) && newManager != 0"
+    ]
+  },
+  "superVault_transfer": {
+    "prerequisite_functions": [],
+    "paths": [
+      "owner != 0 && to != 0 && owner != 0 && fromBalance >= value && to == 0",
+      "owner != 0 && to != 0 && owner == 0 && to == 0"
+    ]
+  },
+  "fulfillRedeemRequests": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "executeHooks"
+    ],
+    "paths": []
+  },
+  "manageYieldSource": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "manageYieldSources": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "doomsday_fulfillDoesntOverRedeemMultipleActors": {
+    "prerequisite_functions": [],
+    "paths": [
+      "receiver != 0 && shares != 0 && receiver != 0 && 0 != 0 && fromBalance >= shares && receiver == 0 && strategy.quoteMintAssetsGross(shares) && _asset.safeTransferFrom(msg.sender, strategy, assets) && strategy.handleOperations4626Mint(receiver, shares, assets, assetsNet)",
+      "receiver != 0 && shares != 0 && receiver != 0 && 0 == 0 && receiver == 0 && strategy.quoteMintAssetsGross(shares) && _asset.safeTransferFrom(msg.sender, strategy, assets) && strategy.handleOperations4626Mint(receiver, shares, assets, assetsNet)"
+    ]
+  },
+  "setOperator": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVaultStrategy_proposeVaultFeeConfigUpdate": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && performanceFeeBps <= MAX_PERFORMANCE_FEE && managementFeeBps <= BPS_PRECISION && recipient != 0"
+    ]
+  },
+  "superVaultAggregator_cancelChangePrimaryManager": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_strategyData[strategy].mainManager == msg.sender && _strategyData[strategy].proposedManager != 0"
+    ]
+  },
+  "doomsday_primaryManagerAlwaysChangeable": {
+    "prerequisite_functions": [],
+    "paths": [
+      "!(_managerTakeoversFrozen) && aggregator != 0 && aggregator.changePrimaryManager(strategy, newManager, feeRecipient)"
+    ]
+  },
+  "superVaultAggregator_depositUpkeep": {
+    "prerequisite_functions": [],
+    "paths": [
+      "amount != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.UPKEEP_TOKEN()) && SUPER_GOVERNOR.UPKEEP_TOKEN() && upkeepToken.safeTransferFrom(msg.sender, this, amount)"
+    ]
+  },
+  "shortcut_executeWithdrawUpkeep_afterProposal": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && currentBalance != 0"
+    ]
+  },
+  "asset_mint": {
+    "prerequisite_functions": [],
+    "paths": [
+      "newTotalSupply >= totalSupply"
+    ]
+  },
+  "approve": {
+    "prerequisite_functions": [
+      "deposit"
+    ],
+    "paths": []
+  },
+  "property_comparePreviewDepositAndConvertToShares": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+    ]
+  },
+  "returnShares": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "cancelRedeemRequest",
+      "fulfillCancelRedeemRequests"
+    ],
+    "paths": []
+  },
+  "convertToShares": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "setPreviewSharesGreater": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+    ]
+  },
+  "superVaultStrategy_manageYieldSource": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && actionType != YieldSourceAction.Add && actionType != YieldSourceAction.UpdateOracle && actionType == YieldSourceAction.Remove && yieldSources[source] != 0 && yieldSourcesList.remove(source)",
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && actionType == YieldSourceAction.Add && (source != 0) || (oracle == 0) && yieldSources[source] == 0 && yieldSourcesList.add(source)",
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && actionType != YieldSourceAction.Add && actionType == YieldSourceAction.UpdateOracle && oracle != 0 && oldOracle != 0",
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && actionType != YieldSourceAction.Add && actionType != YieldSourceAction.UpdateOracle && actionType != YieldSourceAction.Remove"
+    ]
+  },
+  "superGovernor_proposeGlobalHooksRoot": {
+    "prerequisite_functions": [],
+    "paths": [
+      "aggregator != 0 && aggregator.proposeGlobalHooksRoot(newRoot)"
+    ]
+  },
+  "superVaultStrategy_handleOperations4626Mint": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _vault && sharesNet != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && feeBps != 0 && feeAssets != 0 && recipient != 0 && feeAssets > 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && _asset.safeTransfer(recipient, feeAssets)",
+      "msg.sender == _vault && sharesNet != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && feeBps != 0 && feeAssets != 0 && recipient != 0 && feeAssets <= 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && sharesNet != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && feeBps != 0 && feeAssets == 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && sharesNet != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && feeBps == 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()"
+    ]
+  },
+  "initialize": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "fulfillCancelRedeemRequests": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "cancelRedeemRequest"
+    ],
+    "paths": []
+  },
+  "yieldSource_deposit": {
+    "prerequisite_functions": [],
+    "paths": [
+      "revertBehaviours[FunctionType.DEPOSIT] == RevertType.THROW && revertBehaviours[FunctionType.DEPOSIT] == RevertType.OOG && revertBehaviours[FunctionType.DEPOSIT] == RevertType.RETURN_BOMB && revertBehaviours[FunctionType.DEPOSIT] == RevertType.REVERT_BOMB",
+      "revertBehaviours[FunctionType.DEPOSIT] != RevertType.THROW && revertBehaviours[FunctionType.DEPOSIT] != RevertType.OOG && revertBehaviours[FunctionType.DEPOSIT] != RevertType.RETURN_BOMB && revertBehaviours[FunctionType.DEPOSIT] != RevertType.REVERT_BOMB"
+    ]
+  },
+  "superVaultAggregator_removeSecondaryManager": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && _strategyData[strategy].secondaryManagers.remove(manager)"
+    ]
+  },
+  "executeMinStalenessChange": {
+    "prerequisite_functions": [
+      "proposeMinStaleness"
+    ],
+    "paths": []
+  },
+  "yieldSource_mint": {
+    "prerequisite_functions": [],
+    "paths": [
+      "revertBehaviours[FunctionType.MINT] == RevertType.THROW && revertBehaviours[FunctionType.MINT] == RevertType.OOG && revertBehaviours[FunctionType.MINT] == RevertType.RETURN_BOMB && revertBehaviours[FunctionType.MINT] == RevertType.REVERT_BOMB",
+      "revertBehaviours[FunctionType.MINT] != RevertType.THROW && revertBehaviours[FunctionType.MINT] != RevertType.OOG && revertBehaviours[FunctionType.MINT] != RevertType.RETURN_BOMB && revertBehaviours[FunctionType.MINT] != RevertType.REVERT_BOMB"
+    ]
+  },
+  "superVault_requestRedeem": {
+    "prerequisite_functions": [],
+    "paths": [
+      "shares != 0 && (owner != 0) || (controller == 0) && (owner == msg.sender) && !_isOperator(controller, msg.sender) && balanceOf(owner) >= shares && !(strategy.pendingCancelRedeemRequest(owner)) && controller == owner && owner != 0 && escrow != 0 && true && escrow.escrowShares(owner, shares) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.RedeemRequest, controller, 0, shares)",
+      "shares != 0 && (owner != 0) || (controller == 0) && (owner == msg.sender) && !_isOperator(controller, msg.sender) && balanceOf(owner) >= shares && !(strategy.pendingCancelRedeemRequest(owner)) && controller == owner && owner != 0 && escrow != 0 && !(true) && escrow.escrowShares(owner, shares) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.RedeemRequest, controller, 0, shares)"
+    ]
+  },
+  "transfer": {
+    "prerequisite_functions": [
+      "deposit"
+    ],
+    "paths": []
+  },
+  "requestRedeem": {
+    "prerequisite_functions": [
+      "deposit"
+    ],
+    "paths": []
+  },
+  "yieldSource_transfer": {
+    "prerequisite_functions": [],
+    "paths": [
+      "fromBalance >= amount"
+    ]
+  },
+  "escrowShares": {
+    "prerequisite_functions": [
+      "deposit"
+    ],
+    "paths": []
+  },
+  "superGovernor_executeMinStalenessChange": {
+    "prerequisite_functions": [],
+    "paths": [
+      "minStalenessEffectiveTime != 0 && block.timestamp >= minStalenessEffectiveTime"
+    ]
+  },
+  "proposeChangePrimaryManager": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVaultAggregator_executeChangePrimaryManager": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_strategyData[strategy].proposedManager != 0 && block.timestamp >= _strategyData[strategy].managerChangeEffectiveTime && pendingUpkeepWithdrawals[strategy].effectiveTime != 0 && strategy.changeFeeRecipient(feeRecipient)",
+      "_strategyData[strategy].proposedManager != 0 && block.timestamp >= _strategyData[strategy].managerChangeEffectiveTime && pendingUpkeepWithdrawals[strategy].effectiveTime == 0 && strategy.changeFeeRecipient(feeRecipient)"
+    ]
+  },
+  "yieldSource_claimCancelDepositRequest": {
+    "prerequisite_functions": [],
+    "paths": [
+      "asset.transfer(receiver, assets)"
+    ]
+  },
+  "superVault_mint": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps != 0 && feeBps >= BPS_PRECISION && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps != 0 && feeBps != 0 && feeBps < BPS_PRECISION && strategy.getConfigInfo()"
+    ]
+  },
+  "handleOperations4626Deposit": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "shortcut_removeSecondaryManager_afterAdd": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && manager != 0 && _strategyData[strategy].mainManager != manager && _strategyData[strategy].secondaryManagers.length() < MAX_SECONDARY_MANAGERS && _strategyData[strategy].secondaryManagers.add(manager)"
+    ]
+  },
+  "previewDeposit": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVaultStrategy_manageYieldSources": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && length != 0 && oracles.length == length && actionTypes.length == length && actionTypes[i] != YieldSourceAction.Add && actionTypes[i] != YieldSourceAction.UpdateOracle && actionTypes[i] == YieldSourceAction.Remove && yieldSources[sources[i]] != 0 && yieldSourcesList.remove(source)",
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && length != 0 && oracles.length == length && actionTypes.length == length && actionTypes[i] == YieldSourceAction.Add && (sources[i] != 0) || (oracles[i] == 0) && yieldSources[sources[i]] == 0 && yieldSourcesList.add(source)",
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && length != 0 && oracles.length == length && actionTypes.length == length && actionTypes[i] != YieldSourceAction.Add && actionTypes[i] == YieldSourceAction.UpdateOracle && oracles[i] != 0 && oldOracle != 0",
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && length != 0 && oracles.length == length && actionTypes.length == length && actionTypes[i] != YieldSourceAction.Add && actionTypes[i] != YieldSourceAction.UpdateOracle && actionTypes[i] != YieldSourceAction.Remove"
+    ]
+  },
+  "handleOperations4626Mint": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "skimPerformanceFee": {
+    "prerequisite_functions": [
+      "deposit"
+    ],
+    "paths": []
+  },
+  "superGovernor_executeUpkeepPaymentsChange": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_upkeepPaymentsChangeEffectiveTime != 0 && block.timestamp >= _upkeepPaymentsChangeEffectiveTime"
+    ]
+  },
+  "superVault_burnShares": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == strategy && escrow != 0 && escrow != 0 && fromBalance >= amount && 0 == 0",
+      "msg.sender == strategy && escrow != 0 && escrow == 0 && 0 != 0"
+    ]
+  },
+  "changePrimaryManager": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "shortcut_claimCancelRedeemRequest_afterFulfill": {
+    "prerequisite_functions": [],
+    "paths": [
+      "(controller == msg.sender) && !_isOperator(controller, msg.sender) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.CancelRedeemRequest, controller, 0, 0)"
+    ]
+  },
+  "superVault_redeem_clamped": {
+    "prerequisite_functions": [],
+    "paths": [
+      "withdrawPrice == 0 && strategy.getAverageWithdrawPrice(owner)",
+      "withdrawPrice != 0 && strategy.getAverageWithdrawPrice(owner)"
+    ]
+  },
+  "getAddress": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "yieldSource_redeem": {
+    "prerequisite_functions": [],
+    "paths": [
+      "revertBehaviours[FunctionType.REDEEM] == RevertType.THROW && revertBehaviours[FunctionType.REDEEM] == RevertType.OOG && revertBehaviours[FunctionType.REDEEM] == RevertType.RETURN_BOMB && revertBehaviours[FunctionType.REDEEM] == RevertType.REVERT_BOMB && revertBehaviours[FunctionType.REDEEM] == RevertType.THROW && revertBehaviours[FunctionType.REDEEM] == RevertType.OOG && revertBehaviours[FunctionType.REDEEM] == RevertType.RETURN_BOMB && revertBehaviours[FunctionType.REDEEM] == RevertType.REVERT_BOMB && msg.sender != owner && fromBalance >= shares && asset.transfer(receiver, lossyAssets)",
+      "revertBehaviours[FunctionType.REDEEM] != RevertType.THROW && revertBehaviours[FunctionType.REDEEM] != RevertType.OOG && revertBehaviours[FunctionType.REDEEM] != RevertType.RETURN_BOMB && revertBehaviours[FunctionType.REDEEM] != RevertType.REVERT_BOMB && revertBehaviours[FunctionType.REDEEM] != RevertType.THROW && revertBehaviours[FunctionType.REDEEM] != RevertType.OOG && revertBehaviours[FunctionType.REDEEM] != RevertType.RETURN_BOMB && revertBehaviours[FunctionType.REDEEM] != RevertType.REVERT_BOMB && msg.sender == owner && fromBalance >= shares && asset.transfer(receiver, lossyAssets)"
+    ]
+  },
+  "yieldSource_requestDeposit": {
+    "prerequisite_functions": [],
+    "paths": [
+      "asset.transferFrom(msg.sender, this, assets)"
+    ]
+  },
+  "superVaultStrategy_executeVaultFeeConfigUpdate": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isMainManager(manager_, address(this)) && block.timestamp >= feeConfigEffectiveTime && proposedFeeConfig.recipient != 0"
+    ]
+  },
+  "superVault_setOperator": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender != operator"
+    ]
+  },
+  "superGovernor_executeUpkeepClaim": {
+    "prerequisite_functions": [],
+    "paths": [
+      "aggregator != 0 && aggregator.claimUpkeep(amount)"
+    ]
+  },
+  "doomsday_maxWithdrawResetsAfterFullWithdrawal": {
+    "prerequisite_functions": [],
+    "paths": [
+      "receiver != 0 && assets != 0 && receiver != 0 && 0 != 0 && fromBalance >= shares && receiver == 0 && _asset.safeTransferFrom(msg.sender, strategy, assets) && strategy.handleOperations4626Deposit(receiver, assets)",
+      "receiver != 0 && assets != 0 && receiver != 0 && 0 == 0 && receiver == 0 && _asset.safeTransferFrom(msg.sender, strategy, assets) && strategy.handleOperations4626Deposit(receiver, assets)"
+    ]
+  },
+  "superVaultAggregator_claimUpkeep": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == SUPER_GOVERNOR && claimableUpkeep >= amount && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.UPKEEP_TOKEN()) && SUPER_GOVERNOR.UPKEEP_TOKEN() && upkeepToken.safeTransfer(_superBank, amount)"
+    ]
+  },
+  "superVaultAggregator_addSecondaryManager": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && manager != 0 && _strategyData[strategy].mainManager != manager && _strategyData[strategy].secondaryManagers.length() < MAX_SECONDARY_MANAGERS && _strategyData[strategy].secondaryManagers.add(manager)"
+    ]
+  },
+  "superVault_withdraw": {
+    "prerequisite_functions": [],
+    "paths": [
+      "(receiver != 0) || (controller == 0) && controller != msg.sender && _isOperator(controller, msg.sender) && receiver == controller && averageWithdrawPrice != 0 && assets <= maxWithdrawAmount && assets <= escrowBalance && strategy.getAverageWithdrawPrice(controller) && _asset.balanceOf(escrow) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets) && escrow.returnAssets(receiver, assets)",
+      "(receiver != 0) || (controller == 0) && controller == msg.sender && averageWithdrawPrice != 0 && assets <= maxWithdrawAmount && assets <= escrowBalance && strategy.getAverageWithdrawPrice(controller) && _asset.balanceOf(escrow) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets) && escrow.returnAssets(receiver, assets)"
+    ]
+  },
+  "executeChangePrimaryManager": {
+    "prerequisite_functions": [
+      "proposeChangePrimaryManager"
+    ],
+    "paths": []
+  },
+  "superVaultStrategy_handleOperations4626Deposit": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _vault && assetsGross != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && assetsNet != 0 && feeAssets != 0 && recipient != 0 && feeAssets > 0 && pps != 0 && sharesNet != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR() && _asset.safeTransfer(recipient, feeAssets)",
+      "msg.sender == _vault && assetsGross != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && assetsNet != 0 && feeAssets != 0 && recipient != 0 && feeAssets <= 0 && pps != 0 && sharesNet != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()",
+      "msg.sender == _vault && assetsGross != 0 && controller != 0 && !(aggregator.isGlobalHooksRootVetoed()) && !(_isPaused(aggregator)) && !(_isPPSStale(aggregator)) && !(_isPPSNotUpdated(aggregator)) && assetsNet != 0 && feeAssets == 0 && pps != 0 && sharesNet != 0 && SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()) && SUPER_GOVERNOR.SUPER_VAULT_AGGREGATOR()"
+    ]
+  },
+  "superVault_previewMint": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps != 0 && feeBps >= BPS_PRECISION && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps != 0 && feeBps != 0 && feeBps < BPS_PRECISION && strategy.getConfigInfo()"
+    ]
+  },
+  "executeWithdrawUpkeep": {
+    "prerequisite_functions": [
+      "depositUpkeep",
+      "proposeWithdrawUpkeep"
+    ],
+    "paths": []
+  },
+  "claimUpkeep": {
+    "prerequisite_functions": [
+      "depositUpkeep"
+    ],
+    "paths": []
+  },
+  "property_previewEquivalenceFromShares": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps != 0 && feeBps >= BPS_PRECISION && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps != 0 && feeBps != 0 && feeBps < BPS_PRECISION && strategy.getConfigInfo()"
+    ]
+  },
+  "superVaultAggregator_proposeWithdrawUpkeep": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager && currentBalance != 0"
+    ]
+  },
+  "superVaultAggregator_updateDeviationThreshold": {
+    "prerequisite_functions": [],
+    "paths": [
+      "msg.sender == _strategyData[strategy].mainManager"
+    ]
+  },
+  "claimableRedeemRequest": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "yieldSource_simulateLoss": {
+    "prerequisite_functions": [],
+    "paths": [
+      "asset.transfer(0xbeef, lossAmount)"
+    ]
+  },
+  "yieldSource_redeem5115": {
+    "prerequisite_functions": [],
+    "paths": [
+      "supply == 0 && fromBalance >= amountSharesToRedeem && tokenOut.transfer(receiver, lossyAmountTokenOut)",
+      "supply != 0 && fromBalance >= amountSharesToRedeem && tokenOut.transfer(receiver, lossyAmountTokenOut)"
+    ]
+  },
+  "getSuperVaultState": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVault_approve": {
+    "prerequisite_functions": [],
+    "paths": [
+      "owner != 0 && spender != 0 && true",
+      "owner != 0 && spender != 0 && !(true)"
+    ]
+  },
+  "handleOperations7540": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem"
+    ],
+    "paths": []
+  },
+  "transferFrom": {
+    "prerequisite_functions": [
+      "deposit",
+      "approve"
+    ],
+    "paths": []
+  },
+  "convertToAssets": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "maxWithdraw": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "shortcut_fulfillCancelRedeemRequests_afterCancel": {
+    "prerequisite_functions": [],
+    "paths": [
+      "(controller == msg.sender) && !_isOperator(controller, msg.sender) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.CancelRedeemRequest, controller, 0, 0)"
+    ]
+  },
+  "invalidateNonce": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "setpreviewAssetsGreater": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps != 0 && feeBps >= BPS_PRECISION && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps != 0 && feeBps != 0 && feeBps < BPS_PRECISION && strategy.getConfigInfo()"
+    ]
+  },
+  "proposeVaultFeeConfigUpdate": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "yieldSource_withdraw": {
+    "prerequisite_functions": [],
+    "paths": [
+      "revertBehaviours[FunctionType.WITHDRAW] == RevertType.THROW && revertBehaviours[FunctionType.WITHDRAW] == RevertType.OOG && revertBehaviours[FunctionType.WITHDRAW] == RevertType.RETURN_BOMB && revertBehaviours[FunctionType.WITHDRAW] == RevertType.REVERT_BOMB && revertBehaviours[FunctionType.WITHDRAW] == RevertType.THROW && revertBehaviours[FunctionType.WITHDRAW] == RevertType.OOG && revertBehaviours[FunctionType.WITHDRAW] == RevertType.RETURN_BOMB && revertBehaviours[FunctionType.WITHDRAW] == RevertType.REVERT_BOMB && msg.sender != owner && fromBalance >= shares && asset.transfer(receiver, lossyAssets)",
+      "revertBehaviours[FunctionType.WITHDRAW] != RevertType.THROW && revertBehaviours[FunctionType.WITHDRAW] != RevertType.OOG && revertBehaviours[FunctionType.WITHDRAW] != RevertType.RETURN_BOMB && revertBehaviours[FunctionType.WITHDRAW] != RevertType.REVERT_BOMB && revertBehaviours[FunctionType.WITHDRAW] != RevertType.THROW && revertBehaviours[FunctionType.WITHDRAW] != RevertType.OOG && revertBehaviours[FunctionType.WITHDRAW] != RevertType.RETURN_BOMB && revertBehaviours[FunctionType.WITHDRAW] != RevertType.REVERT_BOMB && msg.sender == owner && fromBalance >= shares && asset.transfer(receiver, lossyAssets)"
+    ]
+  },
+  "superVault_redeem": {
+    "prerequisite_functions": [],
+    "paths": [
+      "(receiver != 0) || (controller == 0) && controller != msg.sender && _isOperator(controller, msg.sender) && receiver == controller && averageWithdrawPrice != 0 && assets <= maxWithdrawAmount && assets <= escrowBalance && strategy.getAverageWithdrawPrice(controller) && _asset.balanceOf(escrow) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets) && escrow.returnAssets(receiver, assets)",
+      "(receiver != 0) || (controller == 0) && controller == msg.sender && averageWithdrawPrice != 0 && assets <= maxWithdrawAmount && assets <= escrowBalance && strategy.getAverageWithdrawPrice(controller) && _asset.balanceOf(escrow) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets) && escrow.returnAssets(receiver, assets)"
+    ]
+  },
+  "redeem": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "fulfillRedeemRequests"
+    ],
+    "paths": []
+  },
+  "ECDSAPPSOracle_updatePPS": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_SUPER_GOVERNORReturn_0.forwardPPS(forwardArgs)"
+    ]
+  },
+  "superVaultEscrow_escrowShares": {
+    "prerequisite_functions": [],
+    "paths": [
+      "amount != 0 && vault.safeTransferFrom(from, this, amount)"
+    ]
+  },
+  "superGovernor_proposeFee": {
+    "prerequisite_functions": [],
+    "paths": [
+      "value <= BPS_MAX"
+    ]
+  },
+  "shortcut_cancelRedeemRequest_afterRequest": {
+    "prerequisite_functions": [],
+    "paths": [
+      "(controller == msg.sender) && !_isOperator(controller, msg.sender) && strategy.handleOperations7540(ISuperVaultStrategy.Operation.CancelRedeemRequest, controller, 0, 0)"
+    ]
+  },
+  "superVault_invalidateNonce": {
+    "prerequisite_functions": [],
+    "paths": [
+      "!(_authorizations[msg.sender][nonce])"
+    ]
+  },
+  "superVault_maxRedeem": {
+    "prerequisite_functions": [],
+    "paths": [
+      "withdrawPrice == 0 && strategy.getAverageWithdrawPrice(owner)",
+      "withdrawPrice != 0 && strategy.getAverageWithdrawPrice(owner)"
+    ]
+  },
+  "doomsday_maxRedeemResetsAfterFullRedemption": {
+    "prerequisite_functions": [],
+    "paths": [
+      "receiver != 0 && shares != 0 && receiver != 0 && 0 != 0 && fromBalance >= shares && receiver == 0 && strategy.quoteMintAssetsGross(shares) && _asset.safeTransferFrom(msg.sender, strategy, assets) && strategy.handleOperations4626Mint(receiver, shares, assets, assetsNet)",
+      "receiver != 0 && shares != 0 && receiver != 0 && 0 == 0 && receiver == 0 && strategy.quoteMintAssetsGross(shares) && _asset.safeTransferFrom(msg.sender, strategy, assets) && strategy.handleOperations4626Mint(receiver, shares, assets, assetsNet)"
+    ]
+  },
+  "removeSecondaryManager": {
+    "prerequisite_functions": [
+      "addSecondaryManager"
+    ],
+    "paths": []
+  },
+  "yieldSource_simulateGain": {
+    "prerequisite_functions": [],
+    "paths": [
+      "asset.transferFrom(msg.sender, this, gainAmount)"
+    ]
+  },
+  "executeVaultFeeConfigUpdate": {
+    "prerequisite_functions": [
+      "proposeVaultFeeConfigUpdate"
+    ],
+    "paths": []
+  },
+  "cancelChangePrimaryManager": {
+    "prerequisite_functions": [
+      "proposeChangePrimaryManager"
+    ],
+    "paths": []
+  },
+  "addSecondaryManager": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "crytic_erc7540_7_redeem": {
+    "prerequisite_functions": [],
+    "paths": [
+      "withdrawPrice == 0 && strategy.getAverageWithdrawPrice(owner)",
+      "withdrawPrice != 0 && strategy.getAverageWithdrawPrice(owner)"
+    ]
+  },
+  "yieldSource_deposit7540": {
+    "prerequisite_functions": [],
+    "paths": [
+      "newTotalSupply >= totalSupply && ((msg.sender == controller) || operators[controller][msg.sender]) && asset.transfer(controller, (request.assets - assets))"
+    ]
+  },
+  "executeUpkeepPaymentsChange": {
+    "prerequisite_functions": [
+      "proposeUpkeepPaymentsChange"
+    ],
+    "paths": []
+  },
+  "claimableUpkeep": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "previewMint": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "superVault_previewDeposit": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+    ]
+  },
+  "deposit": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "yieldSource_claimCancelRedeemRequest": {
+    "prerequisite_functions": [],
+    "paths": [
+      "newTotalSupply >= totalSupply"
+    ]
+  },
+  "superVaultStrategy_fulfillCancelRedeemRequests": {
+    "prerequisite_functions": [],
+    "paths": [
+      "_getSuperVaultAggregator().isAnyManager(manager_, address(this)) && controllersLength != 0"
+    ]
+  },
+  "proposeGlobalHooksRoot": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "cancelRedeemRequest": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem"
+    ],
+    "paths": []
+  },
+  "updateDeviationThreshold": {
+    "prerequisite_functions": [],
+    "paths": []
+  },
+  "property_previewEquivalenceFromAssets": {
+    "prerequisite_functions": [],
+    "paths": [
+      "pps != 0 && feeBps == 0 && strategy.getConfigInfo()",
+      "pps == 0",
+      "pps != 0 && feeBps != 0 && strategy.getConfigInfo()"
+    ]
+  },
+  "burnShares": {
+    "prerequisite_functions": [
+      "deposit",
+      "requestRedeem",
+      "fulfillRedeemRequests"
+    ],
+    "paths": []
+  },
+  "superVault_transferFrom": {
+    "prerequisite_functions": [],
+    "paths": [
+      "currentAllowance < type(uint256).max && currentAllowance >= value && from != 0 && spender != 0 && false && from != 0 && to != 0 && from != 0 && fromBalance >= value && to == 0",
+      "currentAllowance < type(uint256).max && currentAllowance >= value && from != 0 && spender != 0 && !(false) && from != 0 && to != 0 && from == 0 && to == 0",
+      "currentAllowance >= type(uint256).max && from != 0 && to != 0 && from == 0 && to == 0"
+    ]
+  },
+  "yieldSource_deposit5115": {
+    "prerequisite_functions": [],
+    "paths": [
+      "revertBehaviour == RevertType.THROW && revertBehaviour == RevertType.OOG && revertBehaviour == RevertType.RETURN_BOMB && revertBehaviour == RevertType.REVERT_BOMB",
+      "revertBehaviour != RevertType.THROW && revertBehaviour != RevertType.OOG && revertBehaviour != RevertType.RETURN_BOMB && revertBehaviour != RevertType.REVERT_BOMB"
+    ]
+  },
+  "executeUpkeepClaim": {
+    "prerequisite_functions": [
+      "depositUpkeep"
+    ],
+    "paths": []
+  },
+  "yieldSource_cancelDepositRequest": {
+    "prerequisite_functions": [],
+    "paths": [
+      "((msg.sender == controller) || operators[controller][msg.sender]) && ((request.controller == controller) && !request.fulfilled)"
+    ]
+  },
+  "yieldSource_transferFrom": {
+    "prerequisite_functions": [],
+    "paths": [
+      "allowed != type(uint256).max && allowed >= amount && fromBalance >= amount",
+      "allowed == type(uint256).max && fromBalance >= amount"
+    ]
+  }
+}
