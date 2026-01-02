@@ -1071,6 +1071,158 @@ abstract contract TargetFunctions is
         }
     }
     
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 4 Fixes - FulfillRedeemRequests Coverage
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Unpause strategy before fulfilling redeem requests
+    /// @dev Covers lines 329-367 in SuperVaultStrategy.sol (fulfillRedeemRequests)
+    /// Root Cause: _validateStrategyState fails because strategy is paused
+    /// Solution: Shortcut that unpauses -> deposits -> requests redeem -> fulfills
+    function shortcut_fulfillRedeemRequests_unpausedStrategy(
+        uint256 depositAmount,
+        uint256 redeemShares
+    ) public {
+        // Ensure strategy is unpaused
+        vm.prank(address(this));
+        try superVaultAggregator.unpauseStrategy(address(superVaultStrategy)) {
+            // Successfully unpaused
+        } catch {
+            // May already be unpaused - that's ok
+        }
+        
+        // Setup: deposit to get shares
+        superVault_deposit_clamped(depositAmount);
+        
+        // Request redeem
+        superVault_requestRedeem_clamped(redeemShares);
+        
+        // Fulfill the redemption request
+        address[] memory controllers = new address[](1);
+        controllers[0] = _getActor();
+        
+        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+    }
+    
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 4 Fixes - SkimPerformanceFee with PPS Growth
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Skim performance fee with guaranteed PPS growth above HWM
+    /// @dev Covers lines 407-455 in SuperVaultStrategy.sol (skimPerformanceFee full execution)
+    /// Root Cause: currentPPS <= hwmPps, so function returns early at line 403
+    /// Solution: Shortcut that deposits -> simulates significant gain -> waits -> skims
+    function shortcut_skimPerformanceFee_withGuaranteedPPSGrowth(
+        uint256 depositAmount,
+        uint256 gainMultiplier
+    ) public {
+        // Step 1: Make initial deposit to establish baseline
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Record initial PPS (this becomes the HWM)
+        uint256 initialPPS = superVaultStrategy.getStoredPPS();
+        
+        // Step 3: Simulate significant gain to increase PPS above HWM
+        // Use gainMultiplier to create a large gain relative to deposits
+        gainMultiplier = (gainMultiplier % 100) + 1; // 1-100% gain
+        uint256 currentBalance = MockERC20(superVault.asset()).balanceOf(_getActor());
+        uint256 gainAmount = (currentBalance * gainMultiplier) / 100;
+        
+        if (gainAmount > 0) {
+            vm.prank(_getActor());
+            MockERC20(superVault.asset()).approve(address(this), gainAmount);
+            yieldSource_simulateGain(gainAmount);
+        }
+        
+        // Step 4: Advance time past POST_UNPAUSE_SKIM_TIMELOCK (12 hours)
+        vm.warp(block.timestamp + 12 hours + 1);
+        
+        // Step 5: Call skimPerformanceFee (should execute full fee collection logic)
+        vm.prank(address(this));
+        try superVaultStrategy.skimPerformanceFee() {
+            // Success - fee was skimmed and PPS growth was processed
+        } catch {
+            // May still fail due to other conditions, but we've maximized the chance
+        }
+    }
+    
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 4 Fixes - ExecuteHooks Invalid Validation
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Execute hooks with intentionally invalid proofs
+    /// @dev Covers line 290 in SuperVaultStrategy.sol (HOOK_VALIDATION_FAILED)
+    /// Root Cause: _validateHook always returns true (fuzzer generates valid proofs)
+    /// Solution: Shortcut that passes empty proofs to fail validation
+    function shortcut_executeHooks_withInvalidProofs(
+        uint256 hookEntropy
+    ) public {
+        address hook = _getRandomActor(hookEntropy);
+        
+        // Create arrays with intentionally invalid/empty proofs
+        address[] memory hooks = new address[](1);
+        hooks[0] = hook;
+        
+        bytes[] memory hookCalldata = new bytes[](1);
+        hookCalldata[0] = abi.encode(uint256(0)); // Some data
+        
+        bytes32[][] memory emptyGlobalProofs = new bytes32[][](1);
+        emptyGlobalProofs[0] = new bytes32[](0); // Empty proof will fail validation
+        
+        bytes32[][] memory emptyStrategyProofs = new bytes32[][](1);
+        emptyStrategyProofs[0] = new bytes32[](0);
+        
+        uint256[] memory expectedAssetsOrSharesOut = new uint256[](1);
+        expectedAssetsOrSharesOut[0] = 1;
+        
+        ISuperVaultStrategy.ExecuteArgs memory args = ISuperVaultStrategy.ExecuteArgs({
+            hooks: hooks,
+            hookCalldata: hookCalldata,
+            globalProofs: emptyGlobalProofs,
+            strategyProofs: emptyStrategyProofs,
+            expectedAssetsOrSharesOut: expectedAssetsOrSharesOut
+        });
+        
+        // This should revert with HOOK_VALIDATION_FAILED (covering line 290)
+        vm.prank(address(this));
+        try superVaultStrategy.executeHooks(args) {
+            // Should not succeed with invalid proofs
+        } catch {
+            // Expected - validation failed (line 290 covered)
+        }
+    }
+    
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 4 Fixes - SkimPerformanceFee Timelock
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Skim performance fee during timelock window
+    /// @dev Covers line 384 in SuperVaultStrategy.sol (SKIM_TIMELOCK_ACTIVE)
+    /// Root Cause: fuzzer never calls skimPerformanceFee soon enough after unpause
+    /// Solution: Shortcut that pauses -> unpauses -> immediately skims
+    function shortcut_skimPerformanceFee_duringTimelock() public {
+        // Step 1: Pause the strategy
+        vm.prank(address(this));
+        try superVaultAggregator.pauseStrategy(address(superVaultStrategy)) {
+            // Successfully paused
+        } catch {
+            // May already be paused
+        }
+        
+        // Step 2: Unpause to set lastUnpause timestamp
+        vm.prank(address(this));
+        superVaultAggregator.unpauseStrategy(address(superVaultStrategy));
+        
+        // Step 3: Immediately try to skim (within 12 hour timelock window)
+        // This should revert with SKIM_TIMELOCK_ACTIVE (covering line 384)
+        vm.prank(address(this));
+        try superVaultStrategy.skimPerformanceFee() {
+            // Should not succeed within timelock
+        } catch {
+            // Expected - timelock is active (line 384 covered)
+        }
+    }
+    
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
 }

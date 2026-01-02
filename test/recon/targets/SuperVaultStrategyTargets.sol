@@ -156,8 +156,8 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
     /// @dev Coverage Fix: Handler to test skimPerformanceFee within timelock window
     function superVaultStrategy_skimPerformanceFee_duringTimelock() public asAdmin {
         // First, pause and unpause to set lastUnpause timestamp
-        superVaultAggregator.pause(address(superVaultStrategy));
-        superVaultAggregator.unpause(address(superVaultStrategy));
+        superVaultAggregator.pauseStrategy(address(superVaultStrategy));
+        superVaultAggregator.unpauseStrategy(address(superVaultStrategy));
         
         // Immediately try to skim (within 12 hour timelock) - should revert
         try superVaultStrategy.skimPerformanceFee() {

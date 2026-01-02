@@ -218,8 +218,8 @@ abstract contract AdminTargets is BaseTargetFunctions, Properties {
         address[] memory controllers
     ) public asAdmin {
         // Ensure strategy is unpaused
-        if (superVaultAggregator.isPaused(address(superVaultStrategy))) {
-            superVaultAggregator.unpause(address(superVaultStrategy));
+        if (superVaultAggregator.isStrategyPaused(address(superVaultStrategy))) {
+            superVaultAggregator.unpauseStrategy(address(superVaultStrategy));
         }
         
         // Ensure PPS is updated and not stale
