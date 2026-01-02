@@ -55,6 +55,77 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         superVaultStrategy_handleOperations7540(operation, _getActor(), _getActor(), amount);
     }
 
+    function superVaultStrategy_manageYieldSources_clamped(
+        address[] memory sources,
+        address[] memory oracles,
+        ISuperVaultStrategy.YieldSourceAction[] memory actionTypes
+    ) public {
+        // Coverage Fix: Ensure all arrays have the same non-zero length
+        uint256 minLength = sources.length;
+        if (oracles.length < minLength) minLength = oracles.length;
+        if (actionTypes.length < minLength) minLength = actionTypes.length;
+        
+        // Skip if any array is empty
+        if (minLength == 0) return;
+        
+        // Truncate all arrays to the minimum length
+        assembly {
+            mstore(sources, minLength)
+            mstore(oracles, minLength)
+            mstore(actionTypes, minLength)
+        }
+        
+        superVaultStrategy_manageYieldSources(sources, oracles, actionTypes);
+    }
+
+    function superVaultStrategy_skimPerformanceFee_afterTimelock() public {
+        // Coverage Fix: Advance time past the POST_UNPAUSE_SKIM_TIMELOCK (12 hours)
+        vm.warp(block.timestamp + 12 hours + 1);
+        superVaultStrategy_skimPerformanceFee();
+    }
+
+    /// @dev Coverage Fix: Test deposit operation when veto is active
+    function superVaultStrategy_handleOperations4626Deposit_withVeto(
+        address controller,
+        uint256 assetsGross
+    ) public asAdmin {
+        // Set veto status
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Try to deposit (should revert with OPERATIONS_BLOCKED_BY_VETO)
+        try superVaultStrategy.handleOperations4626Deposit(controller, assetsGross) {
+            // If it doesn't revert, that's a bug
+            revert("Should have reverted with OPERATIONS_BLOCKED_BY_VETO");
+        } catch {
+            // Expected - veto blocked the operation
+        }
+        
+        // Reset veto status for subsequent operations
+        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+    }
+
+    /// @dev Coverage Fix: Test mint operation when veto is active  
+    function superVaultStrategy_handleOperations4626Mint_withVeto(
+        address controller,
+        uint256 sharesNet,
+        uint256 assetsGross,
+        uint256 assetsNet
+    ) public asAdmin {
+        // Set veto status
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Try to mint (should revert with OPERATIONS_BLOCKED_BY_VETO)
+        try superVaultStrategy.handleOperations4626Mint(controller, sharesNet, assetsGross, assetsNet) {
+            // If it doesn't revert, that's a bug
+            revert("Should have reverted with OPERATIONS_BLOCKED_BY_VETO");
+        } catch {
+            // Expected - veto blocked the operation
+        }
+        
+        // Reset veto status for subsequent operations
+        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+    }
+
 
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///

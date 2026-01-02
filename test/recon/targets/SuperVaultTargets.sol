@@ -40,12 +40,20 @@ abstract contract SuperVaultTargets is BaseTargetFunctions, Properties {
     }
 
     function superVault_redeem_clamped(uint256 shares) public {
-        shares = shares % (superVault.maxRedeem(_getActor()) + 1);
+        uint256 maxRedeemable = superVault.maxRedeem(_getActor());
+        // Coverage Fix: Only call if user has claimable redemptions
+        if (maxRedeemable == 0) return;
+        shares = shares % (maxRedeemable + 1);
+        if (shares == 0) shares = 1; // Ensure at least 1 share if maxRedeemable > 0
         superVault_redeem(shares);
     }
 
     function superVault_withdraw_clamped(uint256 assets) public {
-        assets = assets % (superVault.maxWithdraw(_getActor()) + 1);
+        uint256 maxWithdrawable = superVault.maxWithdraw(_getActor());
+        // Coverage Fix: Only call if user has claimable redemptions
+        if (maxWithdrawable == 0) return;
+        assets = assets % (maxWithdrawable + 1);
+        if (assets == 0) assets = 1; // Ensure at least 1 asset if maxWithdrawable > 0
         superVault_withdraw(assets);
     }
 
