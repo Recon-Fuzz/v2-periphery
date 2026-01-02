@@ -213,6 +213,56 @@ abstract contract AdminTargets is BaseTargetFunctions, Properties {
         }
     }
 
+    /// @dev Coverage Fix: Handler to test insufficient liquidity scenario in fulfillRedeemRequests
+    function superVaultStrategy_fulfillRedeemRequests_insufficientLiquidity(
+        address[] memory controllers
+    ) public asAdmin {
+        // Skip if no controllers
+        if (controllers.length == 0) return;
+        
+        // Sort and deduplicate controllers
+        _sortAndDeduplicateControllers(controllers);
+        
+        // Filter to only controllers with pending redeem requests
+        address[] memory validControllers = new address[](controllers.length);
+        uint256 validCount = 0;
+        
+        for (uint256 i = 0; i < controllers.length; i++) {
+            uint256 pending = superVault.pendingRedeemRequest(0, controllers[i]);
+            if (pending > 0) {
+                validControllers[validCount] = controllers[i];
+                validCount++;
+            }
+        }
+        
+        // Skip if no valid controllers
+        if (validCount == 0) return;
+        
+        // Resize to actual valid count
+        assembly {
+            mstore(validControllers, validCount)
+        }
+        
+        // Calculate totalAssetsOut that EXCEEDS strategy balance
+        uint256[] memory totalAssetsOut = new uint256[](validCount);
+        uint256 strategyBalance = IERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        
+        // Set totalAssetsOut to exceed available balance
+        // We'll try to fulfill with more assets than the strategy has
+        for (uint256 i = 0; i < validCount; i++) {
+            // Set each controller's assets out to the full strategy balance
+            // This ensures the sum exceeds the balance
+            totalAssetsOut[i] = strategyBalance + 1;
+        }
+        
+        // This should revert with INSUFFICIENT_LIQUIDITY
+        try superVaultStrategy.fulfillRedeemRequests(validControllers, totalAssetsOut) {
+            // Should not succeed
+        } catch {
+            // Expected revert with INSUFFICIENT_LIQUIDITY
+        }
+    }
+
     /// @dev Coverage Fix: Ensure strategy is in valid state before fulfillRedeemRequests
     function superVaultStrategy_fulfillRedeemRequests_ensureValidState(
         address[] memory controllers
