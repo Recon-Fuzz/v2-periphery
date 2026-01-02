@@ -1414,6 +1414,183 @@ abstract contract TargetFunctions is
         }
     }
     
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 5 Fixes - Based on functions-missing-covg-1767381145.json
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Execute hooks with invalid proofs to trigger validation failure
+    /// @dev Covers line 290 in SuperVaultStrategy.sol (HOOK_VALIDATION_FAILED)
+    /// Root Cause: _validateHook always returns true because fuzzer generates valid proofs
+    /// Solution: Shortcut that intentionally passes mismatched/empty proofs
+    function shortcut_executeHooks_invalidValidation(uint256 hookEntropy) public {
+        address hook = _getRandomActor(hookEntropy);
+        
+        // Create arrays with intentionally invalid/empty proofs to fail validation
+        address[] memory hooks = new address[](1);
+        hooks[0] = hook;
+        
+        bytes[] memory hookCalldata = new bytes[](1);
+        hookCalldata[0] = abi.encode(uint256(123)); // Some arbitrary data
+        
+        // Empty proofs will fail merkle validation
+        bytes32[][] memory emptyGlobalProofs = new bytes32[][](1);
+        emptyGlobalProofs[0] = new bytes32[](0);
+        
+        bytes32[][] memory emptyStrategyProofs = new bytes32[][](1);
+        emptyStrategyProofs[0] = new bytes32[](0);
+        
+        uint256[] memory expectedAssetsOrSharesOut = new uint256[](1);
+        expectedAssetsOrSharesOut[0] = 1;
+        
+        ISuperVaultStrategy.ExecuteArgs memory args = ISuperVaultStrategy.ExecuteArgs({
+            hooks: hooks,
+            hookCalldata: hookCalldata,
+            globalProofs: emptyGlobalProofs,
+            strategyProofs: emptyStrategyProofs,
+            expectedAssetsOrSharesOut: expectedAssetsOrSharesOut
+        });
+        
+        // This should revert with HOOK_VALIDATION_FAILED (covering line 290)
+        vm.prank(address(this));
+        try superVaultStrategy.executeHooks(args) {
+            // Should not succeed with invalid proofs
+        } catch {
+            // Expected - validation failed (line 290 covered)
+        }
+    }
+    
+    /// @notice Coverage Fix: Fulfill redeem requests with insufficient strategy liquidity
+    /// @dev Covers line 356 in SuperVaultStrategy.sol (INSUFFICIENT_LIQUIDITY)
+    /// Root Cause: Clamped handler ensures strategy has enough balance
+    /// Solution: Shortcut that deposits -> requests -> drains liquidity -> attempts fulfill
+    function shortcut_fulfillRedeemRequests_drainedLiquidity(
+        uint256 depositAmount,
+        uint256 redeemShares
+    ) public {
+        // Step 1: Deposit to get shares
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Request redeem
+        superVault_requestRedeem_clamped(redeemShares);
+        
+        // Step 3: Check if there's a pending request
+        uint256 pendingShares = superVault.pendingRedeemRequest(0, _getActor());
+        if (pendingShares == 0) return; // Nothing to fulfill
+        
+        // Step 4: Drain most of the strategy's liquidity
+        uint256 strategyBalance = MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance > 1) {
+            // Drain 95% of strategy balance to create insufficient liquidity
+            uint256 drainAmount = (strategyBalance * 95) / 100;
+            vm.prank(address(superVaultStrategy));
+            MockERC20(superVault.asset()).transfer(address(0xdead), drainAmount);
+        }
+        
+        // Step 5: Attempt to fulfill - should revert with INSUFFICIENT_LIQUIDITY
+        address[] memory controllers = new address[](1);
+        controllers[0] = _getActor();
+        
+        // Calculate required assets (will exceed drained balance)
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = (pendingShares * currentPPS) / (10 ** MockERC20(superVault.asset()).decimals());
+        
+        vm.prank(address(this));
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {
+            // Should not succeed with insufficient liquidity
+        } catch {
+            // Expected - insufficient liquidity (line 356 covered)
+        }
+    }
+    
+    /// @notice Coverage Fix: Skim performance fee immediately after unpause (during timelock)
+    /// @dev Covers line 384 in SuperVaultStrategy.sol (SKIM_TIMELOCK_ACTIVE)
+    /// Root Cause: Fuzzer never calls skimPerformanceFee soon enough after unpause
+    /// Solution: Shortcut that pauses -> unpauses -> immediately skims
+    function shortcut_skimPerformanceFee_timelockActive() public {
+        // Step 1: Pause the strategy
+        vm.prank(address(this));
+        try superVaultAggregator.pauseStrategy(address(superVaultStrategy)) {
+            // Successfully paused
+        } catch {
+            // May already be paused - that's ok
+        }
+        
+        // Step 2: Unpause to set lastUnpause timestamp to current block.timestamp
+        vm.prank(address(this));
+        superVaultAggregator.unpauseStrategy(address(superVaultStrategy));
+        
+        // Step 3: Immediately try to skim (within 12 hour timelock window)
+        // This should revert with SKIM_TIMELOCK_ACTIVE (covering line 384)
+        vm.prank(address(this));
+        try superVaultStrategy.skimPerformanceFee() {
+            // Should not succeed within timelock
+        } catch {
+            // Expected - timelock is active (line 384 covered)
+        }
+    }
+    
+    /// @notice Coverage Fix: Skim performance fee with guaranteed PPS growth above HWM
+    /// @dev Covers lines 407-455 in SuperVaultStrategy.sol (full fee collection logic)
+    /// Root Cause: currentPPS <= hwmPps, so function returns early at line 403
+    /// Solution: Shortcut that deposits -> simulates large gain -> waits -> skims
+    function shortcut_skimPerformanceFee_ppsGrowthAboveHWM(
+        uint256 depositAmount,
+        uint256 gainMultiplier
+    ) public {
+        // Step 1: Make initial deposit to establish baseline
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Simulate significant gain to increase PPS above HWM
+        // Use gainMultiplier to create a large gain relative to current balance
+        gainMultiplier = (gainMultiplier % 100) + 10; // 10-109% gain
+        uint256 currentBalance = MockERC20(superVault.asset()).balanceOf(_getActor());
+        uint256 gainAmount = (currentBalance * gainMultiplier) / 100;
+        
+        if (gainAmount > 0) {
+            vm.prank(_getActor());
+            MockERC20(superVault.asset()).approve(address(this), gainAmount);
+            yieldSource_simulateGain(gainAmount);
+        }
+        
+        // Step 3: Advance time past POST_UNPAUSE_SKIM_TIMELOCK (12 hours)
+        vm.warp(block.timestamp + 12 hours + 1);
+        
+        // Step 4: Call skimPerformanceFee (should execute full fee collection logic)
+        vm.prank(address(this));
+        try superVaultStrategy.skimPerformanceFee() {
+            // Success - fee was skimmed and PPS growth was processed
+        } catch {
+            // May still fail due to other conditions, but we've maximized the chance
+        }
+    }
+    
+    /// @notice Coverage Fix: Test handleOperations7540 with invalid operation type
+    /// @dev Covers line 265 in SuperVaultStrategy.sol (ACTION_TYPE_DISALLOWED)
+    /// Root Cause: Fuzzer only passes valid Operation enum values (0-3)
+    /// Solution: Shortcut that uses low-level call to bypass type checking
+    /// Note: This may be unreachable with proper enum typing, but we attempt it
+    function shortcut_handleOperations7540_invalidOperation() public {
+        address controller = _getActor();
+        uint256 amount = 100;
+        
+        // Attempt to call with invalid operation type (4, outside enum range 0-3)
+        // Use low-level call to bypass Solidity's type checking
+        bytes memory data = abi.encodeWithSelector(
+            ISuperVaultStrategy.handleOperations7540.selector,
+            uint8(4), // Invalid operation type
+            controller,
+            controller,
+            amount
+        );
+        
+        vm.prank(address(superVault));
+        (bool success,) = address(superVaultStrategy).call(data);
+        
+        // Expected to fail, either at decoding or at ACTION_TYPE_DISALLOWED revert
+        // We don't assert here since this is a coverage attempt
+    }
+    
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
 }
