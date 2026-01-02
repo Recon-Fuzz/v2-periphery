@@ -1,6 +1,6 @@
 {
-  "timestamp": "1767378557",
-  "lcov_file": "echidna/covered.1767378557.lcov",
+  "timestamp": "1767381145",
+  "lcov_file": "echidna/covered.1767381145.lcov",
   "missing_coverage": [
     {
       "function": "executeHooks",
@@ -18,8 +18,7 @@
           "290:                 revert HOOK_VALIDATION_FAILED();"
         ]
       },
-      "complexity": 9,
-      "analysis": "The last_covered_line is 289, which contains the conditional statement `if (!_validateHook(...))`. This line was executed (covered), but line 290 inside the conditional block is uncovered. This tells us the condition `!_validateHook(...)` never evaluates to true - meaning _validateHook always returns true and never fails validation.\n\nLooking at the executeHooks function context (lines 273-297), the fuzzer is successfully calling executeHooks with valid hooks that pass validation. However, the error path where hook validation fails is never explored. The root cause is that the fuzzer is only providing valid hook configurations (correct merkle proofs, registered hooks, valid calldata) that always pass the _validateHook check.\n\nTo fix this, we need to create a clamped handler that intentionally provides invalid hook data - such as incorrect merkle proofs, unregistered hook addresses, or invalid calldata - to trigger the validation failure path and cover line 290."
+      "complexity": 9
     },
     {
       "function": "fulfillRedeemRequests",
@@ -37,8 +36,7 @@
           "356:             revert INSUFFICIENT_LIQUIDITY();"
         ]
       },
-      "complexity": 8,
-      "analysis": "The last_covered_line is 355, which contains the conditional `if (vars.strategyBalance < vars.totalNetAssetsOut)`. This line was executed (covered), but line 356 inside the conditional is uncovered. This tells us the condition `vars.strategyBalance < vars.totalNetAssetsOut` never evaluates to true.\n\nLooking at the fulfillRedeemRequests function context (lines 318-368), vars.strategyBalance is calculated at line 354 as the asset balance of the strategy contract, and vars.totalNetAssetsOut is accumulated from the totalAssetsOut array parameter. The root cause is that the fuzzer never attempts to fulfill redemption requests with more assets than are currently available in the strategy's liquid balance.\n\nThis is a liquidity check - the strategy must have sufficient free assets to cover all redemptions being fulfilled. The fuzzer is only calling fulfillRedeemRequests when the strategy has enough liquidity, so the insufficient liquidity error path is never triggered. To fix this, we need to create a scenario where redemption requests exceed available liquidity - either by draining strategy assets through hooks before fulfillment, or by attempting to fulfill with totalAssetsOut values that exceed the strategy's balance."
+      "complexity": 8
     },
     {
       "function": "initialize",
@@ -56,8 +54,7 @@
           "129:         ) revert ZERO_ADDRESS();"
         ]
       },
-      "complexity": 6,
-      "analysis": "The last_covered_line is 128, which is part of a multi-line conditional statement checking `(feeConfigData.performanceFeeBps > 0 || feeConfigData.managementFeeBps > 0) && feeConfigData.recipient == address(0)`. Line 128 was evaluated (covered), but line 129's revert is uncovered, meaning the full condition never evaluates to true.\n\nLooking at the initialize function context (lines 122-150), this validation checks whether fees are configured (either performanceFeeBps or managementFeeBps > 0) but the recipient is set to address(0). The root cause is that the fuzzer's initialization always provides either: (1) no fees configured (both fee values are 0), or (2) fees configured with a valid non-zero recipient address. It never tries the invalid combination of having fees configured with a zero address recipient.\n\nSince initialize is called during setup and is an `initializer` (can only be called once), this is likely already being tested in unit tests or the setup phase with valid parameters. This branch represents an initialization error condition that should revert. To cover this, we would need to add a separate test case that intentionally tries to initialize with invalid fee configuration (fees > 0 but recipient == address(0)), but this may not be necessary for fuzzing coverage since it's a one-time initialization validation."
+      "complexity": 6
     },
     {
       "function": "skimPerformanceFee",
@@ -75,8 +72,7 @@
           "384:             revert SKIM_TIMELOCK_ACTIVE();"
         ]
       },
-      "complexity": 6,
-      "analysis": "The last_covered_line is 383, which contains the conditional `if (block.timestamp < lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK)`. This line was executed (covered), but line 384's revert is uncovered, meaning the condition never evaluates to true.\n\nLooking at the skimPerformanceFee function context (lines 373-456), this check prevents performance fee skimming for 12 hours after the strategy is unpaused (POST_UNPAUSE_SKIM_TIMELOCK = 12 hours). The lastUnpause timestamp comes from aggregator.getLastUnpauseTimestamp(address(this)). The root cause is that the fuzzer never calls skimPerformanceFee during the 12-hour window after an unpause event.\n\nThis is a time-based safety mechanism (rug prevention). To cover this path, we need to: (1) pause the strategy, (2) unpause the strategy (which sets lastUnpause to current block.timestamp), and (3) immediately call skimPerformanceFee while block.timestamp < lastUnpause + 12 hours. The fuzzer likely isn't testing this scenario because it either never pauses/unpauses strategies, or enough time passes between unpause and skim attempts. This requires state manipulation with time-dependent sequencing."
+      "complexity": 6
     },
     {
       "function": "skimPerformanceFee",
@@ -112,8 +108,7 @@
           "455:         aggregator.updatePPSAfterSkim(newPPS, fee);"
         ]
       },
-      "complexity": 6,
-      "analysis": "The last_covered_line is 403, which contains `return;`. This line executes successfully (early return), meaning the condition at lines 400-402 evaluates to true: `if (currentPPS <= hwmPps) { return; }`. Lines 407-455 are uncovered because the function always returns early at line 403.\n\nLooking at the skimPerformanceFee function context, the function checks if the current PPS (price per share) has grown above the high-water mark (hwmPps). If currentPPS <= hwmPps, there's no profit to skim, so it returns early. The uncovered lines 407-455 represent the core fee skimming logic that executes when there IS profit (currentPPS > hwmPps).\n\nThe root cause is that the vault's PPS never increases above its high-water mark during fuzzing. This is an unreachable state problem - the system state (PPS relative to HWM) prevents execution of the fee skimming logic. The fuzzer needs to create profit scenarios where the vault generates yield and increases its PPS above the initial HWM. This requires: (1) depositing assets, (2) generating yield through hooks or direct asset transfers to increase totalAssets, (3) updating the PPS oracle to reflect the growth, and (4) then calling skimPerformanceFee. This is a complex state sequence requiring yield generation."
+      "complexity": 6
     },
     {
       "function": "handleOperations7540",
@@ -131,8 +126,7 @@
           "265:             revert ACTION_TYPE_DISALLOWED();"
         ]
       },
-      "complexity": 5,
-      "analysis": "The last_covered_line is 263, which contains the function call `_handleCancelRedeemRequest(controller);`. This line executes successfully (covered), but line 265's revert is uncovered. Looking at the function context (lines 251-267), this is an if-else chain handling different Operation types: RedeemRequest, ClaimCancelRedeem, ClaimRedeem, CancelRedeemRequest, and a final else clause at line 265.\n\nLine 263 is inside the `else if (operation == Operation.CancelRedeemRequest)` block, which executes successfully. Line 265 is in the final else clause that should only execute if none of the four valid operation types match. The root cause is that the fuzzer only passes valid Operation enum values (RedeemRequest, ClaimCancelRedeem, ClaimRedeem, or CancelRedeemRequest) and never passes an invalid or undefined operation type.\n\nThis is an invalid input validation branch. Since Operation is likely an enum with only these four defined values, the else clause at line 265 might only be reachable if: (1) the Operation enum has additional undefined values, (2) the enum is cast from an invalid uint8 value, or (3) new operation types are added later. To cover this, we would need to pass an invalid operation value, but this may not be possible if Operation is a strict enum type. This line may be defensive programming that's unreachable with current code."
+      "complexity": 5
     },
     {
       "function": "erc7540_1",
@@ -150,8 +144,7 @@
           "87:         ) return true;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 86, which completes a conditional check for whether `convertToAssets(10 ** decimals) == 0` (testing for zero price). Line 86 was evaluated (covered), but line 87's early return is uncovered, meaning the condition never evaluates to true.\n\nLooking at the erc7540_1 property (lines 81-93), this tests the ERC-7540 invariant: convertToAssets(totalSupply) == totalAssets, unless the price is 0.0. Lines 83-86 check if the price is zero by converting 1 share (10^decimals) to assets. If that conversion returns 0, the property should return true (skip the test). Line 87 is uncovered because the vault's PPS is never zero.\n\nThe root cause is that the vault always has a non-zero price per share during fuzzing. The fuzzer never creates a scenario where convertToAssets returns 0 for a single share. This is expected behavior - vaults typically maintain positive PPS, and a zero PPS would indicate a catastrophic failure state. This branch is defensive programming for edge cases. To cover it, we would need to manipulate the vault into a zero-price state (e.g., totalAssets = 0 but totalSupply > 0), which may not be a realistic or desirable state to test."
+      "complexity": null
     },
     {
       "function": "erc7540_2",
@@ -169,8 +162,7 @@
           "101:         ) return true;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 100, which completes a conditional check for whether `convertToAssets(10 ** decimals) == 0` (testing for zero price). Line 100 was evaluated (covered), but line 101's early return is uncovered, meaning the condition never evaluates to true.\n\nLooking at the erc7540_2 property (lines 96-111), this tests the ERC-7540 invariant: convertToShares(totalAssets) == totalSupply, unless the price is 0.0. Lines 97-100 check if the price is zero using the same approach as erc7540_1. Line 101 is uncovered for the same reason as in erc7540_1.\n\nThe root cause is identical to erc7540_1: the vault's PPS is never zero during fuzzing. This is the same zero-price edge case check used across multiple ERC-7540 property tests. The fuzzer never creates a zero-price state, which is expected behavior. To cover this branch, we would need to force the vault into a zero-price state, which may not be realistic or desirable. This is defensive programming for extreme edge cases."
+      "complexity": null
     },
     {
       "function": "erc7540_3",
@@ -188,8 +180,7 @@
           "124:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 123, which contains `try IERC7540Like(erc7540Target).maxMint(actor) {} catch {`. The try block executed successfully (covered), but line 124 inside the catch block is uncovered, meaning maxMint(actor) never reverts.\n\nLooking at the erc7540_3 property (lines 118-134), this tests the ERC-7540 invariant: 'max* functions never revert'. The property tries calling maxDeposit, maxMint, maxRedeem, and maxWithdraw, expecting all to succeed. If any revert, the property returns false (test fails). Line 124 is uncovered because maxMint never throws an exception.\n\nThe root cause is that the vault's maxMint implementation is robust and never reverts for any actor address. This is correct behavior according to the ERC-7540 spec - max* functions should always return gracefully (returning 0 if the operation isn't allowed, rather than reverting). The catch block at line 124 would only execute if maxMint violates the spec and reverts, which would be a bug. Since this doesn't happen, the catch block remains uncovered. This is actually a positive signal - it means the vault correctly implements the no-revert guarantee for maxMint."
+      "complexity": null
     },
     {
       "function": "erc7540_3",
@@ -207,8 +198,7 @@
           "130:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 129, which contains `try IERC7540Like(erc7540Target).maxWithdraw(actor) {} catch {`. The try block executed successfully (covered), but line 130 inside the catch block is uncovered, meaning maxWithdraw(actor) never reverts.\n\nThis is the same pattern as the previous erc7540_3 coverage gap, but for maxWithdraw instead of maxMint. The erc7540_3 property tests that all max* functions (maxDeposit, maxMint, maxRedeem, maxWithdraw) never revert per the ERC-7540 specification.\n\nThe root cause is identical: the vault's maxWithdraw implementation correctly follows the ERC-7540 spec and never reverts, always returning gracefully (0 if withdraw isn't allowed). The catch block would only execute if maxWithdraw has a bug and violates the spec by reverting. Since maxWithdraw behaves correctly, the catch block remains uncovered. This is expected and correct behavior - the uncovered line represents a failure case that shouldn't happen in a compliant ERC-7540 implementation."
+      "complexity": null
     },
     {
       "function": "erc7540_4_deposit",
@@ -226,8 +216,7 @@
           "154:             return true; // Needs to be greater than 0, skip"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 153, which contains `if (sum == 0)`. Line 153 was evaluated (covered), but line 154's return statement is uncovered, meaning sum is never 0.\n\nLooking at the erc7540_4_deposit property (lines 139-165), this tests the invariant: 'claiming more than max always reverts'. At line 152, sum = maxDep + amt where maxDep = maxDeposit(actor) and amt is a fuzzed input (with amt == 0 already filtered out at lines 144-146). Line 154 checks if sum == 0 to skip the test.\n\nThe root cause is that sum = maxDeposit(actor) + amt is never 0 during fuzzing. Since amt > 0 (filtered at line 144), sum would only be 0 if maxDeposit(actor) returns a value that causes overflow (e.g., maxDeposit = type(uint256).max and amt = 1, causing wrap to 0). However, in normal operation, maxDeposit returns reasonable values and sum is always > 0. This check at lines 153-154 appears to be defensive programming for uint256 overflow edge cases that don't occur in practice. The property correctly proceeds to test the main invariant since sum > 0."
+      "complexity": null
     },
     {
       "function": "erc7540_4_mint",
@@ -245,8 +234,7 @@
           "180:             return true; // Needs to be greater than 0, skip"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 179, which contains `if (sum == 0)`. Line 179 was evaluated (covered), but line 180's return statement is uncovered, meaning sum is never 0.\n\nThis is the same pattern as erc7540_4_deposit, but for the mint operation. Looking at erc7540_4_mint (lines 167-191), at line 178 sum = maxDep + amt where maxDep = maxMint(actor) and amt > 0 (already filtered).\n\nThe root cause is identical to erc7540_4_deposit: sum = maxMint(actor) + amt is never 0 during fuzzing. Since amt > 0 is guaranteed by the filter at lines 172-174, sum would only be 0 with uint256 overflow (maxMint = type(uint256).max + amt causing wrap). In normal operation, maxMint returns reasonable values and sum > 0. This is defensive programming for overflow edge cases that don't occur in practice with compliant ERC-7540 implementations."
+      "complexity": null
     },
     {
       "function": "erc7540_4_redeem",
@@ -264,8 +252,7 @@
           "232:             return true; // Needs to be greater than 0"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 231, which contains `if (sum == 0)`. Line 231 was evaluated (covered), but line 232's return statement is uncovered, meaning sum is never 0.\n\nThis is the same pattern as erc7540_4_deposit and erc7540_4_mint, but for the redeem operation. Looking at erc7540_4_redeem (lines 219-243), at line 230 sum = maxDep + amt where maxDep = maxRedeem(actor) and amt > 0 (filtered at lines 223-226).\n\nThe root cause is identical: sum = maxRedeem(actor) + amt is never 0 during fuzzing. With amt > 0 guaranteed, sum would only be 0 with uint256 overflow. In normal operation, maxRedeem returns reasonable values and sum > 0. This is defensive programming for overflow edge cases that don't occur in practice."
+      "complexity": null
     },
     {
       "function": "erc7540_4_withdraw",
@@ -283,8 +270,7 @@
           "206:             return true; // Needs to be greater than 0"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 205, which contains `if (sum == 0)`. Line 205 was evaluated (covered), but line 206's return statement is uncovered, meaning sum is never 0.\n\nThis is the same pattern as the other erc7540_4_* functions, but for the withdraw operation. Looking at erc7540_4_withdraw (lines 193-217), at line 204 sum = maxDep + amt where maxDep = maxWithdraw(actor) and amt > 0 (filtered at lines 197-200).\n\nThe root cause is identical: sum = maxWithdraw(actor) + amt is never 0 during fuzzing. With amt > 0 guaranteed, sum would only be 0 with uint256 overflow. In normal operation, maxWithdraw returns reasonable values and sum > 0. This is defensive programming for overflow edge cases that don't occur in practice."
+      "complexity": null
     },
     {
       "function": "erc7540_5",
@@ -302,8 +288,7 @@
           "261:             return true; // Skip"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 260, which contains `if (balWeWillUse == 0)`. Line 260 was evaluated (covered), but line 261's return statement is uncovered, meaning balWeWillUse is never 0.\n\nLooking at the erc7540_5 property (lines 248-278), this tests: 'requestRedeem reverts if the share balance is less than amount'. At lines 257-258, balWeWillUse = actualBal + shares where actualBal = shareToken.balanceOf(actor) and shares > 0 (already filtered at lines 253-255).\n\nThe root cause is that balWeWillUse = balanceOf(actor) + shares is never 0 during fuzzing. Since shares > 0 is guaranteed by the filter, balWeWillUse would only be 0 with uint256 overflow (balanceOf returning type(uint256).max + shares causing wrap). In normal operation, share balances are reasonable and balWeWillUse > 0. This is defensive programming for overflow edge cases. The property correctly proceeds to test that requestRedeem with an amount exceeding the actor's balance reverts as expected."
+      "complexity": null
     },
     {
       "function": "erc7540_5",
@@ -321,8 +306,7 @@
           "272:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 267, which is the last parameter (`actor`) in the requestRedeem call inside a try block (lines 264-271). The try block executed successfully (covered), but line 272 inside the try block's success branch is uncovered.\n\nLooking at the erc7540_5 property context, this tests that requestRedeem should revert when requesting more shares than the actor's balance. The try-catch at lines 264-275 expects requestRedeem(balWeWillUse, actor, actor, \"\") to revert (catch block at line 274 returns true), but if it succeeds, line 272 returns false (property violation).\n\nLine 272 is uncovered because requestRedeem always reverts when given an amount exceeding the actor's share balance, which is the correct behavior. The fuzzer creates balWeWillUse = actualBal + shares (where shares > 0), ensuring the requested amount exceeds the actor's balance. The vault correctly reverts this invalid request, so the success branch at line 272 never executes. This is correct behavior - line 272 would only execute if the vault has a bug and allows redeeming more shares than owned, which would violate the ERC-7540 spec."
+      "complexity": null
     },
     {
       "function": "erc7540_6",
@@ -340,8 +324,7 @@
           "290:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 289, which contains `try IERC7540Like(erc7540Target).previewRedeem(0) {`. The try block executed (covered), but line 290 inside the try success branch is uncovered, meaning previewRedeem(0) always reverts and never succeeds.\n\nLooking at the erc7540_6 property (lines 281-297), this tests the ERC-7540 invariant for async vaults: 'preview* functions always revert' (because async vaults use request/redeem flow, not immediate preview). The property tries calling previewDeposit(0), previewMint(0), previewRedeem(0), and previewWithdraw(0), expecting all to revert. If any succeed, the property returns false (violation).\n\nLine 290 is uncovered because previewRedeem(0) correctly reverts as expected for an ERC-7540 async vault. The catch blocks (line 291) execute successfully, and the property returns true at line 296. Line 290 would only execute if previewRedeem(0) succeeds, which would violate the ERC-7540 async spec. Since the vault correctly implements the async pattern and reverts preview operations, line 290 remains uncovered. This is correct behavior - the uncovered line represents a spec violation that shouldn't happen."
+      "complexity": null
     },
     {
       "function": "erc7540_6",
@@ -359,8 +342,7 @@
           "293:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 292, which contains `try IERC7540Like(erc7540Target).previewWithdraw(0) {`. The try block executed (covered), but line 293 inside the try success branch is uncovered, meaning previewWithdraw(0) always reverts and never succeeds.\n\nThis is the same pattern as the previous erc7540_6 coverage gap, but for previewWithdraw instead of previewRedeem. The erc7540_6 property tests that all preview* functions revert for async ERC-7540 vaults.\n\nLine 293 is uncovered because previewWithdraw(0) correctly reverts as expected for an ERC-7540 async vault. Line 293 would only execute if previewWithdraw(0) succeeds, violating the async spec. Since the vault correctly implements the async pattern and reverts preview operations, line 293 remains uncovered. This is correct behavior - the uncovered line represents a spec violation that shouldn't happen in a compliant async vault."
+      "complexity": null
     }
   ],
   "summary": {

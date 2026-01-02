@@ -1,0 +1,414 @@
+{
+  "timestamp": "1767381145",
+  "lcov_file": "echidna/covered.1767381145.lcov",
+  "missing_coverage": [
+    {
+      "group_name": "Validation Failures - Hook and State Checks",
+      "group_description": "Functions blocked by validation checks that require specific hook configurations or state conditions to pass",
+      "functions": [
+        {
+          "function": "executeHooks",
+          "contract": "SuperVaultStrategy",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+          "function_range": {
+            "start": 273,
+            "end": 297
+          },
+          "uncovered_code": {
+            "line_range": "290",
+            "last_covered_line": 289,
+            "code": [
+              "289: [LAST COVERED]             if (!_validateHook(hook, args.hookCalldata[i], args.globalProofs[i], args.strategyProofs[i])) {",
+              "290:                 revert HOOK_VALIDATION_FAILED();"
+            ]
+          },
+          "complexity": 9,
+          "analysis": "The last_covered_line is 289, which contains the conditional check `if (!_validateHook(hook, args.hookCalldata[i], args.globalProofs[i], args.strategyProofs[i]))`. This line was executed (covered), but line 290 inside the conditional block (the revert statement) is uncovered. This indicates that the condition `!_validateHook(...)` is never evaluating to true - meaning `_validateHook` always returns true.\n\nThe root cause is that the fuzzer is always passing valid hook configurations that pass validation. To cover this error path, we need the fuzzer to generate invalid hook configurations that will cause `_validateHook` to return false. This requires either:\n1. Clamping parameters to intentionally create invalid hook/proof combinations, OR\n2. Setting up state where hooks fail validation (e.g., manipulating merkle proofs to be incorrect)\n\nSince hook validation involves cryptographic proofs (merkle proofs in globalProofs and strategyProofs), the most practical fix is to create a clamped handler that intentionally passes mismatched or corrupted proofs to trigger the validation failure."
+        },
+        {
+          "function": "initialize",
+          "contract": "SuperVaultStrategy",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+          "function_range": {
+            "start": 122,
+            "end": 150
+          },
+          "uncovered_code": {
+            "line_range": "129",
+            "last_covered_line": 128,
+            "code": [
+              "128: [LAST COVERED]                 && feeConfigData.recipient == address(0)",
+              "129:         ) revert ZERO_ADDRESS();"
+            ]
+          },
+          "complexity": 6,
+          "analysis": "The last_covered_line is 128, which is part of a multi-line conditional statement checking `(feeConfigData.performanceFeeBps > 0 || feeConfigData.managementFeeBps > 0) && feeConfigData.recipient == address(0)`. Line 128 was executed (the condition was evaluated), but line 129 (the revert) is uncovered.\n\nThis tells us that the condition is never evaluating to true. Looking at the full condition (lines 126-128), the revert triggers when:\n- Either performanceFeeBps > 0 OR managementFeeBps > 0 (at least one fee is configured)\n- AND recipient == address(0)\n\nThe fuzzer is never generating this specific combination - it's either setting fees to 0, or when setting fees > 0, it's also providing a non-zero recipient address. To cover this error path, we need a clamped handler that intentionally passes a FeeConfig with non-zero fees BUT a zero recipient address to trigger the ZERO_ADDRESS revert."
+        }
+      ]
+    },
+    {
+      "group_name": "Insufficient Balance/Liquidity Checks",
+      "group_description": "Functions blocked by balance or liquidity validation that require specific asset/share amounts",
+      "functions": [
+        {
+          "function": "fulfillRedeemRequests",
+          "contract": "SuperVaultStrategy",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+          "function_range": {
+            "start": 318,
+            "end": 368
+          },
+          "uncovered_code": {
+            "line_range": "356",
+            "last_covered_line": 355,
+            "code": [
+              "355: [LAST COVERED]         if (vars.strategyBalance < vars.totalNetAssetsOut) {",
+              "356:             revert INSUFFICIENT_LIQUIDITY();"
+            ]
+          },
+          "complexity": 8,
+          "analysis": "The last_covered_line is 355, which contains the conditional check `if (vars.strategyBalance < vars.totalNetAssetsOut)`. This line was executed (covered), but line 356 (the revert) is uncovered. This indicates the condition is never evaluating to true - the strategy always has sufficient balance to fulfill the redemption requests.\n\nLooking at the function context, `vars.strategyBalance` is the asset balance of the strategy contract (line 354: `_getTokenBalance(address(_asset), address(this))`), and `vars.totalNetAssetsOut` is the sum of all assets being redeemed (accumulated in line 350). The fuzzer is never creating a scenario where the requested redemption amount exceeds the strategy's available liquid assets.\n\nTo cover this error path, we need to create a situation where the strategy has insufficient liquidity. This could be achieved by:\n1. Clamping the `totalAssetsOut` parameters to values larger than the strategy's current balance, OR\n2. Draining the strategy's balance before calling fulfillRedeemRequests (using hooks or other withdrawal mechanisms)\n\nThe most practical fix is a clamped handler that intentionally requests more assets than available in the strategy balance."
+        }
+      ]
+    },
+    {
+      "group_name": "Time-Based Constraints",
+      "group_description": "Functions blocked by timelock or time-based validation that require specific timing conditions",
+      "functions": [
+        {
+          "function": "skimPerformanceFee",
+          "contract": "SuperVaultStrategy",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+          "function_range": {
+            "start": 373,
+            "end": 456
+          },
+          "uncovered_code": {
+            "line_range": "384",
+            "last_covered_line": 383,
+            "code": [
+              "383: [LAST COVERED]         if (block.timestamp < lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) {",
+              "384:             revert SKIM_TIMELOCK_ACTIVE();"
+            ]
+          },
+          "complexity": 6,
+          "analysis": "The last_covered_line is 383, which contains the conditional check `if (block.timestamp < lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK)`. This line was executed (covered), but line 384 (the revert) is uncovered. This indicates the condition is never evaluating to true - meaning the timelock period has always elapsed when the fuzzer calls this function.\n\nThe timelock prevents performance fee skimming for POST_UNPAUSE_SKIM_TIMELOCK duration (likely 12 hours based on the comment) after the strategy is unpaused. The fuzzer is never calling `skimPerformanceFee` during this timelock window.\n\nThis is a time-based constraint that cannot be solved by parameter clamping alone. To cover this error path, we need to:\n1. Call a function that unpauses the strategy (setting `lastUnpause` to current `block.timestamp`), AND\n2. Immediately call `skimPerformanceFee` before the timelock expires\n\nSince Echidna typically doesn't manipulate block.timestamp between calls in a single transaction, we need to ensure there's a handler that calls unpause and then immediately attempts to skim fees, triggering the timelock check."
+        }
+      ]
+    },
+    {
+      "group_name": "Early Return Paths - No Action Needed",
+      "group_description": "Functions where uncovered code follows early return statements due to specific state conditions",
+      "functions": [
+        {
+          "function": "skimPerformanceFee",
+          "contract": "SuperVaultStrategy",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+          "function_range": {
+            "start": 373,
+            "end": 456
+          },
+          "uncovered_code": {
+            "line_range": "407-455",
+            "last_covered_line": 403,
+            "code": [
+              "403: [LAST COVERED]             return;",
+              "407:         uint256 ppsGrowth = currentPPS - hwmPps;",
+              "411:         uint256 profit = Math.mulDiv(ppsGrowth, totalSupplyLocal, PRECISION, Math.Rounding.Floor);",
+              "414:         if (profit == 0) return;",
+              "417:         uint256 fee = Math.mulDiv(profit, feeConfig.performanceFeeBps, BPS_PRECISION, Math.Rounding.Ceil);",
+              "420:         if (fee == 0) return;",
+              "423:         uint256 sfFee =",
+              "424:             Math.mulDiv(fee, SUPER_GOVERNOR.getFee(FeeType.PERFORMANCE_FEE_SHARE), BPS_PRECISION, Math.Rounding.Floor);",
+              "425:         uint256 recipientFee = fee - sfFee;",
+              "428:         if (_getTokenBalance(address(_asset), address(this)) < fee) revert NOT_ENOUGH_FREE_ASSETS_FEE_SKIM();",
+              "431:         _safeTokenTransfer(address(_asset), SUPER_GOVERNOR.getAddress(SUPER_GOVERNOR.TREASURY()), sfFee);",
+              "432:         _safeTokenTransfer(address(_asset), feeConfig.recipient, recipientFee);",
+              "434:         emit PerformanceFeeSkimmed(fee, sfFee);",
+              "438:         uint256 ppsReduction = Math.mulDiv(fee, PRECISION, totalSupplyLocal, Math.Rounding.Floor);",
+              "441:         if (ppsReduction >= currentPPS) revert INVALID_PPS();",
+              "443:         uint256 newPPS = currentPPS - ppsReduction;",
+              "446:         if (newPPS == 0) revert INVALID_PPS();",
+              "450:         vaultHwmPps = newPPS;",
+              "452:         emit HWMPPSUpdated(newPPS, currentPPS, profit, fee);",
+              "455:         aggregator.updatePPSAfterSkim(newPPS, fee);"
+            ]
+          },
+          "complexity": 6,
+          "analysis": "The last_covered_line is 403, which is an early `return;` statement. This line executes when the condition on line 401 is true: `if (currentPPS <= hwmPps)`. The subsequent lines 407-455 are uncovered because execution never proceeds past this early return.\n\nLooking at the context: The function checks if the current price per share (PPS) has grown above the high-water mark (HWM). If `currentPPS <= hwmPps`, there's no growth above the HWM, so no performance fee can be collected, and the function returns early.\n\nThe root cause is that the fuzzer has never created a scenario where the PPS grows above the HWM. This requires:\n1. The vault to have an initial PPS (set during initialization to the asset decimals, e.g., 10^assetDecimals)\n2. The vault to generate yield/profit that increases the PPS above the initial value\n3. The skimPerformanceFee function to be called after this growth\n\nThis is a state dependency issue. The vault needs to accumulate value (through deposits, yield generation, or other mechanisms) to increase its PPS. To cover these lines, we need handlers that:\n1. Deposit assets into the vault to establish a position\n2. Generate yield or profit (could be through hooks that add value to the underlying vault)\n3. Call skimPerformanceFee after the PPS has grown\n\nAlternatively, we could manipulate the vaultHwmPps to be artificially low so that the current PPS is always above it."
+        }
+      ]
+    },
+    {
+      "group_name": "Default Case in Control Flow",
+      "group_description": "Functions with uncovered default/else branches in control flow that handle invalid operation types",
+      "functions": [
+        {
+          "function": "handleOperations7540",
+          "contract": "SuperVaultStrategy",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+          "function_range": {
+            "start": 251,
+            "end": 267
+          },
+          "uncovered_code": {
+            "line_range": "265",
+            "last_covered_line": 263,
+            "code": [
+              "263: [LAST COVERED]             _handleCancelRedeemRequest(controller);",
+              "265:             revert ACTION_TYPE_DISALLOWED();"
+            ]
+          },
+          "complexity": 5,
+          "analysis": "The last_covered_line is 263, which is the handler for the `CancelRedeemRequest` operation. Line 265 (the revert) is uncovered because it's in an `else` block that only executes when none of the previous operation type checks match.\n\nLooking at the function structure (lines 255-266), there's an if-else chain checking for:\n- Operation.RedeemRequest (line 255)\n- Operation.ClaimCancelRedeem (line 258)\n- Operation.ClaimRedeem (line 260)\n- Operation.CancelRedeemRequest (line 262)\n- else -> revert ACTION_TYPE_DISALLOWED() (line 265)\n\nThe fuzzer is only passing valid Operation enum values that match one of the four defined cases. To cover line 265, we would need to pass an invalid operation type that doesn't match any of these cases.\n\nHowever, since `Operation` is likely an enum type with only these four valid values, it's impossible in Solidity to pass an invalid enum value without causing a lower-level error. This line may be defensive programming but is practically unreachable with a properly defined enum.\n\nTo attempt coverage, we could try to clamp the operation parameter to a value outside the enum range (e.g., casting a uint that's larger than the enum size), but this may cause a revert at the ABI decoding level before reaching the function logic."
+        }
+      ]
+    },
+    {
+      "group_name": "ERC7540 Property Edge Cases - Zero Sum Checks",
+      "group_description": "ERC7540 property functions where the 'return true' early exit for sum==0 conditions are uncovered",
+      "functions": [
+        {
+          "function": "erc7540_1",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 81,
+            "end": 93
+          },
+          "uncovered_code": {
+            "line_range": "87",
+            "last_covered_line": 86,
+            "code": [
+              "86: [LAST COVERED]             ) == 0",
+              "87:         ) return true;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 86, which is part of a conditional check for whether `convertToAssets(10 ** decimals) == 0` (indicating zero price). Line 87 is the early return that executes when this condition is true. The line is uncovered because the condition is never true - the price is never zero.\n\nThis property checks that `convertToAssets(totalSupply) == totalAssets` unless the price is 0.0. The early return on line 87 is a skip condition for when the vault has zero price (which would make the property not applicable).\n\nThe fuzzer is never creating a scenario where the vault's price per share is zero. A zero price typically occurs when:\n1. The vault has no assets but has shares (total assets = 0, total supply > 0)\n2. Or the vault is in an invalid/uninitialized state\n\nTo cover this line, we need to create a state where convertToAssets returns 0 for a single share. This could be achieved by draining all assets from the vault while leaving shares outstanding, or by testing the vault before any deposits are made."
+        },
+        {
+          "function": "erc7540_2",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 96,
+            "end": 111
+          },
+          "uncovered_code": {
+            "line_range": "101",
+            "last_covered_line": 100,
+            "code": [
+              "100: [LAST COVERED]             ) == 0",
+              "101:         ) return true;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 100, which is part of the same zero-price check as erc7540_1. Line 101 is the early return when the price is zero. This is uncovered for the same reason as erc7540_1.\n\nThis property checks that `convertToShares(totalAssets) == totalSupply` unless the price is 0.0. The fuzzer never creates a zero-price state, so the skip condition is never triggered.\n\nSame fix as erc7540_1: Create a state where the vault has zero price by draining assets while keeping shares, or testing before initialization."
+        },
+        {
+          "function": "erc7540_4_deposit",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 139,
+            "end": 165
+          },
+          "uncovered_code": {
+            "line_range": "154",
+            "last_covered_line": 153,
+            "code": [
+              "153: [LAST COVERED]         if (sum == 0) {",
+              "154:             return true; // Needs to be greater than 0, skip"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 153, which checks `if (sum == 0)` where `sum = maxDep + amt` (line 152). Line 154 is an early return that triggers when sum is zero. This is uncovered because sum is never zero.\n\nLooking at the logic: `maxDep` is the result of `maxDeposit(actor)` and `amt` is a fuzzed parameter. For sum to be zero, both maxDep and amt would need to be zero. The property is testing that depositing more than maxDeposit reverts, but it skips the test when the sum would be zero.\n\nThe fuzzer is never generating the case where amt==0 AND maxDeposit==0 simultaneously. To cover this, we would need:\n1. The vault to have maxDeposit(actor) == 0 (vault is full or actor is blocked)\n2. AND amt parameter to be 0\n\nHowever, there's already an early check on line 144-146 that returns true if `amt == 0`, so this should handle the amt==0 case. The only way to hit line 154 would be if amt > 0 but still sum==0, which would require maxDep to be negative (impossible for uint256). This may be unreachable code or defensive programming for future changes."
+        },
+        {
+          "function": "erc7540_4_mint",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 167,
+            "end": 191
+          },
+          "uncovered_code": {
+            "line_range": "180",
+            "last_covered_line": 179,
+            "code": [
+              "179: [LAST COVERED]         if (sum == 0) {",
+              "180:             return true; // Needs to be greater than 0, skip"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 179, checking `if (sum == 0)` where `sum = maxDep + amt`. Same pattern as erc7540_4_deposit.\n\nSame analysis: The fuzzer never generates a case where both maxMint(actor) and amt are zero. Given the early return for amt==0 on lines 172-174, this check at line 179 may be unreachable for the same reason as erc7540_4_deposit."
+        },
+        {
+          "function": "erc7540_4_redeem",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 219,
+            "end": 243
+          },
+          "uncovered_code": {
+            "line_range": "232",
+            "last_covered_line": 231,
+            "code": [
+              "231: [LAST COVERED]         if (sum == 0) {",
+              "232:             return true; // Needs to be greater than 0"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 231, checking `if (sum == 0)` where `sum = maxDep + amt`. Same pattern as the other erc7540_4 functions.\n\nSame analysis: Given the early return for amt==0 on lines 224-226, and sum being the addition of two uint256 values, this check may be unreachable or defensive programming."
+        },
+        {
+          "function": "erc7540_4_withdraw",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 193,
+            "end": 217
+          },
+          "uncovered_code": {
+            "line_range": "206",
+            "last_covered_line": 205,
+            "code": [
+              "205: [LAST COVERED]         if (sum == 0) {",
+              "206:             return true; // Needs to be greater than 0"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 205, checking `if (sum == 0)` where `sum = maxDep + amt`. Same pattern as the other erc7540_4 functions.\n\nSame analysis: Given the early return for amt==0 on lines 197-200, this check may be unreachable for the same reasons."
+        },
+        {
+          "function": "erc7540_5",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 248,
+            "end": 278
+          },
+          "uncovered_code": {
+            "line_range": "261",
+            "last_covered_line": 260,
+            "code": [
+              "260: [LAST COVERED]         if (balWeWillUse == 0) {",
+              "261:             return true; // Skip"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 260, checking `if (balWeWillUse == 0)` where `balWeWillUse = actualBal + shares` (line 258). Line 261 is an early return when balWeWillUse is zero.\n\nThis property tests that requestRedeem reverts when requesting more shares than the actor's balance. The check skips the test when the total would be zero. For this to be true, both `actualBal` (actor's share balance) and `shares` (fuzzed parameter) would need to be zero.\n\nThe fuzzer never creates this specific case. Given there's already an early return for shares==0 on lines 253-255, hitting line 261 would require actualBal==0 AND shares to somehow still be 0 after passing the first check. This may be unreachable or redundant code."
+        }
+      ]
+    },
+    {
+      "group_name": "ERC7540 Property Catch Blocks - Try/Catch False Returns",
+      "group_description": "ERC7540 property functions where catch block 'return false' statements are uncovered, indicating calls never revert",
+      "functions": [
+        {
+          "function": "erc7540_3",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 118,
+            "end": 134
+          },
+          "uncovered_code": {
+            "line_range": "124",
+            "last_covered_line": 123,
+            "code": [
+              "123: [LAST COVERED]         try IERC7540Like(erc7540Target).maxMint(actor) {} catch {",
+              "124:             return false;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 123, which is a try-catch block for `maxMint(actor)`. Line 124 is the catch block that returns false if the call reverts. This line is uncovered because maxMint never reverts.\n\nThis property (erc7540_3) tests that max* functions never revert. The property expects all max* calls to succeed. The catch block returning false would indicate a property violation (the function reverted when it shouldn't).\n\nThe fuzzer has never triggered a revert in maxMint, which is actually correct behavior - it means the property is holding. However, to test the property's failure path (and achieve coverage of this catch block), we would need to create a state where maxMint reverts, which would indicate a bug in the vault implementation.\n\nThis is likely intentionally uncovered in a well-implemented vault - covering it would require breaking the vault's implementation or using a mock that intentionally reverts."
+        },
+        {
+          "function": "erc7540_3",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 118,
+            "end": 134
+          },
+          "uncovered_code": {
+            "line_range": "130",
+            "last_covered_line": 129,
+            "code": [
+              "129: [LAST COVERED]         try IERC7540Like(erc7540Target).maxWithdraw(actor) {} catch {",
+              "130:             return false;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 129, a try-catch block for `maxWithdraw(actor)`. Line 130 is the catch block. Same pattern as the previous erc7540_3 entry.\n\nSame analysis: maxWithdraw never reverts (which is correct behavior per ERC7540 spec). Covering this would require a buggy vault implementation or intentional mock."
+        },
+        {
+          "function": "erc7540_5",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 248,
+            "end": 278
+          },
+          "uncovered_code": {
+            "line_range": "272",
+            "last_covered_line": 267,
+            "code": [
+              "267: [LAST COVERED]                 actor,",
+              "272:             return false;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 267, which is part of the try block for `requestRedeem(balWeWillUse, actor, actor, \"\")`. Line 272 is in a catch block. However, looking at the full try-catch structure (lines 264-275), the try block should cause the function to return false (line 271), while the catch block should return true (line 274).\n\nThis property tests that requestRedeem should revert when requesting more shares than the actor's balance. The expected behavior is:\n- Try to requestRedeem with more shares than available -> should revert -> catch block -> return true (property holds)\n- If it doesn't revert -> try block succeeds -> return false (property violated)\n\nLine 272 appears to be in a position that suggests a different catch block or structure. Looking more carefully at the code structure, line 272 is the return statement in a try block (lines 264-271), not a catch block. The actual catch block is lines 273-275.\n\nGiven the structure, line 272 (`return false;`) executes when the requestRedeem call succeeds (doesn't revert). This line being uncovered means requestRedeem always reverts when given balWeWillUse (which is more than the actor's actual balance), which is the correct behavior.\n\nThis is proper vault behavior - the property is holding. Covering this line would require the vault to improperly allow requesting more shares than owned, which would be a bug."
+        },
+        {
+          "function": "erc7540_6",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 281,
+            "end": 297
+          },
+          "uncovered_code": {
+            "line_range": "290",
+            "last_covered_line": 289,
+            "code": [
+              "289: [LAST COVERED]         try IERC7540Like(erc7540Target).previewRedeem(0) {",
+              "290:             return false;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 289, a try block for `previewRedeem(0)`. Line 290 would execute if the call succeeds. This line being uncovered means previewRedeem(0) always reverts.\n\nThis property (erc7540_6) tests that preview* functions always revert (per ERC7540 async vault spec, preview functions should revert for async vaults). The expected behavior is:\n- Call previewRedeem(0) -> should revert -> catch block (line 291) -> continue to next check\n- If it doesn't revert -> try block succeeds -> return false (property violated)\n\nLine 290 being uncovered means previewRedeem always reverts as expected, which is correct behavior for an ERC7540 async vault. Covering this would require the vault to improperly implement previewRedeem to not revert, which would violate the ERC7540 spec."
+        },
+        {
+          "function": "erc7540_6",
+          "contract": "ERC7540Properties",
+          "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/erc7540-reusable-properties/src/ERC7540Properties.sol",
+          "function_range": {
+            "start": 281,
+            "end": 297
+          },
+          "uncovered_code": {
+            "line_range": "293",
+            "last_covered_line": 292,
+            "code": [
+              "292: [LAST COVERED]         try IERC7540Like(erc7540Target).previewWithdraw(0) {",
+              "293:             return false;"
+            ]
+          },
+          "complexity": null,
+          "analysis": "The last_covered_line is 292, a try block for `previewWithdraw(0)`. Line 293 would execute if the call succeeds. Same pattern as the previous erc7540_6 entry.\n\nSame analysis: previewWithdraw always reverts as expected per ERC7540 spec. This is correct behavior. Covering this would require violating the spec."
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "functions_analyzed": 165,
+    "functions_with_missing_coverage": 14,
+    "uncovered_sections": 18,
+    "full_coverage": false
+  }
+}
