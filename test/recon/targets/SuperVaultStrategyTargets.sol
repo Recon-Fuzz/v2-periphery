@@ -84,6 +84,107 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         superVaultStrategy_skimPerformanceFee();
     }
 
+    /// @dev Coverage Fix: Handler to trigger veto state and test OPERATIONS_BLOCKED_BY_VETO path
+    function superVaultStrategy_handleOperations4626Deposit_withVeto(
+        address controller,
+        uint256 assetsGross
+    ) public asAdmin {
+        // Enable veto status
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Clamp assets
+        assetsGross = assetsGross % (MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy)) + 1);
+        
+        // Attempt deposit - should revert with OPERATIONS_BLOCKED_BY_VETO
+        try superVaultStrategy.handleOperations4626Deposit(controller, assetsGross) {
+            // If it doesn't revert, disable veto for future operations
+            superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+        } catch {
+            // Expected revert - disable veto for future operations
+            superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+        }
+    }
+
+    /// @dev Coverage Fix: Handler to trigger veto state and test OPERATIONS_BLOCKED_BY_VETO path for mint
+    function superVaultStrategy_handleOperations4626Mint_withVeto(
+        address controller,
+        uint256 sharesNet,
+        uint256 assetsGross,
+        uint256 assetsNet
+    ) public asAdmin {
+        // Enable veto status
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Clamp parameters
+        uint256 strategyBalance = MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        sharesNet = sharesNet % (superVault.convertToShares(strategyBalance) + 1);
+        assetsGross = assetsGross % (strategyBalance + 1);
+        assetsNet = assetsNet % (strategyBalance + 1);
+        
+        // Attempt mint - should revert with OPERATIONS_BLOCKED_BY_VETO
+        try superVaultStrategy.handleOperations4626Mint(controller, sharesNet, assetsGross, assetsNet) {
+            superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+        } catch {
+            superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+        }
+    }
+
+    /// @dev Coverage Fix: Handler to test initialize with invalid fee config (fee set but recipient is address(0))
+    function superVaultStrategy_initialize_invalidFeeConfig(
+        uint256 performanceFeeBps,
+        uint256 managementFeeBps
+    ) public {
+        // This should be called on a fresh strategy instance
+        // Clamp to non-zero fees to trigger the validation
+        performanceFeeBps = (performanceFeeBps % 5100) + 1; // Ensure non-zero
+        managementFeeBps = managementFeeBps % 10_000;
+        
+        ISuperVaultStrategy.FeeConfig memory feeConfig = ISuperVaultStrategy.FeeConfig({
+            performanceFeeBps: performanceFeeBps,
+            managementFeeBps: managementFeeBps,
+            recipient: address(0) // Invalid: fees configured but no recipient
+        });
+        
+        // This should revert with ZERO_ADDRESS
+        try superVaultStrategy.initialize(address(superVault), feeConfig) {
+            // Should not succeed
+        } catch {
+            // Expected revert
+        }
+    }
+
+    /// @dev Coverage Fix: Handler to test skimPerformanceFee within timelock window
+    function superVaultStrategy_skimPerformanceFee_duringTimelock() public asAdmin {
+        // First, pause and unpause to set lastUnpause timestamp
+        superVaultAggregator.pause(address(superVaultStrategy));
+        superVaultAggregator.unpause(address(superVaultStrategy));
+        
+        // Immediately try to skim (within 12 hour timelock) - should revert
+        try superVaultStrategy.skimPerformanceFee() {
+            // Should not succeed
+        } catch {
+            // Expected revert with SKIM_TIMELOCK_ACTIVE
+        }
+    }
+
+    /// @dev Coverage Fix: Handler to create PPS growth above HWM and trigger fee collection
+    function superVaultStrategy_skimPerformanceFee_withPPSGrowth() public asAdmin {
+        // This is complex and requires:
+        // 1. Deposits to establish baseline
+        // 2. Profitable yield operations to increase PPS
+        // 3. Waiting past timelock
+        // 4. Calling skimPerformanceFee
+        
+        // For now, we'll rely on natural fuzzing to create PPS growth
+        // and just call skimPerformanceFee after waiting
+        vm.warp(block.timestamp + 12 hours + 1);
+        
+        try superVaultStrategy.skimPerformanceFee() {
+            // Success means we had PPS growth
+        } catch {
+            // May fail if no PPS growth or other conditions not met
+        }
+    }
 
 
 

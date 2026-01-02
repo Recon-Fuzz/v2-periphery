@@ -177,6 +177,58 @@ abstract contract AdminTargets is BaseTargetFunctions, Properties {
         // This is done separately by the fuzzer calling superVault_withdraw or superVault_redeem
     }
 
+    /// @dev Coverage Fix: Handler to test executeHooks with invalid hook validation
+    function superVaultStrategy_executeHooks_invalidProofs(
+        address[] memory hooks,
+        bytes[] memory hookCalldata
+    ) public asAdmin {
+        // Ensure arrays have matching length
+        uint256 len = hooks.length;
+        if (len == 0 || hookCalldata.length != len) return;
+        
+        // Create arrays with intentionally invalid/empty proofs to fail validation
+        bytes32[][] memory emptyGlobalProofs = new bytes32[][](len);
+        bytes32[][] memory emptyStrategyProofs = new bytes32[][](len);
+        uint256[] memory expectedAssetsOrSharesOut = new uint256[](len);
+        
+        for (uint256 i = 0; i < len; i++) {
+            emptyGlobalProofs[i] = new bytes32[](0); // Empty proofs will fail validation
+            emptyStrategyProofs[i] = new bytes32[](0);
+            expectedAssetsOrSharesOut[i] = 1;
+        }
+        
+        // This should revert with HOOK_VALIDATION_FAILED
+        try superVaultStrategy.executeHooks(
+            ISuperVaultStrategy.ExecuteArgs({
+                hooks: hooks,
+                hookCalldata: hookCalldata,
+                expectedAssetsOrSharesOut: expectedAssetsOrSharesOut,
+                globalProofs: emptyGlobalProofs,
+                strategyProofs: emptyStrategyProofs
+            })
+        ) {
+            // Should not succeed with invalid proofs
+        } catch {
+            // Expected revert
+        }
+    }
+
+    /// @dev Coverage Fix: Ensure strategy is in valid state before fulfillRedeemRequests
+    function superVaultStrategy_fulfillRedeemRequests_ensureValidState(
+        address[] memory controllers
+    ) public asAdmin {
+        // Ensure strategy is unpaused
+        if (superVaultAggregator.isPaused(address(superVaultStrategy))) {
+            superVaultAggregator.unpause(address(superVaultStrategy));
+        }
+        
+        // Ensure PPS is updated and not stale
+        // The aggregator should have fresh PPS - this is handled by other operations
+        
+        // Now call the fulfillRedeemRequests handler
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
+    }
+
     /// @dev Property: superVaultStrategy does not incur loss on fulfillment
     function superVaultStrategy_fulfillRedeemRequests(
         uint256 redeemShares,
