@@ -3,69 +3,22 @@
   "lcov_file": "echidna/covered.1767375646.lcov",
   "missing_coverage": [
     {
-      "function": "maxRedeem",
-      "contract": "SuperVault",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function": "handleOperations4626Deposit",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
       "function_range": {
-        "start": 412,
-        "end": 416
+        "start": 157,
+        "end": 195
       },
       "uncovered_code": {
-        "line_range": "415",
-        "last_covered_line": 414,
+        "line_range": "166",
+        "last_covered_line": 165,
         "code": [
-          "414: [LAST COVERED]         if (withdrawPrice == 0) return 0;",
-          "415:         return maxWithdraw(owner).mulDiv(PRECISION, withdrawPrice, Math.Rounding.Floor);"
+          "165: [LAST COVERED]         if (aggregator.isGlobalHooksRootVetoed()) {",
+          "166:             revert OPERATIONS_BLOCKED_BY_VETO();"
         ]
-      }
-    },
-    {
-      "function": "redeem",
-      "contract": "SuperVault",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
-      "function_range": {
-        "start": 511,
-        "end": 543
       },
-      "uncovered_code": {
-        "line_range": "528-542",
-        "last_covered_line": 525,
-        "code": [
-          "525: [LAST COVERED]         if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE();",
-          "528:         assets = shares.mulDiv(averageWithdrawPrice, PRECISION, Math.Rounding.Floor);",
-          "530:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
-          "531:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();",
-          "533:         uint256 escrowBalance = _asset.balanceOf(escrow);",
-          "534:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();",
-          "537:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);",
-          "540:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);",
-          "542:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
-        ]
-      }
-    },
-    {
-      "function": "withdraw",
-      "contract": "SuperVault",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
-      "function_range": {
-        "start": 476,
-        "end": 508
-      },
-      "uncovered_code": {
-        "line_range": "492-507",
-        "last_covered_line": 490,
-        "code": [
-          "490: [LAST COVERED]         if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE();",
-          "492:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
-          "493:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();",
-          "496:         shares = assets.mulDiv(PRECISION, averageWithdrawPrice, Math.Rounding.Ceil);",
-          "498:         uint256 escrowBalance = _asset.balanceOf(escrow);",
-          "499:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();",
-          "502:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);",
-          "505:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);",
-          "507:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
-        ]
-      }
+      "complexity": 10
     },
     {
       "function": "executeHooks",
@@ -82,7 +35,8 @@
           "289: [LAST COVERED]             if (!_validateHook(hook, args.hookCalldata[i], args.globalProofs[i], args.strategyProofs[i])) {",
           "290:                 revert HOOK_VALIDATION_FAILED();"
         ]
-      }
+      },
+      "complexity": 9
     },
     {
       "function": "fulfillRedeemRequests",
@@ -117,24 +71,8 @@
           "364:             _asset.safeTransfer(ISuperVault(_vault).escrow(), vars.totalNetAssetsOut);",
           "367:         emit RedeemRequestsFulfilled(controllers, vars.totalRequestedShares, vars.currentPPS);"
         ]
-      }
-    },
-    {
-      "function": "handleOperations4626Deposit",
-      "contract": "SuperVaultStrategy",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
-      "function_range": {
-        "start": 157,
-        "end": 195
       },
-      "uncovered_code": {
-        "line_range": "166",
-        "last_covered_line": 165,
-        "code": [
-          "165: [LAST COVERED]         if (aggregator.isGlobalHooksRootVetoed()) {",
-          "166:             revert OPERATIONS_BLOCKED_BY_VETO();"
-        ]
-      }
+      "complexity": 8
     },
     {
       "function": "handleOperations4626Mint",
@@ -151,41 +89,8 @@
           "213: [LAST COVERED]         if (aggregator.isGlobalHooksRootVetoed()) {",
           "214:             revert OPERATIONS_BLOCKED_BY_VETO();"
         ]
-      }
-    },
-    {
-      "function": "handleOperations7540",
-      "contract": "SuperVaultStrategy",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
-      "function_range": {
-        "start": 251,
-        "end": 267
       },
-      "uncovered_code": {
-        "line_range": "261",
-        "last_covered_line": 260,
-        "code": [
-          "260: [LAST COVERED]         } else if (operation == Operation.ClaimRedeem) {",
-          "261:             _handleClaimRedeem(controller, receiver, amount); // amount = assets"
-        ]
-      }
-    },
-    {
-      "function": "handleOperations7540",
-      "contract": "SuperVaultStrategy",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
-      "function_range": {
-        "start": 251,
-        "end": 267
-      },
-      "uncovered_code": {
-        "line_range": "265",
-        "last_covered_line": 263,
-        "code": [
-          "263: [LAST COVERED]             _handleCancelRedeemRequest(controller);",
-          "265:             revert ACTION_TYPE_DISALLOWED();"
-        ]
-      }
+      "complexity": 7
     },
     {
       "function": "initialize",
@@ -202,7 +107,8 @@
           "128: [LAST COVERED]                 && feeConfigData.recipient == address(0)",
           "129:         ) revert ZERO_ADDRESS();"
         ]
-      }
+      },
+      "complexity": 6
     },
     {
       "function": "skimPerformanceFee",
@@ -219,7 +125,8 @@
           "383: [LAST COVERED]         if (block.timestamp < lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK) {",
           "384:             revert SKIM_TIMELOCK_ACTIVE();"
         ]
-      }
+      },
+      "complexity": 6
     },
     {
       "function": "skimPerformanceFee",
@@ -254,7 +161,112 @@
           "452:         emit HWMPPSUpdated(newPPS, currentPPS, profit, fee);",
           "455:         aggregator.updatePPSAfterSkim(newPPS, fee);"
         ]
-      }
+      },
+      "complexity": 6
+    },
+    {
+      "function": "redeem",
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 511,
+        "end": 543
+      },
+      "uncovered_code": {
+        "line_range": "528-542",
+        "last_covered_line": 525,
+        "code": [
+          "525: [LAST COVERED]         if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE();",
+          "528:         assets = shares.mulDiv(averageWithdrawPrice, PRECISION, Math.Rounding.Floor);",
+          "530:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
+          "531:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();",
+          "533:         uint256 escrowBalance = _asset.balanceOf(escrow);",
+          "534:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();",
+          "537:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);",
+          "540:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);",
+          "542:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
+        ]
+      },
+      "complexity": 5
+    },
+    {
+      "function": "withdraw",
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 476,
+        "end": 508
+      },
+      "uncovered_code": {
+        "line_range": "492-507",
+        "last_covered_line": 490,
+        "code": [
+          "490: [LAST COVERED]         if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE();",
+          "492:         uint256 maxWithdrawAmount = maxWithdraw(controller);",
+          "493:         if (assets > maxWithdrawAmount) revert INVALID_AMOUNT();",
+          "496:         shares = assets.mulDiv(PRECISION, averageWithdrawPrice, Math.Rounding.Ceil);",
+          "498:         uint256 escrowBalance = _asset.balanceOf(escrow);",
+          "499:         if (assets > escrowBalance) revert NOT_ENOUGH_ASSETS();",
+          "502:         strategy.handleOperations7540(ISuperVaultStrategy.Operation.ClaimRedeem, controller, receiver, assets);",
+          "505:         ISuperVaultEscrow(escrow).returnAssets(receiver, assets);",
+          "507:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
+        ]
+      },
+      "complexity": 5
+    },
+    {
+      "function": "handleOperations7540",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 251,
+        "end": 267
+      },
+      "uncovered_code": {
+        "line_range": "261",
+        "last_covered_line": 260,
+        "code": [
+          "260: [LAST COVERED]         } else if (operation == Operation.ClaimRedeem) {",
+          "261:             _handleClaimRedeem(controller, receiver, amount); // amount = assets"
+        ]
+      },
+      "complexity": 5
+    },
+    {
+      "function": "handleOperations7540",
+      "contract": "SuperVaultStrategy",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVaultStrategy.sol",
+      "function_range": {
+        "start": 251,
+        "end": 267
+      },
+      "uncovered_code": {
+        "line_range": "265",
+        "last_covered_line": 263,
+        "code": [
+          "263: [LAST COVERED]             _handleCancelRedeemRequest(controller);",
+          "265:             revert ACTION_TYPE_DISALLOWED();"
+        ]
+      },
+      "complexity": 5
+    },
+    {
+      "function": "maxRedeem",
+      "contract": "SuperVault",
+      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/src/SuperVault/SuperVault.sol",
+      "function_range": {
+        "start": 412,
+        "end": 416
+      },
+      "uncovered_code": {
+        "line_range": "415",
+        "last_covered_line": 414,
+        "code": [
+          "414: [LAST COVERED]         if (withdrawPrice == 0) return 0;",
+          "415:         return maxWithdraw(owner).mulDiv(PRECISION, withdrawPrice, Math.Rounding.Floor);"
+        ]
+      },
+      "complexity": 1
     },
     {
       "function": "erc7540_1",
@@ -271,7 +283,8 @@
           "86: [LAST COVERED]             ) == 0",
           "87:         ) return true;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_2",
@@ -288,7 +301,8 @@
           "100: [LAST COVERED]             ) == 0",
           "101:         ) return true;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_3",
@@ -305,7 +319,8 @@
           "123: [LAST COVERED]         try IERC7540Like(erc7540Target).maxMint(actor) {} catch {",
           "124:             return false;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_3",
@@ -322,7 +337,8 @@
           "129: [LAST COVERED]         try IERC7540Like(erc7540Target).maxWithdraw(actor) {} catch {",
           "130:             return false;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_4_deposit",
@@ -339,7 +355,8 @@
           "153: [LAST COVERED]         if (sum == 0) {",
           "154:             return true; // Needs to be greater than 0, skip"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_4_mint",
@@ -356,7 +373,8 @@
           "179: [LAST COVERED]         if (sum == 0) {",
           "180:             return true; // Needs to be greater than 0, skip"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_4_redeem",
@@ -373,7 +391,8 @@
           "231: [LAST COVERED]         if (sum == 0) {",
           "232:             return true; // Needs to be greater than 0"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_4_redeem",
@@ -390,7 +409,8 @@
           "235: [LAST COVERED]         try IERC7540Like(erc7540Target).redeem(maxDep + amt, actor, actor) {",
           "236:             return false;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_4_withdraw",
@@ -407,7 +427,8 @@
           "205: [LAST COVERED]         if (sum == 0) {",
           "206:             return true; // Needs to be greater than 0"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_5",
@@ -424,7 +445,8 @@
           "260: [LAST COVERED]         if (balWeWillUse == 0) {",
           "261:             return true; // Skip"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_5",
@@ -441,7 +463,8 @@
           "267: [LAST COVERED]                 actor,",
           "272:             return false;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_6",
@@ -458,7 +481,8 @@
           "289: [LAST COVERED]         try IERC7540Like(erc7540Target).previewRedeem(0) {",
           "290:             return false;"
         ]
-      }
+      },
+      "complexity": null
     },
     {
       "function": "erc7540_6",
@@ -475,7 +499,8 @@
           "292: [LAST COVERED]         try IERC7540Like(erc7540Target).previewWithdraw(0) {",
           "293:             return false;"
         ]
-      }
+      },
+      "complexity": null
     }
   ],
   "summary": {
