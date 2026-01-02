@@ -34,6 +34,11 @@ abstract contract SuperGovernorTargets is BaseTargetFunctions, Properties {
         superGovernor_proposeGlobalHooksRoot(newRoot);
     }
 
+    function superGovernor_setGlobalHooksRootVetoStatus_clamped(uint256 vetoEntropy) public {
+        bool vetoed = vetoEntropy % 2 == 0;
+        superGovernor_setGlobalHooksRootVetoStatus(vetoed);
+    }
+
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
     function superGovernor_proposeFee(
@@ -75,5 +80,11 @@ abstract contract SuperGovernorTargets is BaseTargetFunctions, Properties {
         bytes32 newRoot
     ) public asAdmin {
         superGovernor.proposeGlobalHooksRoot(newRoot);
+    }
+
+    function superGovernor_setGlobalHooksRootVetoStatus(
+        bool vetoed
+    ) public asAdmin {
+        superGovernor.setGlobalHooksRootVetoStatus(vetoed);
     }
 }
