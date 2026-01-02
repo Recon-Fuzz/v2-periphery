@@ -94,11 +94,11 @@ abstract contract TargetFunctions is
         // Prerequisite: request redeem
         superVault_requestRedeem_clamped(redeemShares);
         
-        // Call target
+        // Call target using clamped handler
         address[] memory controllers = new address[](1);
         controllers[0] = _getActor();
         
-        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
     }
     
     /// @notice Shortcut: deposit -> requestRedeem (multiple users) -> fulfillRedeemRequests
@@ -120,12 +120,18 @@ abstract contract TargetFunctions is
         superVault_deposit_clamped(depositAmount2);
         superVault_requestRedeem_clamped(redeemShares2);
         
-        // Fulfill for both users
+        // Fulfill for both users using clamped handler
         address[] memory controllers = new address[](2);
-        controllers[0] = actor1;
-        controllers[1] = actor2;
+        // Ensure controllers are sorted (required by fulfillRedeemRequests)
+        if (actor1 < actor2) {
+            controllers[0] = actor1;
+            controllers[1] = actor2;
+        } else {
+            controllers[0] = actor2;
+            controllers[1] = actor1;
+        }
         
-        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
         
         switchActor(0);
     }
@@ -894,11 +900,11 @@ abstract contract TargetFunctions is
         // Step 2: Request redeem
         superVault_requestRedeem_clamped(redeemShares);
         
-        // Step 3: Fulfill the redemption request using the existing workflow
+        // Step 3: Fulfill the redemption request using the clamped handler
         address[] memory controllers = new address[](1);
         controllers[0] = _getActor();
         
-        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
         
         // Step 4: Withdraw from escrow (this covers lines 492-507 in SuperVault.sol)
         superVault_withdraw_clamped(withdrawAssets);
@@ -919,11 +925,11 @@ abstract contract TargetFunctions is
         // Step 2: Request redeem
         superVault_requestRedeem_clamped(redeemShares);
         
-        // Step 3: Fulfill the redemption request using the existing workflow
+        // Step 3: Fulfill the redemption request using the clamped handler
         address[] memory controllers = new address[](1);
         controllers[0] = _getActor();
         
-        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
         
         // Step 4: Redeem from escrow (this covers lines 528-542 in SuperVault.sol)
         superVault_redeem_clamped(finalRedeemShares);
@@ -946,19 +952,56 @@ abstract contract TargetFunctions is
         
         // User 2: deposit and request redeem
         switchActor(1);
+        address actor2 = _getActor();
         superVault_deposit_clamped(depositAmount2);
         superVault_requestRedeem_clamped(redeemShares2);
         
-        // Fulfill for both users using existing workflow
+        // Fulfill for both users using clamped handler
         address[] memory controllers = new address[](2);
-        controllers[0] = actor1;
-        controllers[1] = _getActor();
+        // Ensure controllers are sorted (required by fulfillRedeemRequests)
+        if (actor1 < actor2) {
+            controllers[0] = actor1;
+            controllers[1] = actor2;
+        } else {
+            controllers[0] = actor2;
+            controllers[1] = actor1;
+        }
         
-        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
         
         // User 1 withdraws
         switchActor(0);
         superVault_withdraw_clamped(withdrawAssets1);
+    }
+    
+    /// @notice Coverage Fix: Test maxRedeem with fulfilled redemption to cover line 415
+    /// @dev Covers line 415 in SuperVault.sol (maxRedeem calculation when withdrawPrice != 0)
+    /// Root Cause: maxRedeem returns 0 early at line 414 because withdrawPrice == 0
+    /// Solution: Complete async workflow to ensure withdrawPrice != 0, then call maxRedeem
+    function shortcut_maxRedeem_withFulfilledRedemption(
+        uint256 depositAmount,
+        uint256 redeemShares
+    ) public {
+        // Step 1: Deposit to get shares
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Request redeem
+        superVault_requestRedeem_clamped(redeemShares);
+        
+        // Step 3: Fulfill the redemption request to set withdrawPrice
+        address[] memory controllers = new address[](1);
+        controllers[0] = _getActor();
+        
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
+        
+        // Step 4: Call maxRedeem - now withdrawPrice != 0, so line 415 is executed
+        uint256 maxRedeemable = superVault.maxRedeem(_getActor());
+        
+        // Optional: Actually redeem if there's something to redeem
+        if (maxRedeemable > 0) {
+            vm.prank(_getActor());
+            superVault.redeem(maxRedeemable, _getActor(), _getActor());
+        }
     }
     
     // ----------------------------------------------------------------------------
@@ -1097,11 +1140,11 @@ abstract contract TargetFunctions is
         // Request redeem
         superVault_requestRedeem_clamped(redeemShares);
         
-        // Fulfill the redemption request
+        // Fulfill the redemption request using clamped handler
         address[] memory controllers = new address[](1);
         controllers[0] = _getActor();
         
-        superVaultStrategy_fulfillRedeemRequests(0, controllers);
+        superVaultStrategy_fulfillRedeemRequests_clamped(controllers);
     }
     
     // ----------------------------------------------------------------------------
