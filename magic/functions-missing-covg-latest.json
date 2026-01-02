@@ -1,6 +1,6 @@
 {
-  "timestamp": "1767372467",
-  "lcov_file": "echidna/covered.1767372467.lcov",
+  "timestamp": "1767375646",
+  "lcov_file": "echidna/covered.1767375646.lcov",
   "missing_coverage": [
     {
       "function": "handleOperations4626Deposit",
@@ -18,8 +18,7 @@
           "166:             revert OPERATIONS_BLOCKED_BY_VETO();"
         ]
       },
-      "complexity": 10,
-      "analysis": "The last_covered_line is 165, which contains the conditional statement `if (aggregator.isGlobalHooksRootVetoed())`. This line was executed (covered), but line 166 inside the conditional block is uncovered. This tells us the root cause: the condition `aggregator.isGlobalHooksRootVetoed()` is never evaluating to true.\n\nThe fuzzer is not triggering the veto state in the aggregator. Looking at the code, the global hooks root veto status is a governance-controlled state variable that prevents operations when set to true. To cover this branch, we need a state-changing function to be called first to set the veto status to true. This is an unreachable state problem - we need to add a handler that calls `aggregator.setGlobalHooksRootVetoStatus(true)` before calling handleOperations4626Deposit."
+      "complexity": 10
     },
     {
       "function": "executeHooks",
@@ -37,8 +36,7 @@
           "290:                 revert HOOK_VALIDATION_FAILED();"
         ]
       },
-      "complexity": 9,
-      "analysis": "The last_covered_line is 289, which contains the conditional statement `if (!_validateHook(...))`. This line was executed (covered), but line 290 inside the conditional block is uncovered. This tells us the root cause: the condition `!_validateHook(...)` is never evaluating to true (meaning _validateHook always returns true).\n\nThe fuzzer is always passing valid hook validation parameters (valid proofs that satisfy the merkle tree verification). To cover this branch, we need to clamp the parameters to intentionally provide invalid proofs or hook calldata that will fail validation. We should create a clamped handler that passes incorrect proofs (e.g., empty arrays or mismatched proof data) to trigger the validation failure path."
+      "complexity": 9
     },
     {
       "function": "fulfillRedeemRequests",
@@ -74,8 +72,7 @@
           "367:         emit RedeemRequestsFulfilled(controllers, vars.totalRequestedShares, vars.currentPPS);"
         ]
       },
-      "complexity": 8,
-      "analysis": "The last_covered_line is 327, which contains `_validateStrategyState(_getSuperVaultAggregator())`. This line executes successfully, but all subsequent lines 329-367 are uncovered. This tells us the root cause: the _validateStrategyState function is reverting, preventing execution from continuing.\n\nLooking at the function signature, _validateStrategyState likely checks if the strategy is paused or in an invalid state. The fuzzer is never reaching this function's body because the strategy state validation is failing. This is an unreachable state problem - we need to ensure the strategy is in a valid (unpaused, properly initialized) state before calling fulfillRedeemRequests. We should check for existing handlers that unpause the strategy or initialize it properly, or add new ones if they don't exist."
+      "complexity": 8
     },
     {
       "function": "handleOperations4626Mint",
@@ -93,8 +90,7 @@
           "214:             revert OPERATIONS_BLOCKED_BY_VETO();"
         ]
       },
-      "complexity": 7,
-      "analysis": "The last_covered_line is 213, which contains the conditional statement `if (aggregator.isGlobalHooksRootVetoed())`. This line was executed (covered), but line 214 inside the conditional block is uncovered. This tells us the root cause: the condition `aggregator.isGlobalHooksRootVetoed()` is never evaluating to true.\n\nThis is identical to the handleOperations4626Deposit case. The fuzzer is not triggering the veto state in the aggregator. This is an unreachable state problem - we need to add a handler that calls `aggregator.setGlobalHooksRootVetoStatus(true)` before calling handleOperations4626Mint to enable coverage of this error path."
+      "complexity": 7
     },
     {
       "function": "initialize",
@@ -112,8 +108,7 @@
           "129:         ) revert ZERO_ADDRESS();"
         ]
       },
-      "complexity": 6,
-      "analysis": "The last_covered_line is 128, which is part of a multi-line conditional statement checking `(feeConfigData.performanceFeeBps > 0 || feeConfigData.managementFeeBps > 0) && feeConfigData.recipient == address(0)`. This line was executed (covered), but line 129 (the revert statement) is uncovered. This tells us the root cause: the complete condition is never evaluating to true.\n\nLooking at the logic, the condition requires that at least one fee is configured (performanceFeeBps > 0 OR managementFeeBps > 0) AND the recipient is address(0). The fuzzer is never generating this specific combination of invalid parameters. To cover this branch, we need to create a clamped handler that explicitly sets one of the fee bps values to a non-zero value while keeping the recipient as address(0), forcing the validation error to trigger."
+      "complexity": 6
     },
     {
       "function": "skimPerformanceFee",
@@ -131,8 +126,7 @@
           "384:             revert SKIM_TIMELOCK_ACTIVE();"
         ]
       },
-      "complexity": 6,
-      "analysis": "The last_covered_line is 383, which contains the conditional statement `if (block.timestamp < lastUnpause + POST_UNPAUSE_SKIM_TIMELOCK)`. This line was executed (covered), but line 384 inside the conditional block is uncovered. This tells us the root cause: the condition is never evaluating to true.\n\nThe condition checks if the current timestamp is less than the last unpause timestamp plus a timelock period (12 hours based on the comment). The fuzzer is never calling skimPerformanceFee soon enough after an unpause event. To cover this branch, we need to create a sequence of handlers: first unpause the strategy, then immediately call skimPerformanceFee before the timelock expires. We need a clamped handler that ensures block.timestamp is within the timelock window after unpause."
+      "complexity": 6
     },
     {
       "function": "skimPerformanceFee",
@@ -168,8 +162,7 @@
           "455:         aggregator.updatePPSAfterSkim(newPPS, fee);"
         ]
       },
-      "complexity": 6,
-      "analysis": "The last_covered_line is 403, which contains an early `return` statement. This line executes successfully, but all subsequent lines 407-455 are uncovered. This tells us the root cause: the function is always returning early at line 403.\n\nLooking at the surrounding context, line 403 is reached when `currentPPS <= hwmPps` (line 401 check). The high-water mark (hwmPps) tracks the highest PPS achieved, and fees are only collected when the current PPS exceeds this mark. The fuzzer is never generating a scenario where the vault's PPS grows above the HWM. This is an unreachable state problem - we need to ensure the vault experiences PPS growth above the HWM. We need handlers that: (1) establish a baseline HWM, (2) execute profitable yield-generating operations that increase PPS above the HWM, (3) then call skimPerformanceFee to collect fees on the growth."
+      "complexity": 6
     },
     {
       "function": "redeem",
@@ -194,8 +187,7 @@
           "542:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
         ]
       },
-      "complexity": 5,
-      "analysis": "The last_covered_line is 525, which contains `if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE()`. This line executes successfully (the require passes), but all subsequent lines 528-542 are uncovered. This tells us the root cause: the averageWithdrawPrice is always 0, causing the function to always revert at line 525.\n\nThe averageWithdrawPrice is calculated based on fulfilled redemption requests in the ERC7540 async flow. The fuzzer is never completing the full async redemption workflow: (1) requestRedeem, (2) fulfillRedeemRequests (by manager), (3) then redeem/withdraw. Without step 2 being completed, there are no claimable assets and the averageWithdrawPrice remains 0. This is an unreachable state problem - we need to ensure the complete async redemption workflow is executed. The existing helper_completeAsyncRedemptionWorkflow in AdminTargets.sol should help, but we may need to ensure it's being called by the fuzzer or create additional clamped handlers that sequence these operations correctly."
+      "complexity": 5
     },
     {
       "function": "withdraw",
@@ -220,8 +212,7 @@
           "507:         emit Withdraw(msg.sender, receiver, controller, assets, shares);"
         ]
       },
-      "complexity": 5,
-      "analysis": "The last_covered_line is 490, which contains `if (averageWithdrawPrice == 0) revert INVALID_WITHDRAW_PRICE()`. This line executes successfully (the require passes), but all subsequent lines 492-507 are uncovered. This tells us the root cause: the averageWithdrawPrice is always 0, causing the function to always revert at line 490.\n\nThis is identical to the redeem function case. The averageWithdrawPrice is calculated based on fulfilled redemption requests in the ERC7540 async flow. The fuzzer is never completing the full async redemption workflow: (1) requestRedeem, (2) fulfillRedeemRequests (by manager), (3) then withdraw. Without step 2 being completed, there are no claimable assets and the averageWithdrawPrice remains 0. This is an unreachable state problem - we need to ensure the complete async redemption workflow is executed."
+      "complexity": 5
     },
     {
       "function": "handleOperations7540",
@@ -239,8 +230,7 @@
           "261:             _handleClaimRedeem(controller, receiver, amount); // amount = assets"
         ]
       },
-      "complexity": 5,
-      "analysis": "The last_covered_line is 260, which contains the conditional statement `} else if (operation == Operation.ClaimRedeem) {`. This line was executed (covered), but line 261 inside the conditional block is uncovered. This tells us the root cause: the operation parameter is never equal to Operation.ClaimRedeem.\n\nLooking at the function, handleOperations7540 is called from SuperVault's withdraw() and redeem() functions with Operation.ClaimRedeem. Since withdraw() and redeem() are not being covered (as we saw in the previous analyses), handleOperations7540 is never being called with Operation.ClaimRedeem. This is a cascading coverage issue - once we fix the withdraw/redeem coverage by ensuring the async redemption workflow completes, this line will automatically be covered."
+      "complexity": 5
     },
     {
       "function": "handleOperations7540",
@@ -258,8 +248,7 @@
           "265:             revert ACTION_TYPE_DISALLOWED();"
         ]
       },
-      "complexity": 5,
-      "analysis": "The last_covered_line is 263, which contains `_handleCancelRedeemRequest(controller)`. This line executes successfully, but line 265 (the revert statement) is uncovered. This tells us the root cause: the else branch is never being reached.\n\nLooking at the function structure, line 265 is in the final else clause that should trigger when the operation parameter doesn't match any of the defined Operation enum values (RedeemRequest, ClaimCancelRedeem, ClaimRedeem, CancelRedeemRequest). Since Solidity enum validation prevents invalid enum values at compile time, the only way to reach this else branch is if a new Operation enum value is added that's not handled in the if-else chain. This appears to be defensive programming for future extensibility. To cover this, we would need to modify the contract to add a new Operation type, which is not practical for fuzzing. This may be acceptable uncovered defensive code."
+      "complexity": 5
     },
     {
       "function": "maxRedeem",
@@ -277,27 +266,7 @@
           "415:         return maxWithdraw(owner).mulDiv(PRECISION, withdrawPrice, Math.Rounding.Floor);"
         ]
       },
-      "complexity": 1,
-      "analysis": "The last_covered_line is 414, which contains `if (withdrawPrice == 0) return 0;`. This line executes successfully and returns early, but line 415 is uncovered. This tells us the root cause: withdrawPrice is always 0, causing the function to always return early at line 414.\n\nThis is related to the same async redemption workflow issue. The withdrawPrice (averageWithdrawPrice from the strategy) is only non-zero when redemption requests have been fulfilled. The fuzzer is never completing the full async redemption workflow, so withdrawPrice remains 0. Once we fix the async redemption workflow coverage (by ensuring fulfillRedeemRequests is called after requestRedeem), this line will automatically be covered."
-    },
-    {
-      "function": "initializer",
-      "contract": "Initializable",
-      "source_file": "/Users/nelsonpereira/Documents/GitHub/Auditing/Fuzzing/Recon_Fuzzing/Superform/v2-periphery/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol",
-      "function_range": {
-        "start": 104,
-        "end": 132
-      },
-      "uncovered_code": {
-        "line_range": "121",
-        "last_covered_line": 120,
-        "code": [
-          "120: [LAST COVERED]         if (!initialSetup && !construction) {",
-          "121:             revert InvalidInitialization();"
-        ]
-      },
-      "complexity": null,
-      "analysis": "The last_covered_line is 120, which contains the conditional statement `if (!initialSetup && !construction)`. This line was executed (covered), but line 121 inside the conditional block is uncovered. This tells us the root cause: the condition `!initialSetup && !construction` is never evaluating to true.\n\nThis is OpenZeppelin's Initializable modifier checking that the contract is either being initialized for the first time (initialSetup) or being constructed. The fuzzer is never attempting to initialize a contract that's already been initialized or calling initialize outside of construction/initialization context. To cover this error path, we would need to call initialize() twice on the same contract instance, which should fail. We can create a clamped handler that attempts to reinitialize an already-initialized contract to trigger this validation error."
+      "complexity": 1
     },
     {
       "function": "erc7540_1",
@@ -315,8 +284,7 @@
           "87:         ) return true;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 86, which is part of a multi-line conditional checking if pendingDepositRequest equals 0. This line was executed (covered), but line 87 (the return statement) is uncovered. This tells us the root cause: the complete condition is never evaluating to true.\n\nThis is an ERC7540 property test checking edge cases where pendingDepositRequest is 0. The fuzzer is generating scenarios where there are always pending deposit requests, never hitting the edge case of 0 pending requests. This is a property test that returns true (test passes) when skipping the test due to preconditions not being met. Since this is in external library code for property testing, we may want to focus on covering our own contract code first before attempting to cover all property test edge cases."
+      "complexity": null
     },
     {
       "function": "erc7540_2",
@@ -334,8 +302,7 @@
           "101:         ) return true;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 100, which is part of a multi-line conditional checking if pendingRedeemRequest equals 0. This line was executed (covered), but line 101 (the return statement) is uncovered. This tells us the root cause: the complete condition is never evaluating to true.\n\nThis is similar to erc7540_1 - an ERC7540 property test checking edge cases where pendingRedeemRequest is 0. The fuzzer is generating scenarios where there are always pending redeem requests. This is property test library code that may be lower priority than covering our own contract logic."
+      "complexity": null
     },
     {
       "function": "erc7540_3",
@@ -353,8 +320,7 @@
           "124:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 123, which shows a try-catch block attempting to call maxMint(actor). The try block executed successfully (no exception), but line 124 in the catch block is uncovered. This tells us the root cause: the maxMint() call is never reverting.\n\nThis is an ERC7540 property test checking that maxMint() should not revert. The fact that the catch block is never reached means the property is always satisfied (maxMint never reverts), which is the expected behavior. Covering the catch block would require making maxMint() revert, which would violate the ERC7540 spec. This uncovered code represents the \"bad behavior\" path that should ideally never be reached."
+      "complexity": null
     },
     {
       "function": "erc7540_3",
@@ -372,8 +338,7 @@
           "130:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 129, which shows a try-catch block attempting to call maxWithdraw(actor). The try block executed successfully (no exception), but line 130 in the catch block is uncovered. This tells us the root cause: the maxWithdraw() call is never reverting.\n\nSimilar to the previous case, this is an ERC7540 property test checking that maxWithdraw() should not revert. The uncovered catch block represents spec-violating behavior that should not occur. This is expected and desirable - we don't want to cover error paths that represent contract bugs or spec violations."
+      "complexity": null
     },
     {
       "function": "erc7540_4_deposit",
@@ -384,17 +349,14 @@
         "end": 165
       },
       "uncovered_code": {
-        "line_range": "153-157",
-        "last_covered_line": 152,
+        "line_range": "154",
+        "last_covered_line": 153,
         "code": [
-          "152: [LAST COVERED]         uint256 sum = maxDep + amt;",
-          "153:         if (sum == 0) {",
-          "154:             return true; // Needs to be greater than 0, skip",
-          "157:         try IERC7540Like(erc7540Target).deposit(maxDep + amt, actor) {"
+          "153: [LAST COVERED]         if (sum == 0) {",
+          "154:             return true; // Needs to be greater than 0, skip"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 152, which contains `uint256 sum = maxDep + amt;`. This line executes successfully, but lines 153-157 are uncovered. This tells us the root cause: the conditional check `if (sum == 0)` at line 153 is never true, and the try statement at line 157 is also not being reached.\n\nThis suggests that execution is somehow terminating between lines 152 and 153, which is unusual. Looking at the broader context, this property test is checking ERC7540 deposit behavior when attempting to deposit more than maxDeposit. The fuzzer may be reverting earlier in the function before reaching these lines, or there may be a precondition that's not being satisfied. This is library property test code that may require specific setup to reach."
+      "complexity": null
     },
     {
       "function": "erc7540_4_mint",
@@ -405,17 +367,14 @@
         "end": 191
       },
       "uncovered_code": {
-        "line_range": "179-183",
-        "last_covered_line": 178,
+        "line_range": "180",
+        "last_covered_line": 179,
         "code": [
-          "178: [LAST COVERED]         uint256 sum = maxDep + amt;",
-          "179:         if (sum == 0) {",
-          "180:             return true; // Needs to be greater than 0, skip",
-          "183:         try IERC7540Like(erc7540Target).mint(maxDep + amt, actor) {"
+          "179: [LAST COVERED]         if (sum == 0) {",
+          "180:             return true; // Needs to be greater than 0, skip"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 178, which contains `uint256 sum = maxDep + amt;`. This line executes successfully, but lines 179-183 are uncovered. This tells us the root cause: similar to erc7540_4_deposit, execution is not reaching the subsequent conditional or try block.\n\nThis is the same pattern as erc7540_4_deposit but for the mint function. The property test is checking behavior when attempting to mint more than maxMint. These are external library property tests that may require specific setup to fully cover."
+      "complexity": null
     },
     {
       "function": "erc7540_4_redeem",
@@ -433,8 +392,7 @@
           "232:             return true; // Needs to be greater than 0"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 231, which contains `if (sum == 0) {`. This line was executed (covered), but line 232 inside the conditional block is uncovered. This tells us the root cause: the condition `sum == 0` is never evaluating to true.\n\nThis property test is checking redeem behavior, and the condition checks if the sum (maxRedeem + amt) equals 0. The fuzzer never generates a scenario where both maxRedeem and amt are 0. This is an edge case in the property testing library for skipping tests when preconditions aren't met. Lower priority than main contract coverage."
+      "complexity": null
     },
     {
       "function": "erc7540_4_redeem",
@@ -452,8 +410,7 @@
           "236:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 235, which shows a try block attempting to call redeem(). The try block executed successfully, but line 236 (return false inside try block) is uncovered. This tells us the root cause: the redeem() call is reverting as expected, so the catch block is being executed instead of the try block's body.\n\nThis property test expects that attempting to redeem more than maxRedeem should revert. The fact that line 236 is uncovered means the property is being satisfied correctly - redeem() is reverting as expected when called with more than maxRedeem. This is correct behavior, and the uncovered line represents the violation case that shouldn't occur."
+      "complexity": null
     },
     {
       "function": "erc7540_4_withdraw",
@@ -471,8 +428,7 @@
           "206:             return true; // Needs to be greater than 0"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 205, which contains `if (sum == 0) {`. This line was executed (covered), but line 206 inside the conditional block is uncovered. This tells us the root cause: the condition `sum == 0` is never evaluating to true.\n\nSimilar to erc7540_4_redeem, this property test is checking withdraw behavior and the condition checks if sum (maxWithdraw + amt) equals 0. The fuzzer never generates this edge case. This is property testing library code for skipping tests, lower priority than main contract coverage."
+      "complexity": null
     },
     {
       "function": "erc7540_5",
@@ -490,8 +446,7 @@
           "261:             return true; // Skip"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 260, which contains `if (balWeWillUse == 0) {`. This line was executed (covered), but line 261 inside the conditional block is uncovered. This tells us the root cause: the condition `balWeWillUse == 0` is never evaluating to true.\n\nThis property test checks behavior when the balance to use is 0. The fuzzer never generates scenarios where the actor has 0 balance. This is an edge case test skip condition in the property testing library."
+      "complexity": null
     },
     {
       "function": "erc7540_5",
@@ -509,8 +464,7 @@
           "272:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 267, which appears to be part of a function call argument list. Line 272 (return false) is uncovered. Based on the gap between lines 267 and 272, this is likely inside a try block, and line 272 would be in the try block's body.\n\nThis suggests that the function call (likely requestDeposit or similar) is reverting, so the catch block is being executed instead of reaching line 272. This would be expected behavior for the property test - it's checking that certain operations properly revert under specific conditions. The uncovered line represents the violation case."
+      "complexity": null
     },
     {
       "function": "erc7540_6",
@@ -528,8 +482,7 @@
           "290:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 289, which shows a try block attempting to call previewRedeem(0). The try block executed successfully, but line 290 (return false inside try block) is uncovered. This tells us the root cause: previewRedeem(0) is reverting as expected.\n\nThis property test checks that preview functions should revert when called with 0. The fact that line 290 is uncovered means the property is being satisfied - previewRedeem(0) correctly reverts. This is expected behavior, and the uncovered line represents the spec violation case."
+      "complexity": null
     },
     {
       "function": "erc7540_6",
@@ -547,14 +500,13 @@
           "293:             return false;"
         ]
       },
-      "complexity": null,
-      "analysis": "The last_covered_line is 292, which shows a try block attempting to call previewWithdraw(0). The try block executed successfully, but line 293 (return false inside try block) is uncovered. This tells us the root cause: previewWithdraw(0) is reverting as expected.\n\nSimilar to the previous case, this property test checks that preview functions should revert when called with 0. The uncovered line represents correct spec-compliant behavior where the function properly reverts for invalid input."
+      "complexity": null
     }
   ],
   "summary": {
     "functions_analyzed": 165,
-    "functions_with_missing_coverage": 20,
-    "uncovered_sections": 26,
+    "functions_with_missing_coverage": 19,
+    "uncovered_sections": 25,
     "full_coverage": false
   }
 }
