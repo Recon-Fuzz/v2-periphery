@@ -1,0 +1,524 @@
+[
+    {
+        "target_function": "executeFeeUpdate",
+        "type": "exact",
+        "value": "FeeType feeType",
+        "access": "FeeType.REVENUE_SHARE"
+    },
+    {
+        "target_function": "executeMinStalenessChange",
+        "type": "max",
+        "value": "uint256 timestamp",
+        "access": "block.timestamp"
+    },
+    {
+        "target_function": "executeUpkeepClaim",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVaultAggregator.claimableUpkeep()"
+    },
+    {
+        "target_function": "executeUpkeepPaymentsChange",
+        "type": "max",
+        "value": "uint256 timestamp",
+        "access": "block.timestamp"
+    },
+    {
+        "target_function": "getAddress",
+        "type": "exact",
+        "value": "bytes32 key",
+        "access": "superGovernor.SUPER_VAULT_AGGREGATOR()"
+    },
+    {
+        "target_function": "proposeFee",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superGovernor.BPS_MAX()"
+    },
+    {
+        "target_function": "proposeFee",
+        "type": "exact",
+        "value": "FeeType feeType",
+        "access": "FeeType.REVENUE_SHARE"
+    },
+    {
+        "target_function": "proposeGlobalHooksRoot",
+        "type": "exact",
+        "value": "bytes32 newRoot",
+        "access": "bytes32(uint256(1))"
+    },
+    {
+        "target_function": "proposeMinStaleness",
+        "type": "max",
+        "value": "uint256 newMinStaleness",
+        "access": "superGovernor.getMinStaleness()"
+    },
+    {
+        "target_function": "proposeUpkeepPaymentsChange",
+        "type": "exact",
+        "value": "bool enabled",
+        "access": "superGovernor.isUpkeepPaymentsEnabled()"
+    },
+    {
+        "target_function": "approve",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "balanceOf",
+        "type": "exact",
+        "value": "address account",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "burnShares",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVault.balanceOf(address(superVaultEscrow))"
+    },
+    {
+        "target_function": "cancelRedeemRequest",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "claimCancelRedeemRequest",
+        "type": "max",
+        "value": "uint256 claimableShares",
+        "access": "superVaultStrategy.claimableCancelRedeemRequest(_getActor())"
+    },
+    {
+        "target_function": "claimableRedeemRequest",
+        "type": "max",
+        "value": "uint256 claimableShares",
+        "access": "superVault.maxRedeem(_getActor())"
+    },
+    {
+        "target_function": "convertToAssets",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "convertToShares",
+        "type": "max",
+        "value": "uint256 assets",
+        "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+    },
+    {
+        "target_function": "deposit",
+        "type": "max",
+        "value": "uint256 assets",
+        "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+    },
+    {
+        "target_function": "deposit",
+        "type": "exact",
+        "value": "address receiver",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "invalidateNonce",
+        "type": "exact",
+        "value": "bytes32 nonce",
+        "access": "bytes32(uint256(1))"
+    },
+    {
+        "target_function": "maxRedeem",
+        "type": "exact",
+        "value": "address owner",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "maxWithdraw",
+        "type": "exact",
+        "value": "address owner",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "mint",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.convertToShares(IERC20(superVault.asset()).balanceOf(_getActor()))"
+    },
+    {
+        "target_function": "mint",
+        "type": "exact",
+        "value": "address receiver",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "pendingRedeemRequest",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "previewDeposit",
+        "type": "max",
+        "value": "uint256 assets",
+        "access": "IERC20(superVault.asset()).balanceOf(_getActor())"
+    },
+    {
+        "target_function": "previewMint",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "redeem",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.maxRedeem(_getActor())"
+    },
+    {
+        "target_function": "redeem",
+        "type": "exact",
+        "value": "address receiver",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "redeem",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "requestRedeem",
+        "type": "max",
+        "value": "uint256 shares",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "requestRedeem",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "requestRedeem",
+        "type": "exact",
+        "value": "address owner",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "setOperator",
+        "type": "exact",
+        "value": "address operator",
+        "access": "_getRandomActor(entropy)"
+    },
+    {
+        "target_function": "transfer",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superVault.balanceOf(_getActor())"
+    },
+    {
+        "target_function": "transferFrom",
+        "type": "max",
+        "value": "uint256 value",
+        "access": "superVault.balanceOf(_getRandomActor(entropyFrom))"
+    },
+    {
+        "target_function": "withdraw",
+        "type": "max",
+        "value": "uint256 assets",
+        "access": "superVault.maxWithdraw(_getActor())"
+    },
+    {
+        "target_function": "withdraw",
+        "type": "exact",
+        "value": "address receiver",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "withdraw",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "escrowShares",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVault.balanceOf(from)"
+    },
+    {
+        "target_function": "initialize",
+        "type": "exact",
+        "value": "address vaultAddress",
+        "access": "address(superVault)"
+    },
+    {
+        "target_function": "returnShares",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVault.balanceOf(address(superVaultEscrow))"
+    },
+    {
+        "target_function": "executeHooks",
+        "type": "max",
+        "value": "uint256 hooksLength",
+        "access": "yieldSourcesList.length()"
+    },
+    {
+        "target_function": "executeVaultFeeConfigUpdate",
+        "type": "max",
+        "value": "uint256 timestamp",
+        "access": "block.timestamp"
+    },
+    {
+        "target_function": "fulfillCancelRedeemRequests",
+        "type": "max",
+        "value": "uint256 controllersLength",
+        "access": "actorCount"
+    },
+    {
+        "target_function": "fulfillRedeemRequests",
+        "type": "max",
+        "value": "uint256 controllersLength",
+        "access": "actorCount"
+    },
+    {
+        "target_function": "getSuperVaultState",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "handleOperations4626Deposit",
+        "type": "max",
+        "value": "uint256 assetsGross",
+        "access": "IERC20(superVault.asset()).balanceOf(address(superVaultStrategy))"
+    },
+    {
+        "target_function": "handleOperations4626Deposit",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "handleOperations4626Mint",
+        "type": "max",
+        "value": "uint256 sharesNet",
+        "access": "superVault.convertToShares(IERC20(superVault.asset()).balanceOf(address(superVaultStrategy)))"
+    },
+    {
+        "target_function": "handleOperations4626Mint",
+        "type": "max",
+        "value": "uint256 assetsGross",
+        "access": "IERC20(superVault.asset()).balanceOf(address(superVaultStrategy))"
+    },
+    {
+        "target_function": "handleOperations4626Mint",
+        "type": "max",
+        "value": "uint256 assetsNet",
+        "access": "IERC20(superVault.asset()).balanceOf(address(superVaultStrategy))"
+    },
+    {
+        "target_function": "handleOperations4626Mint",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "handleOperations7540",
+        "type": "exact",
+        "value": "address controller",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "handleOperations7540",
+        "type": "exact",
+        "value": "address receiver",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "handleOperations7540",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVaultStrategy.claimableWithdraw(_getActor())"
+    },
+    {
+        "target_function": "manageYieldSource",
+        "type": "exact",
+        "value": "address source",
+        "access": "yieldSourcesList.at(0)"
+    },
+    {
+        "target_function": "manageYieldSource",
+        "type": "exact",
+        "value": "address oracle",
+        "access": "superGovernor.getAddress(superGovernor.SUPER_ORACLE())"
+    },
+    {
+        "target_function": "manageYieldSources",
+        "type": "max",
+        "value": "uint256 length",
+        "access": "yieldSourcesList.length()"
+    },
+    {
+        "target_function": "proposeVaultFeeConfigUpdate",
+        "type": "max",
+        "value": "uint256 performanceFeeBps",
+        "access": "superVaultStrategy.MAX_PERFORMANCE_FEE()"
+    },
+    {
+        "target_function": "proposeVaultFeeConfigUpdate",
+        "type": "max",
+        "value": "uint256 managementFeeBps",
+        "access": "superVaultStrategy.BPS_PRECISION()"
+    },
+    {
+        "target_function": "proposeVaultFeeConfigUpdate",
+        "type": "exact",
+        "value": "address recipient",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "skimPerformanceFee",
+        "type": "max",
+        "value": "uint256 profit",
+        "access": "superVaultStrategy.vaultUnrealizedProfit()"
+    },
+    {
+        "target_function": "addSecondaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "addSecondaryManager",
+        "type": "exact",
+        "value": "address manager",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "cancelChangePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "changePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "changePrimaryManager",
+        "type": "exact",
+        "value": "address newManager",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "changePrimaryManager",
+        "type": "exact",
+        "value": "address feeRecipient",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "claimUpkeep",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVaultAggregator.claimableUpkeep()"
+    },
+    {
+        "target_function": "claimableUpkeep",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "superVaultAggregator.claimableUpkeep()"
+    },
+    {
+        "target_function": "createVault",
+        "type": "exact",
+        "value": "address asset",
+        "access": "address(asset)"
+    },
+    {
+        "target_function": "createVault",
+        "type": "exact",
+        "value": "address mainManager",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "createVault",
+        "type": "max",
+        "value": "uint256 maxStaleness",
+        "access": "superGovernor.getMinStaleness()"
+    },
+    {
+        "target_function": "depositUpkeep",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "depositUpkeep",
+        "type": "max",
+        "value": "uint256 amount",
+        "access": "IERC20(superGovernor.getAddress(superGovernor.UPKEEP_TOKEN())).balanceOf(_getActor())"
+    },
+    {
+        "target_function": "executeChangePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "executeWithdrawUpkeep",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "proposeChangePrimaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "proposeChangePrimaryManager",
+        "type": "exact",
+        "value": "address newManager",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "proposeChangePrimaryManager",
+        "type": "exact",
+        "value": "address feeRecipient",
+        "access": "_getActor()"
+    },
+    {
+        "target_function": "proposeWithdrawUpkeep",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "removeSecondaryManager",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "removeSecondaryManager",
+        "type": "exact",
+        "value": "address manager",
+        "access": "superVaultAggregator.getSecondaryManagers(address(superVaultStrategy))[0]"
+    },
+    {
+        "target_function": "updateDeviationThreshold",
+        "type": "exact",
+        "value": "address strategy",
+        "access": "address(superVaultStrategy)"
+    },
+    {
+        "target_function": "updateDeviationThreshold",
+        "type": "max",
+        "value": "uint256 deviationThreshold_",
+        "access": "superVaultAggregator.getDeviationThreshold(address(superVaultStrategy))"
+    }
+]
