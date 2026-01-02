@@ -1236,6 +1236,70 @@ abstract contract TargetFunctions is
     }
     
     // ----------------------------------------------------------------------------
+    // Coverage Phase 4 Fixes - FulfillRedeemRequests Insufficient Liquidity
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Fulfill redeem requests with insufficient strategy liquidity
+    /// @dev Covers line 356 in SuperVaultStrategy.sol (INSUFFICIENT_LIQUIDITY)
+    /// Root Cause: The clamped handler always calculates totalAssetsOut based on available balance,
+    ///             ensuring the strategy has enough liquidity. The fuzzer never creates scenarios
+    ///             where redeem requests exceed available strategy balance.
+    /// Solution: Shortcut that deposits -> requests redeem -> drains liquidity -> attempts to fulfill
+    function shortcut_fulfillRedeemRequests_insufficientLiquidity(
+        uint256 depositAmount,
+        uint256 redeemShares,
+        uint256 drainAmount
+    ) public {
+        // Step 1: Deposit to get shares
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Request redeem
+        superVault_requestRedeem_clamped(redeemShares);
+        
+        // Step 3: Calculate the assets that would be needed to fulfill
+        uint256 pendingShares = superVault.pendingRedeemRequest(0, _getActor());
+        if (pendingShares == 0) return; // Nothing to fulfill
+        
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        uint256 assetsNeeded = (pendingShares * currentPPS) / (10 ** MockERC20(superVault.asset()).decimals());
+        
+        // Step 4: Drain strategy liquidity to create insufficient balance scenario
+        // Transfer assets out of the strategy to an actor (simulating hook execution or other drain)
+        uint256 strategyBalance = MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        
+        // Drain most of the strategy balance, leaving less than needed for fulfillment
+        drainAmount = drainAmount % (strategyBalance + 1);
+        if (drainAmount > 0 && strategyBalance > assetsNeeded) {
+            // Only drain if we have more than needed, to create the gap
+            uint256 actualDrain = drainAmount;
+            // Ensure we drain enough to create insufficient liquidity
+            if (strategyBalance - actualDrain >= assetsNeeded) {
+                actualDrain = strategyBalance - (assetsNeeded / 2); // Leave less than half of what's needed
+            }
+            
+            if (actualDrain > 0 && actualDrain <= strategyBalance) {
+                // Simulate draining via transfer (would normally happen through hooks)
+                vm.prank(address(superVaultStrategy));
+                MockERC20(superVault.asset()).transfer(_getActor(), actualDrain);
+            }
+        }
+        
+        // Step 5: Attempt to fulfill - should revert with INSUFFICIENT_LIQUIDITY (covering line 356)
+        address[] memory controllers = new address[](1);
+        controllers[0] = _getActor();
+        
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = assetsNeeded; // Request the full amount calculated earlier
+        
+        vm.prank(address(this));
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {
+            // Should not succeed with insufficient liquidity
+        } catch {
+            // Expected - insufficient liquidity error (line 356 covered)
+        }
+    }
+    
+    // ----------------------------------------------------------------------------
     // Coverage Phase 4 Fixes - SkimPerformanceFee Timelock
     // ----------------------------------------------------------------------------
     
