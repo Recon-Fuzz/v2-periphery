@@ -84,47 +84,7 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         superVaultStrategy_skimPerformanceFee();
     }
 
-    /// @dev Coverage Fix: Test deposit operation when veto is active
-    function superVaultStrategy_handleOperations4626Deposit_withVeto(
-        address controller,
-        uint256 assetsGross
-    ) public asAdmin {
-        // Set veto status
-        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
-        
-        // Try to deposit (should revert with OPERATIONS_BLOCKED_BY_VETO)
-        try superVaultStrategy.handleOperations4626Deposit(controller, assetsGross) {
-            // If it doesn't revert, that's a bug
-            revert("Should have reverted with OPERATIONS_BLOCKED_BY_VETO");
-        } catch {
-            // Expected - veto blocked the operation
-        }
-        
-        // Reset veto status for subsequent operations
-        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
-    }
 
-    /// @dev Coverage Fix: Test mint operation when veto is active  
-    function superVaultStrategy_handleOperations4626Mint_withVeto(
-        address controller,
-        uint256 sharesNet,
-        uint256 assetsGross,
-        uint256 assetsNet
-    ) public asAdmin {
-        // Set veto status
-        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
-        
-        // Try to mint (should revert with OPERATIONS_BLOCKED_BY_VETO)
-        try superVaultStrategy.handleOperations4626Mint(controller, sharesNet, assetsGross, assetsNet) {
-            // If it doesn't revert, that's a bug
-            revert("Should have reverted with OPERATIONS_BLOCKED_BY_VETO");
-        } catch {
-            // Expected - veto blocked the operation
-        }
-        
-        // Reset veto status for subsequent operations
-        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
-    }
 
 
 

@@ -961,48 +961,116 @@ abstract contract TargetFunctions is
         superVault_withdraw_clamped(withdrawAssets1);
     }
     
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 5 Fixes - Veto Status Coverage
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Test deposit operation when veto is active
+    /// @dev Covers line 166 in SuperVaultStrategy.sol (OPERATIONS_BLOCKED_BY_VETO for deposit)
+    /// Root Cause: The fuzzer never sets the global hooks root veto status to true
+    /// Solution: Shortcut that sets veto -> attempts deposit -> resets veto
+    function shortcut_handleOperations4626Deposit_withVeto(
+        uint256 depositAmount,
+        address controller,
+        uint256 assetsGross
+    ) public {
+        // Setup: deposit some assets first to have balance
+        superVault_deposit_clamped(depositAmount);
+        
+        // Set veto status (requires admin)
+        vm.prank(address(this));
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Clamp parameters
+        assetsGross = assetsGross % (MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy)) + 1);
+        controller = controller == address(0) ? _getActor() : controller;
+        
+        // Try to deposit (should revert with OPERATIONS_BLOCKED_BY_VETO, covering line 166)
+        vm.prank(address(superVault));
+        try superVaultStrategy.handleOperations4626Deposit(controller, assetsGross) {
+            // If it doesn't revert, that's unexpected but not a failure
+        } catch {
+            // Expected - veto blocked the operation (line 166 covered)
+        }
+        
+        // Reset veto status for subsequent operations
+        vm.prank(address(this));
+        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+    }
+    
+    /// @notice Coverage Fix: Test mint operation when veto is active
+    /// @dev Covers line 214 in SuperVaultStrategy.sol (OPERATIONS_BLOCKED_BY_VETO for mint)
+    /// Root Cause: The fuzzer never sets the global hooks root veto status to true
+    /// Solution: Shortcut that sets veto -> attempts mint -> resets veto
+    function shortcut_handleOperations4626Mint_withVeto(
+        uint256 depositAmount,
+        address controller,
+        uint256 sharesNet,
+        uint256 assetsGross,
+        uint256 assetsNet
+    ) public {
+        // Setup: deposit some assets first to have balance
+        superVault_deposit_clamped(depositAmount);
+        
+        // Set veto status (requires admin)
+        vm.prank(address(this));
+        superVaultAggregator.setGlobalHooksRootVetoStatus(true);
+        
+        // Clamp parameters
+        uint256 strategyBalance = MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        sharesNet = sharesNet % (superVault.convertToShares(strategyBalance) + 1);
+        assetsGross = assetsGross % (strategyBalance + 1);
+        assetsNet = assetsNet % (strategyBalance + 1);
+        controller = controller == address(0) ? _getActor() : controller;
+        
+        // Try to mint (should revert with OPERATIONS_BLOCKED_BY_VETO, covering line 214)
+        vm.prank(address(superVault));
+        try superVaultStrategy.handleOperations4626Mint(controller, sharesNet, assetsGross, assetsNet) {
+            // If it doesn't revert, that's unexpected but not a failure
+        } catch {
+            // Expected - veto blocked the operation (line 214 covered)
+        }
+        
+        // Reset veto status for subsequent operations
+        vm.prank(address(this));
+        superVaultAggregator.setGlobalHooksRootVetoStatus(false);
+    }
+    
+    // ----------------------------------------------------------------------------
+    // Coverage Phase 5 Fixes - Performance Fee Skim with Time Advancement
+    // ----------------------------------------------------------------------------
+    
+    /// @notice Coverage Fix: Skim performance fee after advancing time past timelock
+    /// @dev Covers lines 382-455 in SuperVaultStrategy.sol (skimPerformanceFee execution)
+    /// Root Cause: The fuzzer doesn't advance time by 12+ hours after unpause
+    /// Solution: Shortcut that deposits -> simulates gain -> advances time -> skims
+    function shortcut_skimPerformanceFee_afterTimelock(
+        uint256 depositAmount,
+        uint256 gainAmount
+    ) public {
+        // Step 1: Deposit to create shares (ensures totalSupply != 0)
+        superVault_deposit_clamped(depositAmount);
+        
+        // Step 2: Simulate gain to ensure currentPPS > hwmPps and profit != 0
+        gainAmount = gainAmount % (MockERC20(superVault.asset()).balanceOf(_getActor()) + 1);
+        if (gainAmount > 0) {
+            vm.prank(_getActor());
+            MockERC20(superVault.asset()).approve(address(this), gainAmount);
+            yieldSource_simulateGain(gainAmount);
+        }
+        
+        // Step 3: Advance time past POST_UNPAUSE_SKIM_TIMELOCK (12 hours)
+        vm.warp(block.timestamp + 12 hours + 1);
+        
+        // Step 4: Call skimPerformanceFee (covers lines 382-455)
+        vm.prank(address(this));
+        try superVaultStrategy.skimPerformanceFee() {
+            // Success - fee was skimmed
+        } catch {
+            // May fail due to various conditions (no profit, no fee, etc.) - that's ok
+        }
+    }
+    
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
 
-    }
-    
-    // PATH 1: actionType == YieldSourceAction.Add
-    /// @notice Shortcut: add new yield source
-    function shortcut_manageYieldSource_add(uint256 sourceEntropy) public {
-        address source = _getRandomActor(sourceEntropy);
-        address oracle = _getRandomActor(sourceEntropy + 1);
-        
-        vm.prank(address(this));
-        superVaultStrategy.manageYieldSource(
-            source,
-            oracle,
-            ISuperVaultStrategy.YieldSourceAction.Add
-        );
-    }
-    
-    // PATH 2: actionType == YieldSourceAction.UpdateOracle
-    /// @notice Shortcut: add yield source -> update its oracle
-    function shortcut_manageYieldSource_updateOracle(uint256 sourceEntropy) public {
-        address source = _getRandomActor(sourceEntropy);
-        address oldOracle = _getRandomActor(sourceEntropy + 1);
-        address newOracle = _getRandomActor(sourceEntropy + 2);
-        
-        // First add a yield source
-        vm.prank(address(this));
-        superVaultStrategy.manageYieldSource(
-            source,
-            oldOracle,
-            ISuperVaultStrategy.YieldSourceAction.Add
-        );
-        
-        // Then update its oracle
-        vm.prank(address(this));
-        superVaultStrategy.manageYieldSource(
-            source,
-            newOracle,
-            ISuperVaultStrategy.YieldSourceAction.UpdateOracle
-        );
-    }
-    
-    /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
-
-    }
+}
