@@ -186,6 +186,94 @@ abstract contract SuperVaultStrategyTargets is BaseTargetFunctions, Properties {
         }
     }
 
+    /// @dev Coverage Fix: Handler to trigger INSUFFICIENT_LIQUIDITY in fulfillRedeemRequests
+    /// This creates a scenario where the requested redemption exceeds the strategy's available balance
+    function superVaultStrategy_fulfillRedeemRequests_insufficientLiquidity(
+        uint256 depositAmount,
+        uint256 redeemShares
+    ) public asAdmin {
+        // Step 1: Deposit to create shares
+        address controller = _getActor();
+        
+        // Deposit assets
+        uint256 assetBalance = MockERC20(superVault.asset()).balanceOf(controller);
+        depositAmount = depositAmount % (assetBalance + 1);
+        if (depositAmount == 0) return; // Skip if no deposit
+        
+        // Perform deposit
+        vm.startPrank(controller);
+        MockERC20(superVault.asset()).approve(address(superVault), depositAmount);
+        superVault.deposit(depositAmount, controller);
+        vm.stopPrank();
+        
+        // Step 2: Request redeem
+        uint256 vaultBalance = superVault.balanceOf(controller);
+        redeemShares = redeemShares % (vaultBalance + 1);
+        if (redeemShares == 0) return; // Skip if no shares to redeem
+        
+        vm.prank(controller);
+        superVault.requestRedeem(redeemShares, controller, controller);
+        
+        // Step 3: Drain strategy balance to create insufficient liquidity
+        // Transfer most assets out of the strategy to create the condition
+        uint256 strategyBalance = MockERC20(superVault.asset()).balanceOf(address(superVaultStrategy));
+        if (strategyBalance > 0) {
+            // Drain 90% of strategy balance
+            uint256 drainAmount = (strategyBalance * 90) / 100;
+            vm.prank(address(superVaultStrategy));
+            MockERC20(superVault.asset()).transfer(address(0xdead), drainAmount);
+        }
+        
+        // Step 4: Try to fulfill with more assets than available
+        // This should trigger INSUFFICIENT_LIQUIDITY
+        address[] memory controllers = new address[](1);
+        controllers[0] = controller;
+        
+        // Calculate required assets for the redemption
+        uint256 currentPPS = superVaultStrategy.getStoredPPS();
+        if (currentPPS == 0) return;
+        
+        uint256 pendingShares = superVaultStrategy.pendingRedeemRequest(controller);
+        if (pendingShares == 0) return;
+        
+        // Calculate assets needed (will exceed available balance)
+        uint256[] memory totalAssetsOut = new uint256[](1);
+        totalAssetsOut[0] = (pendingShares * currentPPS) / (10 ** MockERC20(superVault.asset()).decimals());
+        
+        // This should revert with INSUFFICIENT_LIQUIDITY
+        vm.prank(controller);
+        try superVaultStrategy.fulfillRedeemRequests(controllers, totalAssetsOut) {
+            // Should not succeed
+        } catch {
+            // Expected revert
+        }
+    }
+
+    /// @dev Coverage Fix: Handler to test invalid operation type in handleOperations7540
+    /// Note: This is practically unreachable with a properly typed enum, but we attempt it for coverage
+    function superVaultStrategy_handleOperations7540_invalidOperation() public {
+        // Since Operation is an enum with only 4 valid values (0-3), we try to use
+        // assembly to bypass type checking and pass an invalid value
+        address controller = _getActor();
+        uint256 amount = 100;
+        
+        // This will likely fail at the ABI decoding level, but we try
+        // Cast uint256(4) to Operation enum (invalid value outside enum range)
+        bytes memory data = abi.encodeWithSelector(
+            ISuperVaultStrategy.handleOperations7540.selector,
+            uint8(4), // Invalid operation type (enum only has 0-3)
+            controller,
+            controller,
+            amount
+        );
+        
+        vm.prank(address(superVault));
+        (bool success,) = address(superVaultStrategy).call(data);
+        
+        // Expected to fail, either at decoding or at the revert ACTION_TYPE_DISALLOWED
+        require(!success, "Should have reverted");
+    }
+
 
 
 
