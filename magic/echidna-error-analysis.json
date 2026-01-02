@@ -1,0 +1,12 @@
+{
+  "status": "success",
+  "exit_code": 0,
+  "error_type": null,
+  "workflow_action": "continue",
+  "message": "Echidna completed successfully",
+  "coverage_files": [
+    "echidna/covered.1767369080.txt"
+  ],
+  "coverage_generated": true,
+  "timestamp": "2026-01-02T12:51:24.667073"
+}
